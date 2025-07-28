@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the DHTConfig.new constructor from Class DHTConfig from the dart_libp2p_kad_dht library, for the Dart programming language.">
+  <title>DHTConfig.new constructor - DHTConfig - dart_libp2p_kad_dht library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht.dart</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/DHTConfig-class.html">DHTConfig</a></li>
+    <li class="self-crumb">DHTConfig.new constructor</li>
+  </ol>
+  <div class="self-name">DHTConfig.new</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+  <div
+      id="dartdoc-main-content"
+      class="main-content"
+      data-above-sidebar="dart_libp2p_kad_dht&#47;DHTConfig-class-sidebar.html"
+      data-below-sidebar="">
+      <div>
+<h1><span class="kind-constructor">DHTConfig</span> constructor 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+      <span class="name ">DHTConfig</span>(<wbr>{<ol class="parameter-list"> <li><span class="parameter" id="-param-mode"><span class="type-annotation"><a href="../../dart_libp2p_kad_dht/DHTMode.html">DHTMode</a></span> <span class="parameter-name">mode</span> = <span class="default-value">DHTMode.auto</span>, </span></li>
+<li><span class="parameter" id="-param-datastore"><span class="type-annotation">dynamic</span> <span class="parameter-name">datastore</span>, </span></li>
+<li><span class="parameter" id="-param-providerStore"><span class="type-annotation"><a href="../../dart_libp2p_kad_dht/ProviderStore-class.html">ProviderStore</a>?</span> <span class="parameter-name">providerStore</span>, </span></li>
+<li><span class="parameter" id="-param-validator"><span class="type-annotation">Validator?</span> <span class="parameter-name">validator</span>, </span></li>
+<li><span class="parameter" id="-param-protocolPrefix"><span class="type-annotation"><a href="../../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a></span> <span class="parameter-name">protocolPrefix</span> = <span class="default-value">AminoConstants.protocolPrefix</span>, </span></li>
+<li><span class="parameter" id="-param-v1ProtocolOverride"><span class="type-annotation"><a href="../../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a>?</span> <span class="parameter-name">v1ProtocolOverride</span>, </span></li>
+<li><span class="parameter" id="-param-bucketSize"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">bucketSize</span> = <span class="default-value">AminoConstants.defaultBucketSize</span>, </span></li>
+<li><span class="parameter" id="-param-concurrency"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">concurrency</span> = <span class="default-value">AminoConstants.defaultConcurrency</span>, </span></li>
+<li><span class="parameter" id="-param-resiliency"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">resiliency</span> = <span class="default-value">AminoConstants.defaultResiliency</span>, </span></li>
+<li><span class="parameter" id="-param-routingTableLatencyTolerance"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">routingTableLatencyTolerance</span> = <span class="default-value">AminoConstants.defaultMaxLatency</span>, </span></li>
+<li><span class="parameter" id="-param-routingTableRefreshInterval"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">routingTableRefreshInterval</span> = <span class="default-value">AminoConstants.defaultRefreshInterval</span>, </span></li>
+<li><span class="parameter" id="-param-routingTableRefreshQueryTimeout"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">routingTableRefreshQueryTimeout</span> = <span class="default-value">AminoConstants.defaultRefreshQueryTimeout</span>, </span></li>
+<li><span class="parameter" id="-param-routingTableAutoRefresh"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">routingTableAutoRefresh</span> = <span class="default-value">true</span>, </span></li>
+<li><span class="parameter" id="-param-routingTablePeerFilter"><span class="type-annotation"><a href="../../dart_libp2p_kad_dht/RouteTableFilterFunc.html">RouteTableFilterFunc</a>?</span> <span class="parameter-name">routingTablePeerFilter</span>, </span></li>
+<li><span class="parameter" id="-param-routingTableDiversityFilter"><span class="type-annotation">dynamic</span> <span class="parameter-name">routingTableDiversityFilter</span>, </span></li>
+<li><span class="parameter" id="-param-maxRecordAge"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">maxRecordAge</span> = <span class="default-value">AminoConstants.defaultRecordTTL</span>, </span></li>
+<li><span class="parameter" id="-param-enableProviders"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">enableProviders</span> = <span class="default-value">true</span>, </span></li>
+<li><span class="parameter" id="-param-enableValues"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">enableValues</span> = <span class="default-value">true</span>, </span></li>
+<li><span class="parameter" id="-param-queryPeerFilter"><span class="type-annotation"><a href="../../dart_libp2p_kad_dht/QueryFilterFunc.html">QueryFilterFunc</a>?</span> <span class="parameter-name">queryPeerFilter</span>, </span></li>
+<li><span class="parameter" id="-param-bootstrapPeers"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span> <span class="parameter-name">bootstrapPeers</span>()?, </span></li>
+<li><span class="parameter" id="-param-lookupCheckConcurrency"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">lookupCheckConcurrency</span> = <span class="default-value">AminoConstants.defaultLookupCheckConcurrency</span>, </span></li>
+<li><span class="parameter" id="-param-enableOptimisticProvide"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">enableOptimisticProvide</span> = <span class="default-value">false</span>, </span></li>
+<li><span class="parameter" id="-param-optimisticProvideJobsPoolSize"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">optimisticProvideJobsPoolSize</span> = <span class="default-value">AminoConstants.defaultOptimisticProvideJobsPoolSize</span>, </span></li>
+<li><span class="parameter" id="-param-addressFilter"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span>&gt;</span></span> <span class="parameter-name">addressFilter</span>(<ol class="parameter-list single-line"> <li><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span>&gt;</span></span></span></li>
+</ol>)?, </span></li>
+<li><span class="parameter" id="-param-msgSenderBuilder"><span class="type-annotation"><a href="../../dart_libp2p_kad_dht/MessageSenderBuilder.html">MessageSenderBuilder</a>?</span> <span class="parameter-name">msgSenderBuilder</span>, </span></li>
+<li><span class="parameter" id="-param-onRequestHook"><span class="type-annotation">void</span> <span class="parameter-name">onRequestHook</span>(<ol class="parameter-list single-line"> <li><span class="parameter" id="param-"><span class="type-annotation">dynamic</span>, </span></li>
+<li><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Stream-class.html">Stream</a></span>, </span></li>
+<li><span class="parameter" id="param-"><span class="type-annotation"><a href="../../dart_libp2p_kad_dht/Message-class.html">Message</a></span></span></li>
+</ol>)?, </span></li>
+<li><span class="parameter" id="-param-disableFixLowPeers"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">disableFixLowPeers</span> = <span class="default-value">false</span>, </span></li>
+<li><span class="parameter" id="-param-testAddressUpdateProcessing"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">testAddressUpdateProcessing</span> = <span class="default-value">false</span>, </span></li>
+<li><span class="parameter" id="-param-maxDhtMessageRetryAttempts"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">maxDhtMessageRetryAttempts</span> = <span class="default-value">3</span>, </span></li>
+<li><span class="parameter" id="-param-dhtMessageRetryInitialBackoff"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">dhtMessageRetryInitialBackoff</span> = <span class="default-value">const Duration(milliseconds: 500)</span>, </span></li>
+<li><span class="parameter" id="-param-dhtMessageRetryMaxBackoff"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">dhtMessageRetryMaxBackoff</span> = <span class="default-value">const Duration(seconds: 30)</span>, </span></li>
+<li><span class="parameter" id="-param-dhtMessageRetryBackoffFactor"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">dhtMessageRetryBackoffFactor</span> = <span class="default-value">2.0</span>, </span></li>
+<li><span class="parameter" id="-param-filterLocalhostInResponses"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">filterLocalhostInResponses</span> = <span class="default-value">true</span>, </span></li>
+<li><span class="parameter" id="-param-maxPeersPerBucket"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">maxPeersPerBucket</span> = <span class="default-value">20</span>, </span></li>
+<li><span class="parameter" id="-param-maxRoutingTableSize"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">maxRoutingTableSize</span> = <span class="default-value">1000</span>, </span></li>
+</ol>})
+    </section>
+    
+<section class="desc markdown">
+  <p>Creates a new DHT configuration with default values</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">DHTConfig({
+  this.mode = DHTMode.auto,
+  this.datastore,
+  this.providerStore,
+  Validator? validator,
+  this.protocolPrefix = AminoConstants.protocolPrefix,
+  this.v1ProtocolOverride,
+  this.bucketSize = AminoConstants.defaultBucketSize,
+  this.concurrency = AminoConstants.defaultConcurrency,
+  this.resiliency = AminoConstants.defaultResiliency,
+  this.routingTableLatencyTolerance = AminoConstants.defaultMaxLatency,
+  this.routingTableRefreshInterval = AminoConstants.defaultRefreshInterval,
+  this.routingTableRefreshQueryTimeout = AminoConstants.defaultRefreshQueryTimeout,
+  this.routingTableAutoRefresh = true,
+  this.routingTablePeerFilter,
+  this.routingTableDiversityFilter,
+  this.maxRecordAge = AminoConstants.defaultRecordTTL,
+  this.enableProviders = true,
+  this.enableValues = true,
+  this.queryPeerFilter,
+  this.bootstrapPeers,
+  this.lookupCheckConcurrency = AminoConstants.defaultLookupCheckConcurrency,
+  this.enableOptimisticProvide = false,
+  this.optimisticProvideJobsPoolSize = AminoConstants.defaultOptimisticProvideJobsPoolSize,
+  this.addressFilter,
+  this.msgSenderBuilder,
+  this.onRequestHook,
+  this.disableFixLowPeers = false,
+  this.testAddressUpdateProcessing = false,
+  this.maxDhtMessageRetryAttempts = 3,
+  this.dhtMessageRetryInitialBackoff = const Duration(milliseconds: 500),
+  this.dhtMessageRetryMaxBackoff = const Duration(seconds: 30),
+  this.dhtMessageRetryBackoffFactor = 2.0,
+  this.filterLocalhostInResponses = true,
+  this.maxPeersPerBucket = 20,
+  this.maxRoutingTableSize = 1000,
+}) : validator = validator ?? NamespacedValidator();</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/DHTConfig-class.html">DHTConfig</a></li>
+    <li class="self-crumb">DHTConfig.new constructor</li>
+</ol>
+
+    <h5>DHTConfig class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-left-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    dart_libp2p_kad_dht
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

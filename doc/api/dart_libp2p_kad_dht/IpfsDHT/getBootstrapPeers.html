@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the getBootstrapPeers method from the IpfsDHT class, for the Dart programming language.">
+  <title>getBootstrapPeers method - IpfsDHT class - dart_libp2p_kad_dht library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht.dart</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a></li>
+    <li class="self-crumb">getBootstrapPeers method</li>
+  </ol>
+  <div class="self-name">getBootstrapPeers</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="dart_libp2p_kad_dht&#47;IpfsDHT-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">getBootstrapPeers</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span>&gt;</span></span>
+<span class="name ">getBootstrapPeers</span>(<wbr>)
+
+      
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Gets bootstrap peers for the query</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">Future&lt;List&lt;AddrInfo&gt;&gt; getBootstrapPeers() async {
+  final Logger bootstrapLogger = Logger(&#39;IpfsDHT.getBootstrapPeers&#39;);
+  final List&lt;AddrInfo&gt; result = [];
+
+  &#47;&#47; 1. Try peers from our routing table first
+  final rtDhtPeerInfos = await _routingTable.listPeers(); &#47;&#47; These are DhtPeerInfo
+  for (final rtDhtPeerInfo in rtDhtPeerInfos) {
+    &#47;&#47; Get PeerInfo (which contains addrs) from the peerstore
+    final storedPeerInfo = await _host.peerStore.getPeer(rtDhtPeerInfo.id); &#47;&#47; rtDhtPeerInfo.id is correct (PeerId)
+    if (storedPeerInfo != null &amp;&amp; storedPeerInfo.addrs.isNotEmpty) {
+      &#47;&#47; Only add if we have addresses for them
+      &#47;&#47; PeerInfo from peerstore should have &#39;peerId&#39;, not &#39;id&#39;
+      result.add(AddrInfo(storedPeerInfo.peerId, storedPeerInfo.addrs.toList()));
+    }
+  }
+  bootstrapLogger.info(&#39;[${_host.id.toBase58().substring(0,6)}] Initially got ${result.length} peers from routing table with addresses.&#39;);
+
+  &#47;&#47; 2. If routing table yielded no usable peers (e.g., empty or peers have no known addrs),
+  &#47;&#47;    use configured bootstrap peers from DHTOptions.
+  if (result.isEmpty &amp;&amp; _options.bootstrapPeers != null &amp;&amp; _options.bootstrapPeers!.isNotEmpty) {
+    bootstrapLogger.info(&#39;[${_host.id.toBase58().substring(0,6)}] Routing table yielded no usable peers. Using configured bootstrapPeers from DHTOptions.&#39;);
+    for (final ma in _options.bootstrapPeers!) {
+      try {
+        final p2pComponent = ma.valueForProtocol(Protocols.p2p.name);
+        if (p2pComponent == null) {
+          bootstrapLogger.warning(&#39;[${_host.id.toBase58().substring(0,6)}] Configured bootstrap peer $ma is missing &#47;p2p component. Skipping.&#39;);
+          continue;
+        }
+        final peerId = PeerId.fromString(p2pComponent);
+
+        &#47;&#47; Skip adding self if it&#39;s in the bootstrap list
+        if (peerId == _host.id) {
+          bootstrapLogger.finer(&#39;[${_host.id.toBase58().substring(0,6)}] Skipping self from configured bootstrap peers: $peerId&#39;);
+          continue;
+        }
+
+        final addrOnly = ma.decapsulate(Protocols.p2p.name);
+        if (addrOnly != null &amp;&amp; addrOnly.toString().isNotEmpty) {
+          result.add(AddrInfo(peerId, [addrOnly]));
+        } else {
+           bootstrapLogger.warning(&#39;[${_host.id.toBase58().substring(0,6)}] Configured bootstrap multiaddress $ma has no connectable address part after decapsulating &#47;p2p. Skipping.&#39;);
+        }
+      } catch (e, s) {
+        bootstrapLogger.warning(&#39;[${_host.id.toBase58().substring(0,6)}] Error processing configured bootstrap multiaddress $ma: $e\n$s. Skipping.&#39;);
+      }
+    }
+    bootstrapLogger.info(&#39;[${_host.id.toBase58().substring(0,6)}] After processing DHTOptions.bootstrapPeers, result has ${result.length} peers.&#39;);
+  }
+
+  &#47;&#47; Deduplicate, prioritizing entries that might have come from routing table (though current logic adds them first)
+  final finalPeers = &lt;PeerId, AddrInfo&gt;{};
+  for (var ai in result) {
+      finalPeers.putIfAbsent(ai.id, () =&gt; ai);
+  }
+
+  bootstrapLogger.info(&#39;[${_host.id.toBase58().substring(0,6)}] Raw DhtPeerInfo from routingTable.listPeers(): ${rtDhtPeerInfos.map((p) =&gt; p.id.toBase58().substring(0,6)).toList()} (Count: ${rtDhtPeerInfos.length})&#39;);
+  bootstrapLogger.info(&#39;[${_host.id.toBase58().substring(0,6)}] Returning ${finalPeers.values.length} unique bootstrap peers for lookup: ${finalPeers.values.map((ai) =&gt; &#39;${ai.id.toBase58().substring(0,6)}(${ai.addrs.length} addrs)&#39;).toList()}&#39;);
+  return finalPeers.values.toList();
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a></li>
+    <li class="self-crumb">getBootstrapPeers method</li>
+</ol>
+
+    <h5>IpfsDHT class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    dart_libp2p_kad_dht
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

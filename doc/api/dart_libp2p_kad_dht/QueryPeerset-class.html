@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the QueryPeerset class from the dart_libp2p_kad_dht library, for the Dart programming language.">
+  <title>QueryPeerset class - dart_libp2p_kad_dht library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../dart_libp2p_kad_dht/">dart_libp2p_kad_dht.dart</a></li>
+    <li class="self-crumb">QueryPeerset class</li>
+  </ol>
+  <div class="self-name">QueryPeerset</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="dart_libp2p_kad_dht&#47;dart_libp2p_kad_dht-library-sidebar.html"
+    data-below-sidebar="dart_libp2p_kad_dht&#47;QueryPeerset-class-sidebar.html">
+    <div>
+<h1><span class="kind-class">QueryPeerset</span> class 
+ 
+</h1></div>
+
+    
+<section class="desc markdown">
+  <p>QueryPeerset maintains the state of a Kademlia asynchronous lookup.
+The lookup state is a set of peers, each labeled with a peer state.</p>
+</section>
+
+
+
+    
+  <section class="summary offset-anchor" id="constructors">
+    <h2>Constructors</h2>
+    <dl class="constructor-summary-list">
+        <dt id="QueryPeerset.new" class="callable">
+          <span class="name"><a href="../dart_libp2p_kad_dht/QueryPeerset/QueryPeerset.html">QueryPeerset.new</a></span><span class="signature">(<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>&gt;</span></span> <span class="parameter-name">key</span></span>)</span>
+        </dt>
+        <dd>
+          Creates a new empty set of peers.
+<code>key</code> is the target key of the lookup that this peer set is for.
+        </dd>
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-properties">
+    <h2>Properties</h2>
+    <dl class="properties">
+        <dt id="hashCode" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/hashCode.html">hashCode</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  The hash code for this object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="key" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/QueryPeerset/key.html">key</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>&gt;</span></span>
+  
+
+</dt>
+<dd>
+  The key being searched for
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="runtimeType" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/runtimeType.html">runtimeType</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Type-class.html">Type</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  A representation of the runtime type of the object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-methods">
+    <h2>Methods</h2>
+    <dl class="callables">
+        <dt id="getClosestInStates" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/QueryPeerset/getClosestInStates.html">getClosestInStates</a></span><span class="signature">(<wbr><span class="parameter" id="getClosestInStates-param-states"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dart_libp2p_kad_dht/PeerState.html">PeerState</a></span>&gt;</span></span> <span class="parameter-name">states</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets all peers that are in one of the given <code>states</code>.
+The returned peers are sorted in ascending order by their distance to the key.
+  
+
+</dd>
+
+        <dt id="getClosestNInStates" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/QueryPeerset/getClosestNInStates.html">getClosestNInStates</a></span><span class="signature">(<wbr><span class="parameter" id="getClosestNInStates-param-n"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">n</span>, </span><span class="parameter" id="getClosestNInStates-param-states"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dart_libp2p_kad_dht/PeerState.html">PeerState</a></span>&gt;</span></span> <span class="parameter-name">states</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets the closest <code>n</code> peers to the key that are in one of the given <code>states</code>.
+Returns fewer peers if fewer peers meet the condition.
+The returned peers are sorted in ascending order by their distance to the key.
+  
+
+</dd>
+
+        <dt id="getReferrer" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/QueryPeerset/getReferrer.html">getReferrer</a></span><span class="signature">(<wbr><span class="parameter" id="getReferrer-param-p"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">p</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets the peer that referred us to the peer <code>p</code>.
+Throws if <code>p</code> is not in the peerset.
+  
+
+</dd>
+
+        <dt id="getState" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/QueryPeerset/getState.html">getState</a></span><span class="signature">(<wbr><span class="parameter" id="getState-param-p"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">p</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/PeerState.html">PeerState</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets the state of peer <code>p</code>.
+Throws if <code>p</code> is not in the peerset.
+  
+
+</dd>
+
+        <dt id="noSuchMethod" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/noSuchMethod.html">noSuchMethod</a></span><span class="signature">(<wbr><span class="parameter" id="noSuchMethod-param-invocation"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Invocation-class.html">Invocation</a></span> <span class="parameter-name">invocation</span></span>)
+    <span class="returntype parameter">&#8594; dynamic</span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  Invoked when a nonexistent method or property is accessed.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="numHeard" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/QueryPeerset/numHeard.html">numHeard</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Returns the number of peers in state <a href="../dart_libp2p_kad_dht/PeerState.html">PeerState.heard</a>.
+  
+
+</dd>
+
+        <dt id="numWaiting" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/QueryPeerset/numWaiting.html">numWaiting</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Returns the number of peers in state <a href="../dart_libp2p_kad_dht/PeerState.html">PeerState.waiting</a>.
+  
+
+</dd>
+
+        <dt id="setState" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/QueryPeerset/setState.html">setState</a></span><span class="signature">(<wbr><span class="parameter" id="setState-param-p"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">p</span>, </span><span class="parameter" id="setState-param-s"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/PeerState.html">PeerState</a></span> <span class="parameter-name">s</span></span>)
+    <span class="returntype parameter">&#8594; void</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Sets the state of peer <code>p</code> to <code>s</code>.
+Throws if <code>p</code> is not in the peerset.
+  
+
+</dd>
+
+        <dt id="toString" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/toString.html">toString</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  A string representation of this object.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="tryAdd" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/QueryPeerset/tryAdd.html">tryAdd</a></span><span class="signature">(<wbr><span class="parameter" id="tryAdd-param-p"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">p</span>, </span><span class="parameter" id="tryAdd-param-referredBy"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">referredBy</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Tries to add the peer <code>p</code> to the peer set.
+If the peer is already present, no action is taken.
+Otherwise, the peer is added with state set to <a href="../dart_libp2p_kad_dht/PeerState.html">PeerState.heard</a>.
+Returns true if the peer was not already present.
+  
+
+</dd>
+
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="operators">
+    <h2>Operators</h2>
+    <dl class="callables">
+        <dt id="operator ==" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  The equality operator.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+    
+    
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../dart_libp2p_kad_dht/">dart_libp2p_kad_dht</a></li>
+    <li class="self-crumb">QueryPeerset class</li>
+</ol>
+
+    <h5>dart_libp2p_kad_dht library</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    dart_libp2p_kad_dht
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

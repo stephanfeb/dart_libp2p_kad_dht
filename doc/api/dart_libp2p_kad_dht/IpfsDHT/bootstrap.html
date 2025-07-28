@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the bootstrap method from the IpfsDHT class, for the Dart programming language.">
+  <title>bootstrap method - IpfsDHT class - dart_libp2p_kad_dht library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht.dart</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a></li>
+    <li class="self-crumb">bootstrap method</li>
+  </ol>
+  <div class="self-name">bootstrap</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="dart_libp2p_kad_dht&#47;IpfsDHT-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">bootstrap</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+  <div>
+    <ol class="annotation-list">
+        <li>@<a href="https://api.flutter.dev/flutter/dart-core/override-constant.html">override</a></li>
+    </ol>
+  </div>
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+<span class="name ">bootstrap</span>(<wbr>{<ol class="parameter-list"> <li><span class="parameter" id="bootstrap-param-quickConnectOnly"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">quickConnectOnly</span> = <span class="default-value">false</span>, </span></li>
+<li><span class="parameter" id="bootstrap-param-periodicRefreshInterval"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a>?</span> <span class="parameter-name">periodicRefreshInterval</span>, </span></li>
+</ol>})
+
+      <div class="features"><span class="feature">override</span></div>
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Bootstrap allows callers to hint to the routing system to get into a
+Bootstrapped state and remain there. It is not a synchronous call.</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">@override
+Future&lt;void&gt; bootstrap({bool quickConnectOnly = false, Duration? periodicRefreshInterval}) async {
+  final logPrefix = &#39;[${_host.id.toBase58().substring(0, 6)}.bootstrap]&#39;;
+  _log.info(&#39;$logPrefix Starting bootstrap process (quickConnectOnly: $quickConnectOnly, periodicRefresh: $periodicRefreshInterval).&#39;);
+
+  if (_closed) {
+    _log.warning(&#39;$logPrefix Attempted to bootstrap a closed DHT.&#39;);
+    return;
+  }
+  if (!_started) {
+    _log.info(&#39;$logPrefix DHT not started, calling start() from bootstrap.&#39;);
+    await start();
+  }
+
+  &#47;&#47; --- Phase 1: Quick Connect to a limited number of Explicit Bootstrap Peers ---
+  int explicitPeersToQuickConnect = 2; &#47;&#47; Max peers for the &quot;quick&quot; part
+  int connectedExplicitly = 0;
+
+  if (_options.bootstrapPeers != null &amp;&amp; _options.bootstrapPeers!.isNotEmpty) {
+    _log.info(&#39;$logPrefix Processing ${_options.bootstrapPeers!.length} explicit bootstrap peers for initial connection phase.&#39;);
+    for (final ma in _options.bootstrapPeers!) {
+      if (connectedExplicitly &gt;= explicitPeersToQuickConnect &amp;&amp; quickConnectOnly) {
+          _log.fine(&#39;$logPrefix Reached quick connect limit ($explicitPeersToQuickConnect). Further explicit peers will be handled by background task if any.&#39;);
+          break;
+      }
+      try {
+        final p2pComponent = ma.valueForProtocol(Protocols.p2p.name);
+        if (p2pComponent == null) {
+          _log.warning(&#39;$logPrefix Configured bootstrap peer $ma is missing &#47;p2p component. Skipping.&#39;);
+          continue;
+        }
+        final peerId = PeerId.fromString(p2pComponent);
+        final connectAddr = ma.decapsulate(Protocols.p2p.name);
+
+        if (connectAddr != null &amp;&amp; connectAddr.toString().isNotEmpty) {
+          final addrInfo = AddrInfo(peerId, [connectAddr]);
+          final peerShortId = addrInfo.id.toBase58().substring(0,6);
+          _log.info(&#39;$logPrefix Attempting to connect to explicit bootstrap peer: $peerShortId via ${addrInfo.addrs}&#39;);
+          _host.peerStore.addrBook.addAddrs(addrInfo.id, addrInfo.addrs, Duration(hours: 24)); &#47;&#47; Add to peerstore
+          _log.finer(&#39;$logPrefix Before _host.connect for $peerShortId&#39;);
+          await _host.connect(addrInfo); &#47;&#47; Connect
+          _log.finer(&#39;$logPrefix After _host.connect for $peerShortId, before tryAddPeer.&#39;);
+          bool addedToRt = await _routingTable.tryAddPeer(addrInfo.id, queryPeer: true); &#47;&#47; Add to routing table
+          _log.finer(&#39;$logPrefix After tryAddPeer for $peerShortId. Result addedToRt: $addedToRt.&#39;);
+          final currentSize = await _routingTable.size();
+          _log.finer(&#39;$logPrefix After _routingTable.size(). Current RT Size: $currentSize.&#39;);
+          _log.info(&#39;$logPrefix Explicit bootstrap peer $peerShortId connected and processed. Added to RT: $addedToRt. RT Size: $currentSize&#39;);
+          connectedExplicitly++;
+        } else {
+          _log.warning(&#39;$logPrefix Configured bootstrap multiaddress $ma has no connectable address part. Skipping.&#39;);
+        }
+      } catch (e, s) {
+        _log.warning(&#39;$logPrefix Error processing explicit bootstrap multiaddress $ma: $e\n$s. Skipping.&#39;);
+      }
+    }
+  } else {
+    _log.info(&#39;$logPrefix No explicit bootstrap peers configured in _options.bootstrapPeers for initial connection.&#39;);
+  }
+  _log.info(&#39;$logPrefix Initial explicit peer connection phase completed. Connected to $connectedExplicitly peers.&#39;);
+
+  &#47;&#47; --- Phase 2: Deeper population and periodic refresh ---
+  if (quickConnectOnly) {
+    _log.info(&#39;$logPrefix Quick bootstrap requested. Initiating background tasks for fuller population and returning.&#39;);
+    _initiateBackgroundTasks(periodicRefreshInterval);
+    return;
+  }
+
+  &#47;&#47; If not quickConnectOnly, perform the deeper population now and await it.
+  _log.info(&#39;$logPrefix Full bootstrap requested. Performing deeper routing table population now.&#39;);
+  await _populateRoutingTable(); &#47;&#47; Await the first full population
+  _initiateBackgroundTasks(periodicRefreshInterval); &#47;&#47; Then set up background tasks (mainly for periodic refresh if interval provided)
+  _log.info(&#39;$logPrefix Full bootstrap process (including initial deep population) finished.&#39;);
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a></li>
+    <li class="self-crumb">bootstrap method</li>
+</ol>
+
+    <h5>IpfsDHT class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    dart_libp2p_kad_dht
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

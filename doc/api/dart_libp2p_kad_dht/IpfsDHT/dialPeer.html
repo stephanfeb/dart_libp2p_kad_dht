@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the dialPeer method from the IpfsDHT class, for the Dart programming language.">
+  <title>dialPeer method - IpfsDHT class - dart_libp2p_kad_dht library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht.dart</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a></li>
+    <li class="self-crumb">dialPeer method</li>
+  </ol>
+  <div class="self-name">dialPeer</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="dart_libp2p_kad_dht&#47;IpfsDHT-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">dialPeer</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+<span class="name ">dialPeer</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="dialPeer-param-peer"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peer</span></span></li>
+</ol>)
+
+      
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Dials a peer</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">Future&lt;void&gt; dialPeer(PeerId peer) async {
+  final Logger dialLogger = Logger(&#39;IpfsDHT.dialPeer&#39;);
+  dialLogger.info(&#39;[${_host.id.toBase58().substring(0,6)}] Attempting to dial peer ${peer.toBase58().substring(0,6)}&#39;);
+
+  &#47;&#47; If dialing self, we can assume the host is already &quot;connected&quot; to itself.
+  &#47;&#47; Skip the explicit _host.connect() call to avoid issues with repeated self-connections.
+  if (peer == _host.id) {
+    dialLogger.info(&#39;[${_host.id.toBase58().substring( 0, 6)}] Self-dial detected for ${peer.toBase58().substring( 0, 6)}. Skipping _host.connect().&#39;);
+    return;
+  }
+
+  &#47;&#47; Get AddrInfo for the peer from the peerstore
+  final peerInfo = await _host.peerStore.getPeer(peer);
+  if (peerInfo == null || peerInfo.addrs.isEmpty) {
+    dialLogger.warning(&#39;[${_host.id.toBase58().substring(0,6)}] No addresses found for peer ${peer.toBase58().substring(0,6)} in peerstore. Cannot dial.&#39;);
+    return;
+  }
+
+  List&lt;MultiAddr&gt; addrsToUse = peerInfo.addrs.toList();
+
+  &#47;&#47; Transform 0.0.0.0 addresses to 127.0.0.1 for connection attempts,
+  &#47;&#47; as 0.0.0.0 is a listen address, not a connectable target from another local process.
+  final List&lt;MultiAddr&gt; effectiveAddrs = [];
+  for (final addr in addrsToUse) {
+    String addrStr = addr.toString();
+    if (addrStr.startsWith(&#39;&#47;ip4&#47;0.0.0.0&#47;&#39;)) {
+      try {
+        effectiveAddrs.add(MultiAddr(addrStr.replaceFirst(&#39;&#47;ip4&#47;0.0.0.0&#47;&#39;, &#39;&#47;ip4&#47;127.0.0.1&#47;&#39;)));
+      } catch (e) {
+        dialLogger.warning(&quot;Failed to transform 0.0.0.0 address &#39;$addrStr&#39; to 127.0.0.1 for connect: $e&quot;);
+        effectiveAddrs.add(addr); &#47;&#47; Fallback to original on error
+      }
+    } else {
+      effectiveAddrs.add(addr);
+    }
+  }
+  dialLogger.fine(&#39;[${_host.id.toBase58().substring(0,6)}] Original addrs for ${peer.toBase58().substring(0,6)}: ${addrsToUse.map((a) =&gt; a.toString()).join(&quot;, &quot;)}. Effective addrs for connect: ${effectiveAddrs.map((a) =&gt; a.toString()).join(&quot;, &quot;)}.&#39;);
+
+  try {
+    final addrInfoToConnect = AddrInfo(peer, effectiveAddrs); &#47;&#47; Use transformed addresses
+    await _host.connect(addrInfoToConnect);
+    dialLogger.info(&#39;[${_host.id.toBase58().substring(0,6)}] Successfully connected to peer ${peer.toBase58().substring(0,6)}.&#39;);
+  } catch (e, s) {
+    dialLogger.severe(&#39;[${_host.id.toBase58().substring(0,6)}] Error connecting to peer ${peer.toBase58().substring(0,6)}: $e&#39;, e, s);
+    rethrow; &#47;&#47; Rethrow the error so the caller (e.g., _sendMessage) can handle it.
+  }
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a></li>
+    <li class="self-crumb">dialPeer method</li>
+</ol>
+
+    <h5>IpfsDHT class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    dart_libp2p_kad_dht
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

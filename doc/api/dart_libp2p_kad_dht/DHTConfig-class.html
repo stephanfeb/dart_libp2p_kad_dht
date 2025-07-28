@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the DHTConfig class from the dart_libp2p_kad_dht library, for the Dart programming language.">
+  <title>DHTConfig class - dart_libp2p_kad_dht library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../dart_libp2p_kad_dht/">dart_libp2p_kad_dht.dart</a></li>
+    <li class="self-crumb">DHTConfig class</li>
+  </ol>
+  <div class="self-name">DHTConfig</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="dart_libp2p_kad_dht&#47;dart_libp2p_kad_dht-library-sidebar.html"
+    data-below-sidebar="dart_libp2p_kad_dht&#47;DHTConfig-class-sidebar.html">
+    <div>
+<h1><span class="kind-class">DHTConfig</span> class 
+ 
+</h1></div>
+
+    
+<section class="desc markdown">
+  <p>Configuration for the DHT</p>
+</section>
+
+
+
+    
+  <section class="summary offset-anchor" id="constructors">
+    <h2>Constructors</h2>
+    <dl class="constructor-summary-list">
+        <dt id="DHTConfig.new" class="callable">
+          <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/DHTConfig.html">DHTConfig.new</a></span><span class="signature">({<span class="parameter" id="-param-mode"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/DHTMode.html">DHTMode</a></span> <span class="parameter-name">mode</span> = <span class="default-value">DHTMode.auto</span>, </span><span class="parameter" id="-param-datastore"><span class="type-annotation">dynamic</span> <span class="parameter-name">datastore</span>, </span><span class="parameter" id="-param-providerStore"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/ProviderStore-class.html">ProviderStore</a>?</span> <span class="parameter-name">providerStore</span>, </span><span class="parameter" id="-param-validator"><span class="type-annotation">Validator?</span> <span class="parameter-name">validator</span>, </span><span class="parameter" id="-param-protocolPrefix"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a></span> <span class="parameter-name">protocolPrefix</span> = <span class="default-value">AminoConstants.protocolPrefix</span>, </span><span class="parameter" id="-param-v1ProtocolOverride"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a>?</span> <span class="parameter-name">v1ProtocolOverride</span>, </span><span class="parameter" id="-param-bucketSize"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">bucketSize</span> = <span class="default-value">AminoConstants.defaultBucketSize</span>, </span><span class="parameter" id="-param-concurrency"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">concurrency</span> = <span class="default-value">AminoConstants.defaultConcurrency</span>, </span><span class="parameter" id="-param-resiliency"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">resiliency</span> = <span class="default-value">AminoConstants.defaultResiliency</span>, </span><span class="parameter" id="-param-routingTableLatencyTolerance"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">routingTableLatencyTolerance</span> = <span class="default-value">AminoConstants.defaultMaxLatency</span>, </span><span class="parameter" id="-param-routingTableRefreshInterval"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">routingTableRefreshInterval</span> = <span class="default-value">AminoConstants.defaultRefreshInterval</span>, </span><span class="parameter" id="-param-routingTableRefreshQueryTimeout"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">routingTableRefreshQueryTimeout</span> = <span class="default-value">AminoConstants.defaultRefreshQueryTimeout</span>, </span><span class="parameter" id="-param-routingTableAutoRefresh"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">routingTableAutoRefresh</span> = <span class="default-value">true</span>, </span><span class="parameter" id="-param-routingTablePeerFilter"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/RouteTableFilterFunc.html">RouteTableFilterFunc</a>?</span> <span class="parameter-name">routingTablePeerFilter</span>, </span><span class="parameter" id="-param-routingTableDiversityFilter"><span class="type-annotation">dynamic</span> <span class="parameter-name">routingTableDiversityFilter</span>, </span><span class="parameter" id="-param-maxRecordAge"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">maxRecordAge</span> = <span class="default-value">AminoConstants.defaultRecordTTL</span>, </span><span class="parameter" id="-param-enableProviders"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">enableProviders</span> = <span class="default-value">true</span>, </span><span class="parameter" id="-param-enableValues"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">enableValues</span> = <span class="default-value">true</span>, </span><span class="parameter" id="-param-queryPeerFilter"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/QueryFilterFunc.html">QueryFilterFunc</a>?</span> <span class="parameter-name">queryPeerFilter</span>, </span><span class="parameter" id="-param-bootstrapPeers"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span> <span class="parameter-name">bootstrapPeers</span>()?, </span><span class="parameter" id="-param-lookupCheckConcurrency"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">lookupCheckConcurrency</span> = <span class="default-value">AminoConstants.defaultLookupCheckConcurrency</span>, </span><span class="parameter" id="-param-enableOptimisticProvide"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">enableOptimisticProvide</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-optimisticProvideJobsPoolSize"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">optimisticProvideJobsPoolSize</span> = <span class="default-value">AminoConstants.defaultOptimisticProvideJobsPoolSize</span>, </span><span class="parameter" id="-param-addressFilter"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span>&gt;</span></span> <span class="parameter-name">addressFilter</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span>&gt;</span></span></span>)?, </span><span class="parameter" id="-param-msgSenderBuilder"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/MessageSenderBuilder.html">MessageSenderBuilder</a>?</span> <span class="parameter-name">msgSenderBuilder</span>, </span><span class="parameter" id="-param-onRequestHook"><span class="type-annotation">void</span> <span class="parameter-name">onRequestHook</span>(<span class="parameter" id="param-"><span class="type-annotation">dynamic</span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Stream-class.html">Stream</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/Message-class.html">Message</a></span></span>)?, </span><span class="parameter" id="-param-disableFixLowPeers"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">disableFixLowPeers</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-testAddressUpdateProcessing"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">testAddressUpdateProcessing</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-maxDhtMessageRetryAttempts"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">maxDhtMessageRetryAttempts</span> = <span class="default-value">3</span>, </span><span class="parameter" id="-param-dhtMessageRetryInitialBackoff"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">dhtMessageRetryInitialBackoff</span> = <span class="default-value">const Duration(milliseconds: 500)</span>, </span><span class="parameter" id="-param-dhtMessageRetryMaxBackoff"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">dhtMessageRetryMaxBackoff</span> = <span class="default-value">const Duration(seconds: 30)</span>, </span><span class="parameter" id="-param-dhtMessageRetryBackoffFactor"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">dhtMessageRetryBackoffFactor</span> = <span class="default-value">2.0</span>, </span><span class="parameter" id="-param-filterLocalhostInResponses"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">filterLocalhostInResponses</span> = <span class="default-value">true</span>, </span><span class="parameter" id="-param-maxPeersPerBucket"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">maxPeersPerBucket</span> = <span class="default-value">20</span>, </span><span class="parameter" id="-param-maxRoutingTableSize"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">maxRoutingTableSize</span> = <span class="default-value">1000</span></span>})</span>
+        </dt>
+        <dd>
+          Creates a new DHT configuration with default values
+        </dd>
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-properties">
+    <h2>Properties</h2>
+    <dl class="properties">
+        <dt id="addressFilter" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/addressFilter.html">addressFilter</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span>&gt;</span> Function<span class="signature">(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span>&gt;</span></span></span>)</span>?</span>
+  
+
+</dt>
+<dd>
+  The filter for addresses
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="bootstrapPeers" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/bootstrapPeers.html">bootstrapPeers</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span> Function<span class="signature">()</span>?</span>
+  
+
+</dt>
+<dd>
+  Function to get bootstrap peers
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="bucketSize" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/bucketSize.html">bucketSize</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd>
+  The bucket size for the routing table
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="concurrency" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/concurrency.html">concurrency</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd>
+  The concurrency level for queries
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="datastore" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/datastore.html">datastore</a></span>
+  <span class="signature">&#8596; dynamic</span>
+  
+
+</dt>
+<dd>
+  The datastore for the DHT
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="dhtMessageRetryBackoffFactor" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/dhtMessageRetryBackoffFactor.html">dhtMessageRetryBackoffFactor</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span>
+  
+
+</dt>
+<dd>
+  The backoff factor for retrying a DHT message.
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="dhtMessageRetryInitialBackoff" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/dhtMessageRetryInitialBackoff.html">dhtMessageRetryInitialBackoff</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span>
+  
+
+</dt>
+<dd>
+  The initial backoff delay for retrying a DHT message.
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="dhtMessageRetryMaxBackoff" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/dhtMessageRetryMaxBackoff.html">dhtMessageRetryMaxBackoff</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span>
+  
+
+</dt>
+<dd>
+  The maximum backoff delay for retrying a DHT message.
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="disableFixLowPeers" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/disableFixLowPeers.html">disableFixLowPeers</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Whether to disable fixing low peers (for tests only)
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="enableOptimisticProvide" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/enableOptimisticProvide.html">enableOptimisticProvide</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Whether to enable optimistic provide
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="enableProviders" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/enableProviders.html">enableProviders</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Whether to enable providers
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="enableValues" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/enableValues.html">enableValues</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Whether to enable values
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="filterLocalhostInResponses" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/filterLocalhostInResponses.html">filterLocalhostInResponses</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Whether to filter localhost addresses from FIND_NODE responses
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="hashCode" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/hashCode.html">hashCode</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  The hash code for this object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="lookupCheckConcurrency" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/lookupCheckConcurrency.html">lookupCheckConcurrency</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd>
+  The lookup check concurrency
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="maxDhtMessageRetryAttempts" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/maxDhtMessageRetryAttempts.html">maxDhtMessageRetryAttempts</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd>
+  The maximum number of retry attempts for a DHT message.
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="maxPeersPerBucket" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/maxPeersPerBucket.html">maxPeersPerBucket</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd>
+  Maximum number of peers per k-bucket (for bootstrap server capacity)
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="maxRecordAge" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/maxRecordAge.html">maxRecordAge</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span>
+  
+
+</dt>
+<dd>
+  The maximum age for records
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="maxRoutingTableSize" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/maxRoutingTableSize.html">maxRoutingTableSize</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd>
+  Maximum size of the routing table (total peers across all buckets)
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="mode" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/mode.html">mode</a></span>
+  <span class="signature">&#8596; <a href="../dart_libp2p_kad_dht/DHTMode.html">DHTMode</a></span>
+  
+
+</dt>
+<dd>
+  The mode of operation for the DHT
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="msgSenderBuilder" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/msgSenderBuilder.html">msgSenderBuilder</a></span>
+  <span class="signature">&#8596; <a href="../dart_libp2p_kad_dht/MessageSenderBuilder.html">MessageSenderBuilder</a>?</span>
+  
+
+</dt>
+<dd>
+  The builder for message senders
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="onRequestHook" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/onRequestHook.html">onRequestHook</a></span>
+  <span class="signature">&#8596; void Function<span class="signature">(<span class="parameter" id="param-"><span class="type-annotation">dynamic</span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Stream-class.html">Stream</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/Message-class.html">Message</a></span></span>)</span>?</span>
+  
+
+</dt>
+<dd>
+  Hook for incoming requests
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="optimisticProvideJobsPoolSize" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/optimisticProvideJobsPoolSize.html">optimisticProvideJobsPoolSize</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd>
+  The pool size for optimistic provide jobs
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="protocolPrefix" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/protocolPrefix.html">protocolPrefix</a></span>
+  <span class="signature">&#8596; <a href="../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a></span>
+  
+
+</dt>
+<dd>
+  The protocol prefix for the DHT
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="providerStore" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/providerStore.html">providerStore</a></span>
+  <span class="signature">&#8596; <a href="../dart_libp2p_kad_dht/ProviderStore-class.html">ProviderStore</a>?</span>
+  
+
+</dt>
+<dd>
+  The provider store for the DHT
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="queryPeerFilter" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/queryPeerFilter.html">queryPeerFilter</a></span>
+  <span class="signature">&#8596; <a href="../dart_libp2p_kad_dht/QueryFilterFunc.html">QueryFilterFunc</a>?</span>
+  
+
+</dt>
+<dd>
+  The filter for peers to query
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="resiliency" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/resiliency.html">resiliency</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd>
+  The resiliency level for queries
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="routingTableAutoRefresh" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/routingTableAutoRefresh.html">routingTableAutoRefresh</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Whether to automatically refresh the routing table
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="routingTableDiversityFilter" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/routingTableDiversityFilter.html">routingTableDiversityFilter</a></span>
+  <span class="signature">&#8596; dynamic</span>
+  
+
+</dt>
+<dd>
+  The diversity filter for the routing table
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="routingTableLatencyTolerance" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/routingTableLatencyTolerance.html">routingTableLatencyTolerance</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span>
+  
+
+</dt>
+<dd>
+  The maximum acceptable latency for peers in the routing table
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="routingTablePeerFilter" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/routingTablePeerFilter.html">routingTablePeerFilter</a></span>
+  <span class="signature">&#8596; <a href="../dart_libp2p_kad_dht/RouteTableFilterFunc.html">RouteTableFilterFunc</a>?</span>
+  
+
+</dt>
+<dd>
+  The filter for peers in the routing table
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="routingTableRefreshInterval" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/routingTableRefreshInterval.html">routingTableRefreshInterval</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span>
+  
+
+</dt>
+<dd>
+  The refresh interval for the routing table
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="routingTableRefreshQueryTimeout" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/routingTableRefreshQueryTimeout.html">routingTableRefreshQueryTimeout</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span>
+  
+
+</dt>
+<dd>
+  The timeout for routing table refresh queries
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="runtimeType" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/runtimeType.html">runtimeType</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Type-class.html">Type</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  A representation of the runtime type of the object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="testAddressUpdateProcessing" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/testAddressUpdateProcessing.html">testAddressUpdateProcessing</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Whether to force address update processing (for tests only)
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="v1ProtocolOverride" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/v1ProtocolOverride.html">v1ProtocolOverride</a></span>
+  <span class="signature">&#8596; <a href="../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a>?</span>
+  
+
+</dt>
+<dd>
+  Override for the v1 protocol
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="validator" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/validator.html">validator</a></span>
+  <span class="signature">&#8596; Validator</span>
+  
+
+</dt>
+<dd>
+  The validator for records
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+        <dt id="validatorChanged" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTConfig/validatorChanged.html">validatorChanged</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Whether the validator has been changed from the default
+  <div class="features"><span class="feature">getter/setter pair</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="instance-methods">
+    <h2>Methods</h2>
+    <dl class="callables">
+        <dt id="noSuchMethod" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/noSuchMethod.html">noSuchMethod</a></span><span class="signature">(<wbr><span class="parameter" id="noSuchMethod-param-invocation"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Invocation-class.html">Invocation</a></span> <span class="parameter-name">invocation</span></span>)
+    <span class="returntype parameter">&#8594; dynamic</span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  Invoked when a nonexistent method or property is accessed.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="toString" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/toString.html">toString</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  A string representation of this object.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="operators">
+    <h2>Operators</h2>
+    <dl class="callables">
+        <dt id="operator ==" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  The equality operator.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+    
+    
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../dart_libp2p_kad_dht/">dart_libp2p_kad_dht</a></li>
+    <li class="self-crumb">DHTConfig class</li>
+</ol>
+
+    <h5>dart_libp2p_kad_dht library</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    dart_libp2p_kad_dht
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

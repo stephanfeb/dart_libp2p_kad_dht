@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the handleGetValue method from the DHTHandlers class, for the Dart programming language.">
+  <title>handleGetValue method - DHTHandlers class - dart_libp2p_kad_dht library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht.dart</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/DHTHandlers-class.html">DHTHandlers</a></li>
+    <li class="self-crumb">handleGetValue method</li>
+  </ol>
+  <div class="self-name">handleGetValue</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="dart_libp2p_kad_dht&#47;DHTHandlers-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">handleGetValue</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../../dart_libp2p_kad_dht/Message-class.html">Message</a></span>&gt;</span></span>
+<span class="name ">handleGetValue</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="handleGetValue-param-peer"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peer</span>, </span></li>
+<li><span class="parameter" id="handleGetValue-param-message"><span class="type-annotation"><a href="../../dart_libp2p_kad_dht/Message-class.html">Message</a></span> <span class="parameter-name">message</span></span></li>
+</ol>)
+
+      
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Handles a GET_VALUE message</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">Future&lt;Message&gt; handleGetValue(PeerId peer, Message message) async {
+  final peerShortId = peer.toBase58().substring(0,6);
+  final keyString = message.key != null ? base64Encode(message.key!) : &quot;null&quot;;
+  _log.info(&#39;$_logPrefix handleGetValue: Received GET_VALUE from $peerShortId for key $keyString.&#39;);
+  await _tryAddSenderToRT(peer, &#39;handleGetValue&#39;);
+
+  if (message.key == null) {
+    _log.warning(&#39;$_logPrefix handleGetValue: GET_VALUE message from $peerShortId missing key.&#39;);
+    throw ArgumentError(&#39;GET_VALUE message must have a key&#39;);
+  }
+
+  final response = Message(
+    type: MessageType.getValue,
+    key: message.key,
+    closerPeers: [],
+  );
+
+  try {
+    _log.finer(&#39;$_logPrefix handleGetValue: Checking local datastore for key $keyString.&#39;);
+    final record = await dht.checkLocalDatastore(message.key!);
+    if (record != null) {
+      _log.info(&#39;$_logPrefix handleGetValue: Found record locally for key $keyString. Responding to $peerShortId with record.&#39;);
+      return Message(
+        type: MessageType.getValue,
+        key: message.key,
+        record: record,
+        closerPeers: response.closerPeers, &#47;&#47; Typically empty if record is found
+      );
+    }
+    _log.fine(&#39;$_logPrefix handleGetValue: Record for key $keyString not found locally. Finding closer peers.&#39;);
+
+    _log.fine(&#39;$_logPrefix handleGetValue: Finding closest peers directly from routing table using raw key bytes.&#39;);
+    &#47;&#47; Get the closest peer IDs directly from the routing table using the raw key
+    final closestPeerIdsFromRT = await dht.routingTable.nearestPeers(message.key!, dht.options.bucketSize);
+    _log.fine(&#39;$_logPrefix handleGetValue: Found ${closestPeerIdsFromRT.length} closest peer IDs in RT for key $keyString.&#39;);
+
+    for (final pId in closestPeerIdsFromRT) {
+      &#47;&#47; Skip the querying peer to prevent self-dial attempts
+      if (pId == peer) {
+        _log.fine(&#39;$_logPrefix handleGetValue: Skipping querying peer $peerShortId from response to prevent self-dial.&#39;);
+        continue;
+      }
+
+      final peerInfoFromStore = await dht.host().peerStore.getPeer(pId);
+      var peerAddrs = peerInfoFromStore?.addrs.toList() ?? &lt;MultiAddr&gt;[];
+
+      &#47;&#47; Filter out localhost addresses if the option is enabled
+      if (dht.options.filterLocalhostInResponses) {
+        final originalCount = peerAddrs.length;
+        peerAddrs = filterLocalhostAddrs(peerAddrs);
+        if (originalCount &gt; peerAddrs.length) {
+          _log.fine(&#39;$_logPrefix handleGetValue: Filtered out ${originalCount - peerAddrs.length} localhost addresses for peer ${pId.toBase58().substring(0,6)}&#39;);
+        }
+      }
+
+      final addrsBytesList = peerAddrs.map((addr) =&gt; addr.toBytes()).toList();
+
+      if (addrsBytesList.isEmpty) {
+        _log.warning(&#39;$_logPrefix handleGetValue: Peer ${pId.toBase58().substring(0,6)} has no ${dht.options.filterLocalhostInResponses ? &quot;non-localhost &quot; : &quot;&quot;}addresses after filtering&#39;);
+        continue; &#47;&#47; Skip this peer entirely if no valid addresses remain
+      } else {
+        _log.fine(&#39;$_logPrefix handleGetValue: Peer ${pId.toBase58().substring(0,6)} has ${addrsBytesList.length} ${dht.options.filterLocalhostInResponses ? &quot;non-localhost &quot; : &quot;&quot;}addresses: ${peerAddrs.map((a) =&gt; a.toString()).join(&quot;, &quot;)}&#39;);
+      }
+
+      response.closerPeers.add(Peer(
+        id: pId.toBytes(),
+        addrs: addrsBytesList,
+        &#47;&#47; Using NotConnected for consistency with handleFindPeer,
+        &#47;&#47; as we&#39;re returning peers from the RT, not necessarily connected ones.
+        connection: ConnectionType.notConnected,
+      ));
+    }
+    _log.info(&#39;$_logPrefix handleGetValue: Responding to $peerShortId for key $keyString with ${response.closerPeers.length} closerPeers (no local record).&#39;);
+    return response;
+  } catch (e, s) {
+    _log.severe(&#39;$_logPrefix handleGetValue: Error processing GET_VALUE from $peerShortId for key $keyString: $e\n$s&#39;);
+    return response; &#47;&#47; Return with empty record and potentially empty closerPeers
+  }
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/DHTHandlers-class.html">DHTHandlers</a></li>
+    <li class="self-crumb">handleGetValue method</li>
+</ol>
+
+    <h5>DHTHandlers class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    dart_libp2p_kad_dht
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

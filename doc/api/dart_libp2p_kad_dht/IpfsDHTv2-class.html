@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the IpfsDHTv2 class from the dart_libp2p_kad_dht library, for the Dart programming language.">
+  <title>IpfsDHTv2 class - dart_libp2p_kad_dht library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../dart_libp2p_kad_dht/">dart_libp2p_kad_dht.dart</a></li>
+    <li class="self-crumb">IpfsDHTv2 class</li>
+  </ol>
+  <div class="self-name">IpfsDHTv2</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="dart_libp2p_kad_dht&#47;dart_libp2p_kad_dht-library-sidebar.html"
+    data-below-sidebar="dart_libp2p_kad_dht&#47;IpfsDHTv2-class-sidebar.html">
+    <div>
+<h1><span class="kind-class">IpfsDHTv2</span> class 
+ 
+</h1></div>
+
+    
+<section class="desc markdown">
+  <p>IpfsDHT v2 - A modular, maintainable implementation of the IPFS DHT</p>
+<p>This implementation provides the same public API as the original IpfsDHT
+but with improved architecture, better error handling, and enhanced
+observability.</p>
+<p>Key improvements:</p>
+<ul>
+<li>Modular design with focused components</li>
+<li>Consistent query patterns with unified error handling</li>
+<li>Built-in metrics and monitoring</li>
+<li>Simplified configuration</li>
+<li>Better testability</li>
+</ul>
+</section>
+
+
+    <section>
+      <dl class="dl-horizontal">
+        
+
+        
+  <dt>Implemented types</dt>
+  <dd>
+    <ul class="comma-separated clazz-relationships">
+        <li><a href="../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a></li>
+    </ul>
+  </dd>
+        
+
+
+        
+  <dt>Available extensions</dt>
+  <dd><ul class="comma-separated clazz-relationships">
+      <li><a href="../dart_libp2p_kad_dht/DHTBootstrap.html">DHTBootstrap</a></li>
+  </ul></dd>
+        
+
+
+      </dl>
+    </section>
+
+    
+  <section class="summary offset-anchor" id="constructors">
+    <h2>Constructors</h2>
+    <dl class="constructor-summary-list">
+        <dt id="IpfsDHTv2.new" class="callable">
+          <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/IpfsDHTv2.html">IpfsDHTv2.new</a></span><span class="signature">({<span class="parameter" id="-param-host"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/Host-class.html">Host</a></span> <span class="parameter-name">host</span>, </span><span class="parameter" id="-param-providerStore"><span>required</span> <span class="type-annotation"><a href="../dart_libp2p_kad_dht/ProviderStore-class.html">ProviderStore</a></span> <span class="parameter-name">providerStore</span>, </span><span class="parameter" id="-param-options"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/DHTOptions-class.html">DHTOptions</a>?</span> <span class="parameter-name">options</span>, </span><span class="parameter" id="-param-validator"><span class="type-annotation">NamespacedValidator?</span> <span class="parameter-name">validator</span></span>})</span>
+        </dt>
+        <dd>
+          Creates a new IpfsDHTv2 instance
+        </dd>
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-properties">
+    <h2>Properties</h2>
+    <dl class="properties">
+        <dt id="config" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/config.html">config</a></span>
+  <span class="signature">&#8594; DHTConfigV2</span>
+  
+
+</dt>
+<dd>
+  Gets current configuration
+  <div class="features"><span class="feature">no setter</span></div>
+
+</dd>
+
+        <dt id="enableValues" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/enableValues.html">enableValues</a></span>
+  <span class="signature">&#8596; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  Whether value storage and retrieval is enabled
+  <div class="features"><span class="feature">getter/setter pair</span><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="handlers" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/handlers.html">handlers</a></span>
+  <span class="signature">&#8594; <a href="../dart_libp2p_kad_dht/DHTHandlers-class.html">DHTHandlers</a></span>
+  
+
+</dt>
+<dd>
+  
+  <div class="features"><span class="feature">no setter</span><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="hashCode" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/hashCode.html">hashCode</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  The hash code for this object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="metrics" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/metrics.html">metrics</a></span>
+  <span class="signature">&#8594; DHTMetrics</span>
+  
+
+</dt>
+<dd>
+  Gets current DHT metrics
+  <div class="features"><span class="feature">no setter</span></div>
+
+</dd>
+
+        <dt id="nsEstimator" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/nsEstimator.html">nsEstimator</a></span>
+  <span class="signature">&#8594; Estimator</span>
+  
+
+</dt>
+<dd>
+  Gets the network size estimator
+  <div class="features"><span class="feature">no setter</span><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="options" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/options.html">options</a></span>
+  <span class="signature">&#8594; <a href="../dart_libp2p_kad_dht/DHTOptions-class.html">DHTOptions</a></span>
+  
+
+</dt>
+<dd>
+  Gets the DHT options
+  <div class="features"><span class="feature">no setter</span><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="peerstore" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/peerstore.html">peerstore</a></span>
+  <span class="signature">&#8596; <a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/Peerstore-class.html">Peerstore</a></span>
+  
+
+</dt>
+<dd>
+  The peer store for this DHT
+  <div class="features"><span class="feature">getter/setter pair</span><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="protoMessenger" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/protoMessenger.html">protoMessenger</a></span>
+  <span class="signature">&#8596; ProtocolMessenger</span>
+  
+
+</dt>
+<dd>
+  The protocol messenger for this DHT
+  <div class="features"><span class="feature">getter/setter pair</span><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="providerManager" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/providerManager.html">providerManager</a></span>
+  <span class="signature">&#8594; <a href="../dart_libp2p_kad_dht/ProviderManager-class.html">ProviderManager</a></span>
+  
+
+</dt>
+<dd>
+  Gets the provider manager
+  <div class="features"><span class="feature">no setter</span><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="recordValidator" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/recordValidator.html">recordValidator</a></span>
+  <span class="signature">&#8594; NamespacedValidator</span>
+  
+
+</dt>
+<dd>
+  
+  <div class="features"><span class="feature">no setter</span></div>
+
+</dd>
+
+        <dt id="routingTable" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/routingTable.html">routingTable</a></span>
+  <span class="signature">&#8594; RoutingTable</span>
+  
+
+</dt>
+<dd>
+  Gets the routing table
+  <div class="features"><span class="feature">no setter</span><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="runtimeType" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/runtimeType.html">runtimeType</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Type-class.html">Type</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  A representation of the runtime type of the object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="started" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/started.html">started</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd>
+  
+  <div class="features"><span class="feature">no setter</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-methods">
+    <h2>Methods</h2>
+    <dl class="callables">
+        <dt id="addProvider" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/addProvider.html">addProvider</a></span><span class="signature">(<wbr><span class="parameter" id="addProvider-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-typed_data/Uint8List-class.html">Uint8List</a></span> <span class="parameter-name">key</span>, </span><span class="parameter" id="addProvider-param-provider"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span> <span class="parameter-name">provider</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Adds a provider for a key
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="advertise" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/advertise.html">advertise</a></span><span class="signature">(<wbr><span class="parameter" id="advertise-param-ns"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">ns</span>, [</span><span class="parameter" id="advertise-param-options"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/DiscoveryOption.html">DiscoveryOption</a></span>&gt;</span></span> <span class="parameter-name">options</span> = <span class="default-value">const []</span></span>])
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Advertises a service
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="bootstrap" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/bootstrap.html">bootstrap</a></span><span class="signature">(<wbr>{<span class="parameter" id="bootstrap-param-periodicRefreshInterval"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a>?</span> <span class="parameter-name">periodicRefreshInterval</span>, </span><span class="parameter" id="bootstrap-param-quickConnectOnly"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">quickConnectOnly</span> = <span class="default-value">false</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Bootstrap allows callers to hint to the routing system to get into a
+Bootstrapped state and remain there. It is not a synchronous call.
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="bootstrap" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTBootstrap/bootstrap.html">bootstrap</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+      <p class="from-extension">
+        <span>Available on <a href="../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a>,
+        provided by the <a href="../dart_libp2p_kad_dht/DHTBootstrap.html">DHTBootstrap</a> extension</span>
+      </p>
+  Bootstrap tells the DHT to get into a bootstrapped state satisfying the
+Routing interface.
+  
+
+</dd>
+
+        <dt id="checkLocalDatastore" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/checkLocalDatastore.html">checkLocalDatastore</a></span><span class="signature">(<wbr><span class="parameter" id="checkLocalDatastore-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-typed_data/Uint8List-class.html">Uint8List</a></span> <span class="parameter-name">key</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dart_libp2p_kad_dht/Record-class.html">Record</a>?</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Checks the local datastore for a value
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="close" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/close.html">close</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Closes the DHT and releases resources
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="dialPeer" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/dialPeer.html">dialPeer</a></span><span class="signature">(<wbr><span class="parameter" id="dialPeer-param-peer"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peer</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Dials a peer
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="findLocalPeer" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/findLocalPeer.html">findLocalPeer</a></span><span class="signature">(<wbr><span class="parameter" id="findLocalPeer-param-peer"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peer</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a>?</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Finds a peer in the local routing table
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="findPeer" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/findPeer.html">findPeer</a></span><span class="signature">(<wbr><span class="parameter" id="findPeer-param-id"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">id</span>, {</span><span class="parameter" id="findPeer-param-options"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/RoutingOptions-class.html">RoutingOptions</a>?</span> <span class="parameter-name">options</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a>?</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  FindPeer searches for a peer with given ID, returns a peer.AddrInfo
+with relevant addresses.
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="findPeers" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/findPeers.html">findPeers</a></span><span class="signature">(<wbr><span class="parameter" id="findPeers-param-ns"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">ns</span>, [</span><span class="parameter" id="findPeers-param-options"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/DiscoveryOption.html">DiscoveryOption</a></span>&gt;</span></span> <span class="parameter-name">options</span> = <span class="default-value">const []</span></span>])
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/Stream-class.html">Stream</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Discovers peers providing a service
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="findProvidersAsync" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/findProvidersAsync.html">findProvidersAsync</a></span><span class="signature">(<wbr><span class="parameter" id="findProvidersAsync-param-cid"><span class="type-annotation"><a href="https://pub.dev/documentation/dcid/1.0.0/dart_cid/CID-class.html">CID</a></span> <span class="parameter-name">cid</span>, </span><span class="parameter" id="findProvidersAsync-param-count"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">count</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Stream-class.html">Stream</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Search for peers who are able to provide a given key
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="fixRTIfNeeded" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTBootstrap/fixRTIfNeeded.html">fixRTIfNeeded</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; void</span>
+  </span>
+  
+
+</dt>
+<dd>
+      <p class="from-extension">
+        <span>Available on <a href="../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a>,
+        provided by the <a href="../dart_libp2p_kad_dht/DHTBootstrap.html">DHTBootstrap</a> extension</span>
+      </p>
+  Fixes the routing table if needed
+  
+
+</dd>
+
+        <dt id="forceRefresh" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/forceRefresh.html">forceRefresh</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="forceRefresh" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTBootstrap/forceRefresh.html">forceRefresh</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+      <p class="from-extension">
+        <span>Available on <a href="../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a>,
+        provided by the <a href="../dart_libp2p_kad_dht/DHTBootstrap.html">DHTBootstrap</a> extension</span>
+      </p>
+  ForceRefresh acts like RefreshRoutingTable but forces the DHT to refresh all
+buckets in the Routing Table irrespective of when they were last refreshed.
+  
+
+</dd>
+
+        <dt id="getBootstrapPeers" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/getBootstrapPeers.html">getBootstrapPeers</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets bootstrap peers for the query
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="getClosestPeers" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/getClosestPeers.html">getClosestPeers</a></span><span class="signature">(<wbr><span class="parameter" id="getClosestPeers-param-target"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">target</span>, {</span><span class="parameter" id="getClosestPeers-param-networkQueryEnabled"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">networkQueryEnabled</span> = <span class="default-value">true</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets the closest peers to a target
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="getKeysFromDatastore" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/getKeysFromDatastore.html">getKeysFromDatastore</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Stream-class.html">Stream</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="getLocalProviders" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/getLocalProviders.html">getLocalProviders</a></span><span class="signature">(<wbr><span class="parameter" id="getLocalProviders-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-typed_data/Uint8List-class.html">Uint8List</a></span> <span class="parameter-name">key</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets local providers for a key
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="getRecordFromDatastore" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/getRecordFromDatastore.html">getRecordFromDatastore</a></span><span class="signature">(<wbr><span class="parameter" id="getRecordFromDatastore-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">key</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="getRoutingTablePeers" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/getRoutingTablePeers.html">getRoutingTablePeers</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="getRoutingTableSize" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/getRoutingTableSize.html">getRoutingTableSize</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="getRoutingTableStatistics" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/getRoutingTableStatistics.html">getRoutingTableStatistics</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/Map-class.html">Map</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>, <span class="type-parameter">dynamic</span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="getValue" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/getValue.html">getValue</a></span><span class="signature">(<wbr><span class="parameter" id="getValue-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">key</span>, [</span><span class="parameter" id="getValue-param-options"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/RoutingOptions-class.html">RoutingOptions</a>?</span> <span class="parameter-name">options</span></span>])
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-typed_data/Uint8List-class.html">Uint8List</a>?</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  GetValue searches for the value corresponding to given Key.
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="hasRecordInDatastore" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/hasRecordInDatastore.html">hasRecordInDatastore</a></span><span class="signature">(<wbr><span class="parameter" id="hasRecordInDatastore-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">key</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="host" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/host.html">host</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/Host-class.html">Host</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets the host that this DHT is running on
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="isRoutingTableHealthy" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/isRoutingTableHealthy.html">isRoutingTableHealthy</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="noSuchMethod" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/noSuchMethod.html">noSuchMethod</a></span><span class="signature">(<wbr><span class="parameter" id="noSuchMethod-param-invocation"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Invocation-class.html">Invocation</a></span> <span class="parameter-name">invocation</span></span>)
+    <span class="returntype parameter">&#8594; dynamic</span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  Invoked when a nonexistent method or property is accessed.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="provide" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/provide.html">provide</a></span><span class="signature">(<wbr><span class="parameter" id="provide-param-cid"><span class="type-annotation"><a href="https://pub.dev/documentation/dcid/1.0.0/dart_cid/CID-class.html">CID</a></span> <span class="parameter-name">cid</span>, </span><span class="parameter" id="provide-param-announce"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">announce</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Provide adds the given cid to the content routing system. If 'true' is
+passed, it also announces it, otherwise it is just kept in the local
+accounting of which objects are being provided.
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="putRecordToDatastore" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/putRecordToDatastore.html">putRecordToDatastore</a></span><span class="signature">(<wbr><span class="parameter" id="putRecordToDatastore-param-record"><span class="type-annotation">dynamic</span> <span class="parameter-name">record</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Puts a record to the datastore
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="putValue" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/putValue.html">putValue</a></span><span class="signature">(<wbr><span class="parameter" id="putValue-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">key</span>, </span><span class="parameter" id="putValue-param-value"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-typed_data/Uint8List-class.html">Uint8List</a></span> <span class="parameter-name">value</span>, {</span><span class="parameter" id="putValue-param-options"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/RoutingOptions-class.html">RoutingOptions</a>?</span> <span class="parameter-name">options</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  PutValue adds value corresponding to given Key.
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="refreshRoutingTable" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/refreshRoutingTable.html">refreshRoutingTable</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="refreshRoutingTable" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTBootstrap/refreshRoutingTable.html">refreshRoutingTable</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+      <p class="from-extension">
+        <span>Available on <a href="../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a>,
+        provided by the <a href="../dart_libp2p_kad_dht/DHTBootstrap.html">DHTBootstrap</a> extension</span>
+      </p>
+  RefreshRoutingTable tells the DHT to refresh its routing tables.
+  
+
+</dd>
+
+        <dt id="refreshRoutingTableNoWait" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/DHTBootstrap/refreshRoutingTableNoWait.html">refreshRoutingTableNoWait</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; void</span>
+  </span>
+  
+
+</dt>
+<dd>
+      <p class="from-extension">
+        <span>Available on <a href="../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a>,
+        provided by the <a href="../dart_libp2p_kad_dht/DHTBootstrap.html">DHTBootstrap</a> extension</span>
+      </p>
+  Refreshes the routing table without waiting for completion
+  
+
+</dd>
+
+        <dt id="removePeerFromRoutingTable" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/removePeerFromRoutingTable.html">removePeerFromRoutingTable</a></span><span class="signature">(<wbr><span class="parameter" id="removePeerFromRoutingTable-param-peer"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peer</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="removeRecordFromDatastore" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/removeRecordFromDatastore.html">removeRecordFromDatastore</a></span><span class="signature">(<wbr><span class="parameter" id="removeRecordFromDatastore-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">key</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="runLookupWithFollowup" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/runLookupWithFollowup.html">runLookupWithFollowup</a></span><span class="signature">(<wbr>{<span class="parameter" id="runLookupWithFollowup-param-target"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-typed_data/Uint8List-class.html">Uint8List</a></span> <span class="parameter-name">target</span>, </span><span class="parameter" id="runLookupWithFollowup-param-queryFn"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span>&gt;</span></span> <span class="parameter-name">queryFn</span>(<span class="parameter" id="param-peer"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peer</span></span>), </span><span class="parameter" id="runLookupWithFollowup-param-stopFn"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">stopFn</span>(<span class="parameter" id="param-peerset"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/QueryPeerset-class.html">QueryPeerset</a></span> <span class="parameter-name">peerset</span></span>)</span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">LookupWithFollowupResult</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Runs a lookup with followup using the new QueryRunner implementation.
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="searchValue" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/searchValue.html">searchValue</a></span><span class="signature">(<wbr><span class="parameter" id="searchValue-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">key</span>, </span><span class="parameter" id="searchValue-param-options"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/RoutingOptions-class.html">RoutingOptions</a>?</span> <span class="parameter-name">options</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Stream-class.html">Stream</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-typed_data/Uint8List-class.html">Uint8List</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  SearchValue searches for better and better values from this value
+store corresponding to the given Key.
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="sendMessage" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/sendMessage.html">sendMessage</a></span><span class="signature">(<wbr><span class="parameter" id="sendMessage-param-peer"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peer</span>, </span><span class="parameter" id="sendMessage-param-message"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/Message-class.html">Message</a></span> <span class="parameter-name">message</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dart_libp2p_kad_dht/Message-class.html">Message</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Sends a message to a peer and returns the response (public version of _sendMessage)
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="start" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/start.html">start</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Starts the DHT
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="toString" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/toString.html">toString</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  A string representation of this object.
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+        <dt id="updatePeerInRoutingTable" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/updatePeerInRoutingTable.html">updatePeerInRoutingTable</a></span><span class="signature">(<wbr><span class="parameter" id="updatePeerInRoutingTable-param-peer"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peer</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  
+  
+
+</dd>
+
+        <dt id="validateRecord" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/IpfsDHTv2/validateRecord.html">validateRecord</a></span><span class="signature">(<wbr><span class="parameter" id="validateRecord-param-record"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/Record-class.html">Record</a></span> <span class="parameter-name">record</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Validates a record
+  <div class="features"><span class="feature">override</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="operators">
+    <h2>Operators</h2>
+    <dl class="callables">
+        <dt id="operator ==" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  The equality operator.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+    
+    
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../dart_libp2p_kad_dht/">dart_libp2p_kad_dht</a></li>
+    <li class="self-crumb">IpfsDHTv2 class</li>
+</ol>
+
+    <h5>dart_libp2p_kad_dht library</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    dart_libp2p_kad_dht
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

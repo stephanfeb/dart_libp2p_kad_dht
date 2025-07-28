@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="dart_libp2p_kad_dht library API docs, for the Dart programming language.">
+  <title>dart_libp2p_kad_dht library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">dart_libp2p_kad_dht</a></li>
+    <li class="self-crumb">dart_libp2p_kad_dht.dart</li>
+  </ol>
+  <div class="self-name">dart_libp2p_kad_dht</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar=""
+    data-below-sidebar="dart_libp2p_kad_dht&#47;dart_libp2p_kad_dht-library-sidebar.html">
+  
+    <div>
+      
+
+      <h1>
+        <span class="kind-library">dart_libp2p_kad_dht</span>
+        library 
+ 
+
+      </h1>
+    </div>
+
+    
+<section class="desc markdown">
+  <p>A Dart implementation of the libp2p Kademlia DHT.</p>
+<p>This library provides a Dart implementation of the Kademlia Distributed Hash Table (DHT)
+for the libp2p network stack, based on the go-libp2p-kad-dht implementation.</p>
+</section>
+
+
+    <section class="summary offset-anchor" id="classes">
+      <h2>Classes</h2>
+      <dl>
+          <dt id="AminoConstants">
+  <span class="name "><a href="../dart_libp2p_kad_dht/AminoConstants-class.html">AminoConstants</a></span> 
+
+</dt>
+<dd>
+  Protocol constants for the Amino DHT
+</dd>
+
+          <dt id="DHT">
+  <span class="name "><a href="../dart_libp2p_kad_dht/DHT-class.html">DHT</a></span> 
+
+</dt>
+<dd>
+  DHT builder class that provides functional configuration similar to libp2p host configuration
+</dd>
+
+          <dt id="DHTConfig">
+  <span class="name "><a href="../dart_libp2p_kad_dht/DHTConfig-class.html">DHTConfig</a></span> 
+
+</dt>
+<dd>
+  Configuration for the DHT
+</dd>
+
+          <dt id="DHTHandlers">
+  <span class="name "><a href="../dart_libp2p_kad_dht/DHTHandlers-class.html">DHTHandlers</a></span> 
+
+</dt>
+<dd>
+  Handlers for DHT protocol messages
+</dd>
+
+          <dt id="DHTOptions">
+  <span class="name "><a href="../dart_libp2p_kad_dht/DHTOptions-class.html">DHTOptions</a></span> 
+
+</dt>
+<dd>
+  Options for configuring the DHT
+</dd>
+
+          <dt id="HasHost">
+  <span class="name "><a href="../dart_libp2p_kad_dht/HasHost-class.html">HasHost</a></span> 
+
+</dt>
+<dd>
+  Interface for objects that have a Host
+</dd>
+
+          <dt id="IP">
+  <span class="name "><a href="../dart_libp2p_kad_dht/IP-class.html">IP</a></span> 
+
+</dt>
+<dd>
+  Simple IP address class for network operations
+</dd>
+
+          <dt id="IpfsDHT">
+  <span class="name "><a href="../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a></span> 
+
+</dt>
+<dd>
+  DHT is the main implementation of the Kademlia DHT for libp2p.
+</dd>
+
+          <dt id="IpfsDHTv2">
+  <span class="name "><a href="../dart_libp2p_kad_dht/IpfsDHTv2-class.html">IpfsDHTv2</a></span> 
+
+</dt>
+<dd>
+  IpfsDHT v2 - A modular, maintainable implementation of the IPFS DHT
+</dd>
+
+          <dt id="IPNet">
+  <span class="name "><a href="../dart_libp2p_kad_dht/IPNet-class.html">IPNet</a></span> 
+
+</dt>
+<dd>
+  IP network class for CIDR operations
+</dd>
+
+          <dt id="MemoryProviderStore">
+  <span class="name "><a href="../dart_libp2p_kad_dht/MemoryProviderStore-class.html">MemoryProviderStore</a></span> 
+
+</dt>
+<dd>
+  A basic in-memory implementation of ProviderStore
+</dd>
+
+          <dt id="Message">
+  <span class="name "><a href="../dart_libp2p_kad_dht/Message-class.html">Message</a></span> 
+
+</dt>
+<dd>
+  Represents a DHT message
+</dd>
+
+          <dt id="MessageSenderWithDisconnect">
+  <span class="name "><a href="../dart_libp2p_kad_dht/MessageSenderWithDisconnect-class.html">MessageSenderWithDisconnect</a></span> 
+
+</dt>
+<dd>
+  Interface for a message sender that can disconnect from peers.
+</dd>
+
+          <dt id="Peer">
+  <span class="name "><a href="../dart_libp2p_kad_dht/Peer-class.html">Peer</a></span> 
+
+</dt>
+<dd>
+  Represents a peer in the DHT
+</dd>
+
+          <dt id="PeerQueried">
+  <span class="name "><a href="../dart_libp2p_kad_dht/PeerQueried-class.html">PeerQueried</a></span> 
+
+</dt>
+<dd>
+  Event emitted when a peer is successfully queried.
+</dd>
+
+          <dt id="PeerQueryFailed">
+  <span class="name "><a href="../dart_libp2p_kad_dht/PeerQueryFailed-class.html">PeerQueryFailed</a></span> 
+
+</dt>
+<dd>
+  Event emitted when a query to a peer fails.
+</dd>
+
+          <dt id="ProviderManager">
+  <span class="name "><a href="../dart_libp2p_kad_dht/ProviderManager-class.html">ProviderManager</a></span> 
+
+</dt>
+<dd>
+  ProviderManager adds and retrieves providers from a datastore,
+caching them in between for efficiency.
+</dd>
+
+          <dt id="ProviderManagerOptions">
+  <span class="name "><a href="../dart_libp2p_kad_dht/ProviderManagerOptions-class.html">ProviderManagerOptions</a></span> 
+
+</dt>
+<dd>
+  Options for configuring a provider manager
+</dd>
+
+          <dt id="ProviderRecord">
+  <span class="name "><a href="../dart_libp2p_kad_dht/ProviderRecord-class.html">ProviderRecord</a></span> 
+
+</dt>
+<dd>
+  A provider record with an expiration time
+</dd>
+
+          <dt id="ProviderSet">
+  <span class="name "><a href="../dart_libp2p_kad_dht/ProviderSet-class.html">ProviderSet</a></span> 
+
+</dt>
+<dd>
+  ProviderSet maintains a list of providers for a key and the time they were added.
+</dd>
+
+          <dt id="ProviderStore">
+  <span class="name "><a href="../dart_libp2p_kad_dht/ProviderStore-class.html">ProviderStore</a></span> 
+
+</dt>
+<dd>
+  ProviderStore represents a store that associates peers and their addresses to keys.
+</dd>
+
+          <dt id="QueryEvent">
+  <span class="name "><a href="../dart_libp2p_kad_dht/QueryEvent-class.html">QueryEvent</a></span> 
+
+</dt>
+<dd>
+  Base class for all events emitted during a query operation.
+</dd>
+
+          <dt id="QueryPeerset">
+  <span class="name "><a href="../dart_libp2p_kad_dht/QueryPeerset-class.html">QueryPeerset</a></span> 
+
+</dt>
+<dd>
+  QueryPeerset maintains the state of a Kademlia asynchronous lookup.
+The lookup state is a set of peers, each labeled with a peer state.
+</dd>
+
+          <dt id="QueryResult">
+  <span class="name "><a href="../dart_libp2p_kad_dht/QueryResult-class.html">QueryResult</a></span> 
+
+</dt>
+<dd>
+  Represents the result of a completed query operation.
+</dd>
+
+          <dt id="QueryRunner">
+  <span class="name "><a href="../dart_libp2p_kad_dht/QueryRunner-class.html">QueryRunner</a></span> 
+
+</dt>
+<dd>
+  A robust, event-driven query runner for Kademlia DHT lookups.
+</dd>
+
+          <dt id="QueryTerminated">
+  <span class="name "><a href="../dart_libp2p_kad_dht/QueryTerminated-class.html">QueryTerminated</a></span> 
+
+</dt>
+<dd>
+  Event emitted when the query terminates.
+</dd>
+
+          <dt id="Record">
+  <span class="name "><a href="../dart_libp2p_kad_dht/Record-class.html">Record</a></span> 
+
+</dt>
+<dd>
+  Record represents a DHT record that contains a value
+for a key. It contains a timestamp and public key that
+is used to verify the record.
+</dd>
+
+          <dt id="RouterCache">
+  <span class="name "><a href="../dart_libp2p_kad_dht/RouterCache-class.html">RouterCache</a></span> 
+
+</dt>
+<dd>
+  Router cache
+</dd>
+
+          <dt id="SimplePeerLatencyMetrics">
+  <span class="name "><a href="../dart_libp2p_kad_dht/SimplePeerLatencyMetrics-class.html">SimplePeerLatencyMetrics</a></span> 
+
+</dt>
+<dd>
+  Simple implementation of PeerLatencyMetrics that returns a default latency
+for all peers. In a real implementation, this would use the host's peerstore
+to get actual latency measurements.
+</dd>
+
+          <dt id="SimpleProtocolMessenger">
+  <span class="name "><a href="../dart_libp2p_kad_dht/SimpleProtocolMessenger-class.html">SimpleProtocolMessenger</a></span> 
+
+</dt>
+<dd>
+  Simple concrete implementation of ProtocolMessenger for DHT v2
+</dd>
+
+      </dl>
+    </section>
+
+    <section class="summary offset-anchor" id="enums">
+      <h2>Enums</h2>
+      <dl>
+          <dt id="ConnectionType">
+  <span class="name "><a href="../dart_libp2p_kad_dht/ConnectionType.html">ConnectionType</a></span> 
+
+</dt>
+<dd>
+  Enum for different types of peer connections
+</dd>
+
+          <dt id="DHTMode">
+  <span class="name "><a href="../dart_libp2p_kad_dht/DHTMode.html">DHTMode</a></span> 
+
+</dt>
+<dd>
+  Mode options for the DHT
+</dd>
+
+          <dt id="MessageType">
+  <span class="name "><a href="../dart_libp2p_kad_dht/MessageType.html">MessageType</a></span> 
+
+</dt>
+<dd>
+  Enum for different types of DHT messages
+</dd>
+
+          <dt id="PeerState">
+  <span class="name "><a href="../dart_libp2p_kad_dht/PeerState.html">PeerState</a></span> 
+
+</dt>
+<dd>
+  PeerState describes the state of a peer ID during the lifecycle of an individual lookup.
+</dd>
+
+          <dt id="QueryTerminationReason">
+  <span class="name "><a href="../dart_libp2p_kad_dht/QueryTerminationReason.html">QueryTerminationReason</a></span> 
+
+</dt>
+<dd>
+  Enumeration of possible query termination reasons.
+</dd>
+
+      </dl>
+    </section>
+
+
+
+    <section class="summary offset-anchor" id="extensions">
+      <h2>Extensions</h2>
+      <dl>
+          <dt id="DHTBootstrap">
+  <span class="name "><a href="../dart_libp2p_kad_dht/DHTBootstrap.html">DHTBootstrap</a></span>
+  on <a href="../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a>
+  
+
+</dt>
+<dd>
+  Extension methods for DHT bootstrap functionality
+</dd>
+
+      </dl>
+    </section>
+
+    <section class="summary offset-anchor" id="constants">
+      <h2>Constants</h2>
+      <dl class="properties">
+          <dt id="maxNBootstrappers" class="constant">
+    <span class="name "><a href="../dart_libp2p_kad_dht/maxNBootstrappers-constant.html">maxNBootstrappers</a></span>
+  <span class="signature">&#8594; const <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd>
+  Maximum number of bootstrappers to use at once
+  
+
+</dd>
+
+          <dt id="minRTRefreshThreshold" class="constant">
+    <span class="name "><a href="../dart_libp2p_kad_dht/minRTRefreshThreshold-constant.html">minRTRefreshThreshold</a></span>
+  <span class="signature">&#8594; const <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd>
+  Minimum number of peers in the routing table. If we drop below this and we
+see a new peer, we trigger a bootstrap round.
+  
+
+</dd>
+
+          <dt id="periodicBootstrapInterval" class="constant">
+    <span class="name "><a href="../dart_libp2p_kad_dht/periodicBootstrapInterval-constant.html">periodicBootstrapInterval</a></span>
+  <span class="signature">&#8594; const <a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span>
+  
+
+</dt>
+<dd>
+  Interval for periodic bootstrap operations
+  
+
+</dd>
+
+          <dt id="publicCIDR6" class="constant">
+    <span class="name "><a href="../dart_libp2p_kad_dht/publicCIDR6-constant.html">publicCIDR6</a></span>
+  <span class="signature">&#8594; const <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
+  
+
+</dt>
+<dd>
+  CIDR for public IPv6 addresses
+  
+
+</dd>
+
+          <dt id="routerCacheTime" class="constant">
+    <span class="name "><a href="../dart_libp2p_kad_dht/routerCacheTime-constant.html">routerCacheTime</a></span>
+  <span class="signature">&#8594; const <a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span>
+  
+
+</dt>
+<dd>
+  Cache duration for the router
+  
+
+</dd>
+
+      </dl>
+    </section>
+
+    <section class="summary offset-anchor" id="properties">
+      <h2>Properties</h2>
+      <dl class="properties">
+          <dt id="defaultBootstrapPeers" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/defaultBootstrapPeers.html">defaultBootstrapPeers</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span>&gt;</span></span>
+  
+
+</dt>
+<dd>
+  DefaultBootstrapPeers is a set of public DHT bootstrap peers provided by libp2p.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+          <dt id="private4" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/private4.html">private4</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dart_libp2p_kad_dht/IPNet-class.html">IPNet</a></span>&gt;</span></span>
+  
+
+</dt>
+<dd>
+  Private IPv4 networks
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+          <dt id="protocols" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/protocols.html">protocols</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a></span>&gt;</span></span>
+  
+
+</dt>
+<dd>
+  Protocols is a list containing all supported protocol IDs for Amino DHT.
+Currently, it only includes the main ProtocolID, but it's defined as a list
+to allow for potential future protocol versions or variants.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+          <dt id="public6" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/public6.html">public6</a></span>
+  <span class="signature">&#8594; <a href="../dart_libp2p_kad_dht/IPNet-class.html">IPNet</a>?</span>
+  
+
+</dt>
+<dd>
+  Public IPv6 network
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+          <dt id="routerCache" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/routerCache.html">routerCache</a></span>
+  <span class="signature">&#8594; <a href="../dart_libp2p_kad_dht/RouterCache-class.html">RouterCache</a></span>
+  
+
+</dt>
+<dd>
+  Global router cache
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+          <dt id="unroutable4" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/unroutable4.html">unroutable4</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dart_libp2p_kad_dht/IPNet-class.html">IPNet</a></span>&gt;</span></span>
+  
+
+</dt>
+<dd>
+  Unroutable IPv4 networks
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+          <dt id="unroutable6" class="property">
+  <span class="name"><a href="../dart_libp2p_kad_dht/unroutable6.html">unroutable6</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dart_libp2p_kad_dht/IPNet-class.html">IPNet</a></span>&gt;</span></span>
+  
+
+</dt>
+<dd>
+  Unroutable IPv6 networks
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+      </dl>
+    </section>
+
+    <section class="summary offset-anchor" id="functions">
+      <h2>Functions</h2>
+      <dl class="callables">
+          <dt id="addressFilter" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/addressFilter.html">addressFilter</a></span><span class="signature">(<wbr><span class="parameter" id="addressFilter-param-f"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span>&gt;</span></span> <span class="parameter-name">f</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span>&gt;</span></span></span>)</span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  AddressFilter allows to configure the address filtering function.
+This function is run before addresses are added to the peerstore.
+It is most useful to avoid adding localhost / local addresses.
+  
+
+</dd>
+
+          <dt id="bootstrapPeers" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/bootstrapPeers.html">bootstrapPeers</a></span><span class="signature">(<wbr><span class="parameter" id="bootstrapPeers-param-bootstrappers"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span> <span class="parameter-name">bootstrappers</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  BootstrapPeers configures the bootstrapping nodes that we will connect to to seed
+and refresh our Routing Table if it becomes empty.
+  
+
+</dd>
+
+          <dt id="bootstrapPeersFunc" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/bootstrapPeersFunc.html">bootstrapPeersFunc</a></span><span class="signature">(<wbr><span class="parameter" id="bootstrapPeersFunc-param-getBootstrapPeers"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span> <span class="parameter-name">getBootstrapPeers</span>()</span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  BootstrapPeersFunc configures the function that returns the bootstrapping nodes that we will
+connect to to seed and refresh our Routing Table if it becomes empty.
+  
+
+</dd>
+
+          <dt id="bucketSize" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/bucketSize.html">bucketSize</a></span><span class="signature">(<wbr><span class="parameter" id="bucketSize-param-size"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">size</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  BucketSize configures the bucket size (k in the Kademlia paper) of the routing table.
+  
+
+</dd>
+
+          <dt id="concurrency" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/concurrency.html">concurrency</a></span><span class="signature">(<wbr><span class="parameter" id="concurrency-param-alpha"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">alpha</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Concurrency configures the number of concurrent requests (alpha in the Kademlia paper) for a given query path.
+  
+
+</dd>
+
+          <dt id="datastore" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/datastore.html">datastore</a></span><span class="signature">(<wbr><span class="parameter" id="datastore-param-ds"><span class="type-annotation">dynamic</span> <span class="parameter-name">ds</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Datastore configures the DHT to use the specified datastore.
+  
+
+</dd>
+
+          <dt id="dhtMessageRetryBackoffFactor" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/dhtMessageRetryBackoffFactor.html">dhtMessageRetryBackoffFactor</a></span><span class="signature">(<wbr><span class="parameter" id="dhtMessageRetryBackoffFactor-param-factor"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">factor</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  DhtMessageRetryBackoffFactor configures the multiplicative factor for DHT message retry backoff.
+  
+
+</dd>
+
+          <dt id="dhtMessageRetryInitialBackoff" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/dhtMessageRetryInitialBackoff.html">dhtMessageRetryInitialBackoff</a></span><span class="signature">(<wbr><span class="parameter" id="dhtMessageRetryInitialBackoff-param-delay"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">delay</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  DhtMessageRetryInitialBackoff configures the initial delay before retrying a DHT message.
+  
+
+</dd>
+
+          <dt id="dhtMessageRetryMaxBackoff" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/dhtMessageRetryMaxBackoff.html">dhtMessageRetryMaxBackoff</a></span><span class="signature">(<wbr><span class="parameter" id="dhtMessageRetryMaxBackoff-param-delay"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">delay</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  DhtMessageRetryMaxBackoff configures the maximum delay between DHT message retries.
+  
+
+</dd>
+
+          <dt id="disableAutoRefresh" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/disableAutoRefresh.html">disableAutoRefresh</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  DisableAutoRefresh completely disables 'auto-refresh' on the DHT routing
+table. This means that we will neither refresh the routing table periodically
+nor when the routing table size goes below the minimum threshold.
+  
+
+</dd>
+
+          <dt id="disableProviders" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/disableProviders.html">disableProviders</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  DisableProviders disables storing and retrieving provider records.
+  
+
+</dd>
+
+          <dt id="disableValues" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/disableValues.html">disableValues</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  DisableValues disables storing and retrieving value records (including
+public keys).
+  
+
+</dd>
+
+          <dt id="enableOptimisticProvide" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/enableOptimisticProvide.html">enableOptimisticProvide</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  EnableOptimisticProvide enables an optimization that skips the last hops of the provide process.
+This works by using the network size estimator (which uses the keyspace density of queries)
+to optimistically send ADD_PROVIDER requests when we most likely have found the last hop.
+It will also run some ADD_PROVIDER requests asynchronously in the background after returning,
+this allows to optimistically return earlier if some threshold number of RPCs have succeeded.
+The number of background/in-flight queries can be configured with the OptimisticProvideJobsPoolSize
+option.
+  
+
+</dd>
+
+          <dt id="filterLocalhostAddrs" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/filterLocalhostAddrs.html">filterLocalhostAddrs</a></span><span class="signature">(<wbr><span class="parameter" id="filterLocalhostAddrs-param-addrs"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span>&gt;</span></span> <span class="parameter-name">addrs</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Filters out localhost addresses from a list of multiaddrs
+  
+
+</dd>
+
+          <dt id="filterLocalhostInResponses" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/filterLocalhostInResponses.html">filterLocalhostInResponses</a></span><span class="signature">(<wbr><span class="parameter" id="filterLocalhostInResponses-param-filter"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">filter</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  FilterLocalhostInResponses configures whether to filter localhost addresses from FIND_NODE responses.
+This prevents advertising 127.0.0.1 addresses to remote peers, which are not useful for them.
+  
+
+</dd>
+
+          <dt id="getDefaultBootstrapPeerAddrInfos" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/getDefaultBootstrapPeerAddrInfos.html">getDefaultBootstrapPeerAddrInfos</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  GetDefaultBootstrapPeerAddrInfos returns the AddrInfo objects for the default
+bootstrap peers so we can use these for initializing the DHT by passing these to the
+bootstrapPeers(...) option.
+  
+
+</dd>
+
+          <dt id="hasValidConnectedness" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/hasValidConnectedness.html">hasValidConnectedness</a></span><span class="signature">(<wbr><span class="parameter" id="hasValidConnectedness-param-host"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/Host-class.html">Host</a></span> <span class="parameter-name">host</span>, </span><span class="parameter" id="hasValidConnectedness-param-id"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">id</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Checks if a peer has valid connectedness
+  
+
+</dd>
+
+          <dt id="inAddrRange" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/inAddrRange.html">inAddrRange</a></span><span class="signature">(<wbr><span class="parameter" id="inAddrRange-param-ip"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/IP-class.html">IP</a></span> <span class="parameter-name">ip</span>, </span><span class="parameter" id="inAddrRange-param-ipnets"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dart_libp2p_kad_dht/IPNet-class.html">IPNet</a></span>&gt;</span></span> <span class="parameter-name">ipnets</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Checks if an IP is in any of the given IP networks
+  
+
+</dd>
+
+          <dt id="isEUI" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/isEUI.html">isEUI</a></span><span class="signature">(<wbr><span class="parameter" id="isEUI-param-ip"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/IP-class.html">IP</a></span> <span class="parameter-name">ip</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Checks if an IPv6 address is an EUI-64 address
+  
+
+</dd>
+
+          <dt id="isLocalhostAddr" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/isLocalhostAddr.html">isLocalhostAddr</a></span><span class="signature">(<wbr><span class="parameter" id="isLocalhostAddr-param-addr"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span> <span class="parameter-name">addr</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Checks if a multiaddr contains a localhost/loopback address
+  
+
+</dd>
+
+          <dt id="isPrivateAddr" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/isPrivateAddr.html">isPrivateAddr</a></span><span class="signature">(<wbr><span class="parameter" id="isPrivateAddr-param-addr"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span> <span class="parameter-name">addr</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  isPrivateAddr follows the logic of manet.IsPrivateAddr, except that
+it uses a stricter definition of "public" for ipv6
+  
+
+</dd>
+
+          <dt id="isPublicAddr" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/isPublicAddr.html">isPublicAddr</a></span><span class="signature">(<wbr><span class="parameter" id="isPublicAddr-param-addr"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span> <span class="parameter-name">addr</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  isPublicAddr follows the logic of manet.IsPublicAddr, except it uses
+a stricter definition of "public" for ipv6: namely "is it in 2000::/3"?
+  
+
+</dd>
+
+          <dt id="isRelayAddr" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/isRelayAddr.html">isRelayAddr</a></span><span class="signature">(<wbr><span class="parameter" id="isRelayAddr-param-addr"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span> <span class="parameter-name">addr</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Checks if a multiaddr is a relay address
+  
+
+</dd>
+
+          <dt id="lookupCheckConcurrency" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/lookupCheckConcurrency.html">lookupCheckConcurrency</a></span><span class="signature">(<wbr><span class="parameter" id="lookupCheckConcurrency-param-n"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">n</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  LookupCheckConcurrency configures maximal number of go routines that can be used to
+perform a lookup check operation, before adding a new node to the routing table.
+  
+
+</dd>
+
+          <dt id="maxDhtMessageRetries" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/maxDhtMessageRetries.html">maxDhtMessageRetries</a></span><span class="signature">(<wbr><span class="parameter" id="maxDhtMessageRetries-param-count"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">count</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  MaxDhtMessageRetries configures the maximum number of attempts for sending a DHT message.
+  
+
+</dd>
+
+          <dt id="maxPeersPerBucket" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/maxPeersPerBucket.html">maxPeersPerBucket</a></span><span class="signature">(<wbr><span class="parameter" id="maxPeersPerBucket-param-count"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">count</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  MaxPeersPerBucket configures the maximum number of peers per k-bucket.
+This is particularly useful for controlling bootstrap server capacity.
+  
+
+</dd>
+
+          <dt id="maxRecordAge" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/maxRecordAge.html">maxRecordAge</a></span><span class="signature">(<wbr><span class="parameter" id="maxRecordAge-param-maxAge"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">maxAge</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  MaxRecordAge specifies the maximum time that any node will hold onto a record ("PutValue record")
+from the time its received. This does not apply to any other forms of validity that
+the record may contain.
+For example, a record may contain an ipns entry with an EOL saying its valid
+until the year 2020 (a great time in the future). For that record to stick around
+it must be rebroadcasted more frequently than once every 'MaxRecordAge'
+  
+
+</dd>
+
+          <dt id="maxRoutingTableSize" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/maxRoutingTableSize.html">maxRoutingTableSize</a></span><span class="signature">(<wbr><span class="parameter" id="maxRoutingTableSize-param-size"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">size</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  MaxRoutingTableSize configures the maximum size of the routing table.
+This limits the total number of peers across all buckets, which is useful
+for mobile devices with limited resources.
+  
+
+</dd>
+
+          <dt id="mode" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/mode.html">mode</a></span><span class="signature">(<wbr><span class="parameter" id="mode-param-m"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/DHTMode.html">DHTMode</a></span> <span class="parameter-name">m</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Mode configures which mode the DHT operates in (Client, Server, Auto).
+  
+
+</dd>
+
+          <dt id="namespacedValidator" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/namespacedValidator.html">namespacedValidator</a></span><span class="signature">(<wbr><span class="parameter" id="namespacedValidator-param-ns"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">ns</span>, </span><span class="parameter" id="namespacedValidator-param-v"><span class="type-annotation">Validator</span> <span class="parameter-name">v</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  NamespacedValidator adds a validator namespaced under <code>ns</code>. This option fails
+if the DHT is not using a <code>NamespacedValidator</code> as its validator (it
+uses one by default but this can be overridden with the <code>Validator</code> option).
+Adding a namespaced validator without changing the <code>Validator</code> will result in
+adding a new validator in addition to the default public key and IPNS validators.
+The "pk" and "ipns" namespaces cannot be overridden here unless a new <code>Validator</code>
+has been set first.
+  
+
+</dd>
+
+          <dt id="onRequestHook" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/onRequestHook.html">onRequestHook</a></span><span class="signature">(<wbr><span class="parameter" id="onRequestHook-param-f"><span class="type-annotation">void</span> <span class="parameter-name">f</span>(<span class="parameter" id="param-ctx"><span class="type-annotation">dynamic</span> <span class="parameter-name">ctx</span>, </span><span class="parameter" id="param-s"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Stream-class.html">Stream</a></span> <span class="parameter-name">s</span>, </span><span class="parameter" id="param-req"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/Message-class.html">Message</a></span> <span class="parameter-name">req</span></span>)</span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  OnRequestHook registers a callback function that will be invoked for every
+incoming DHT protocol message.
+Note: Ensure that the callback executes efficiently, as it will block the
+entire message handler.
+  
+
+</dd>
+
+          <dt id="optimisticProvideJobsPoolSize" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/optimisticProvideJobsPoolSize.html">optimisticProvideJobsPoolSize</a></span><span class="signature">(<wbr><span class="parameter" id="optimisticProvideJobsPoolSize-param-size"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">size</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  OptimisticProvideJobsPoolSize allows to configure the asynchronicity limit for in-flight ADD_PROVIDER RPCs.
+It makes sense to set it to a multiple of optProvReturnRatio * BucketSize. Check the description of
+EnableOptimisticProvide for more details.
+  
+
+</dd>
+
+          <dt id="privateQueryFilter" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/privateQueryFilter.html">privateQueryFilter</a></span><span class="signature">(<wbr><span class="parameter" id="privateQueryFilter-param-dht"><span class="type-annotation">dynamic</span> <span class="parameter-name">dht</span>, </span><span class="parameter" id="privateQueryFilter-param-peerInfo"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span> <span class="parameter-name">peerInfo</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  PrivateQueryFilter doesn't currently restrict which peers we are willing to query from the local DHT.
+  
+
+</dd>
+
+          <dt id="privateRoutingTableFilter" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/privateRoutingTableFilter.html">privateRoutingTableFilter</a></span><span class="signature">(<wbr><span class="parameter" id="privateRoutingTableFilter-param-dht"><span class="type-annotation">dynamic</span> <span class="parameter-name">dht</span>, </span><span class="parameter" id="privateRoutingTableFilter-param-peerId"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peerId</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  PrivateRoutingTableFilter allows a peer to be added to the routing table if the connections to that peer indicate
+that it is on a private network
+  
+
+</dd>
+
+          <dt id="privRTFilter" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/privRTFilter.html">privRTFilter</a></span><span class="signature">(<wbr><span class="parameter" id="privRTFilter-param-dht"><span class="type-annotation">dynamic</span> <span class="parameter-name">dht</span>, </span><span class="parameter" id="privRTFilter-param-conns"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/Conn-class.html">Conn</a></span>&gt;</span></span> <span class="parameter-name">conns</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Helper function for private routing table filter
+  
+
+</dd>
+
+          <dt id="protocolExtension" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/protocolExtension.html">protocolExtension</a></span><span class="signature">(<wbr><span class="parameter" id="protocolExtension-param-ext"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a></span> <span class="parameter-name">ext</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  ProtocolExtension adds an application specific protocol to the DHT protocol. For example,
+/ipfs/lan/kad/1.0.0 instead of /ipfs/kad/1.0.0. extension should be of the form /lan.
+  
+
+</dd>
+
+          <dt id="protocolPrefix" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/protocolPrefix.html">protocolPrefix</a></span><span class="signature">(<wbr><span class="parameter" id="protocolPrefix-param-prefix"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a></span> <span class="parameter-name">prefix</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  ProtocolPrefix sets an application specific prefix to be attached to all DHT protocols. For example,
+/myapp/kad/1.0.0 instead of /ipfs/kad/1.0.0. Prefix should be of the form /myapp.
+  
+
+</dd>
+
+          <dt id="providerStore" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/providerStore.html">providerStore</a></span><span class="signature">(<wbr><span class="parameter" id="providerStore-param-ps"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/ProviderStore-class.html">ProviderStore</a></span> <span class="parameter-name">ps</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  ProviderStore sets the provider storage manager.
+  
+
+</dd>
+
+          <dt id="publicQueryFilter" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/publicQueryFilter.html">publicQueryFilter</a></span><span class="signature">(<wbr><span class="parameter" id="publicQueryFilter-param-dht"><span class="type-annotation">dynamic</span> <span class="parameter-name">dht</span>, </span><span class="parameter" id="publicQueryFilter-param-peerInfo"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span> <span class="parameter-name">peerInfo</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  PublicQueryFilter returns true if the peer is suspected of being publicly accessible
+  
+
+</dd>
+
+          <dt id="publicRoutingTableFilter" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/publicRoutingTableFilter.html">publicRoutingTableFilter</a></span><span class="signature">(<wbr><span class="parameter" id="publicRoutingTableFilter-param-dht"><span class="type-annotation">dynamic</span> <span class="parameter-name">dht</span>, </span><span class="parameter" id="publicRoutingTableFilter-param-peerId"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peerId</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  PublicRoutingTableFilter allows a peer to be added to the routing table if the connections to that peer indicate
+that it is on a public network
+  
+
+</dd>
+
+          <dt id="queryFilter" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/queryFilter.html">queryFilter</a></span><span class="signature">(<wbr><span class="parameter" id="queryFilter-param-filter"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/QueryFilterFunc.html">QueryFilterFunc</a></span> <span class="parameter-name">filter</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  QueryFilter sets a function that approves which peers may be dialed in a query
+  
+
+</dd>
+
+          <dt id="refreshInterval" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/refreshInterval.html">refreshInterval</a></span><span class="signature">(<wbr><span class="parameter" id="refreshInterval-param-interval"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">interval</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  RefreshInterval configures the refresh interval for the routing table.
+This is a convenience function that sets the routingTableRefreshInterval.
+  
+
+</dd>
+
+          <dt id="resiliency" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/resiliency.html">resiliency</a></span><span class="signature">(<wbr><span class="parameter" id="resiliency-param-beta"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">beta</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Resiliency configures the number of peers closest to a target that must have responded in order for a given query
+path to complete.
+  
+
+</dd>
+
+          <dt id="routingTableFilter" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/routingTableFilter.html">routingTableFilter</a></span><span class="signature">(<wbr><span class="parameter" id="routingTableFilter-param-filter"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/RouteTableFilterFunc.html">RouteTableFilterFunc</a></span> <span class="parameter-name">filter</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  RoutingTableFilter sets a function that approves which peers may be added to the routing table. The host should
+already have at least one connection to the peer under consideration.
+  
+
+</dd>
+
+          <dt id="routingTableLatencyTolerance" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/routingTableLatencyTolerance.html">routingTableLatencyTolerance</a></span><span class="signature">(<wbr><span class="parameter" id="routingTableLatencyTolerance-param-latency"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">latency</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  RoutingTableLatencyTolerance sets the maximum acceptable latency for peers
+in the routing table's cluster.
+  
+
+</dd>
+
+          <dt id="routingTablePeerDiversityFilter" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/routingTablePeerDiversityFilter.html">routingTablePeerDiversityFilter</a></span><span class="signature">(<wbr><span class="parameter" id="routingTablePeerDiversityFilter-param-pg"><span class="type-annotation">dynamic</span> <span class="parameter-name">pg</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  RoutingTablePeerDiversityFilter configures the implementation of the diversity filter for the Routing Table.
+  
+
+</dd>
+
+          <dt id="routingTableRefreshPeriod" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/routingTableRefreshPeriod.html">routingTableRefreshPeriod</a></span><span class="signature">(<wbr><span class="parameter" id="routingTableRefreshPeriod-param-period"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">period</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  RoutingTableRefreshPeriod sets the period for refreshing buckets in the
+routing table. The DHT will refresh buckets every period by:
+  
+
+</dd>
+
+          <dt id="routingTableRefreshQueryTimeout" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/routingTableRefreshQueryTimeout.html">routingTableRefreshQueryTimeout</a></span><span class="signature">(<wbr><span class="parameter" id="routingTableRefreshQueryTimeout-param-timeout"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Duration-class.html">Duration</a></span> <span class="parameter-name">timeout</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  RoutingTableRefreshQueryTimeout sets the timeout for routing table refresh
+queries.
+  
+
+</dd>
+
+          <dt id="sameV6Net" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/sameV6Net.html">sameV6Net</a></span><span class="signature">(<wbr><span class="parameter" id="sameV6Net-param-a"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/IP-class.html">IP</a></span> <span class="parameter-name">a</span>, </span><span class="parameter" id="sameV6Net-param-b"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/IP-class.html">IP</a></span> <span class="parameter-name">b</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Checks if two IPv6 addresses are in the same network
+  
+
+</dd>
+
+          <dt id="toIP" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/toIP.html">toIP</a></span><span class="signature">(<wbr><span class="parameter" id="toIP-param-addr"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/MultiAddr-class.html">MultiAddr</a></span> <span class="parameter-name">addr</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/IP-class.html">IP</a>?</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Extracts the IP address from a multiaddr
+  
+
+</dd>
+
+          <dt id="v1ProtocolOverride" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/v1ProtocolOverride.html">v1ProtocolOverride</a></span><span class="signature">(<wbr><span class="parameter" id="v1ProtocolOverride-param-proto"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a></span> <span class="parameter-name">proto</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  V1ProtocolOverride overrides the protocolID used for /kad/1.0.0 with another. This is an
+advanced feature, and should only be used to handle legacy networks that have not been
+using protocolIDs of the form /app/kad/1.0.0.
+  
+
+</dd>
+
+          <dt id="validator" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/validator.html">validator</a></span><span class="signature">(<wbr><span class="parameter" id="validator-param-v"><span class="type-annotation">Validator</span> <span class="parameter-name">v</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Validator configures the DHT to use the specified validator.
+  
+
+</dd>
+
+          <dt id="withCustomMessageSender" class="callable">
+  <span class="name"><a href="../dart_libp2p_kad_dht/withCustomMessageSender.html">withCustomMessageSender</a></span><span class="signature">(<wbr><span class="parameter" id="withCustomMessageSender-param-messageSenderBuilder"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/MessageSenderBuilder.html">MessageSenderBuilder</a></span> <span class="parameter-name">messageSenderBuilder</span></span>)
+    <span class="returntype parameter">&#8594; <a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span>
+  </span>
+  
+
+</dt>
+<dd>
+  WithCustomMessageSender configures the MessageSender of the DHT to use the
+custom implementation of the MessageSender
+  
+
+</dd>
+
+      </dl>
+    </section>
+
+    <section class="summary offset-anchor" id="typedefs">
+      <h2>Typedefs</h2>
+      <dl>
+          
+  <dt id="DHTHandler" class="callable">
+    <span class="name"><a href="../dart_libp2p_kad_dht/DHTHandler.html">DHTHandler</a></span><span class="signature">
+      <span class="returntype parameter">= <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dart_libp2p_kad_dht/Message-class.html">Message</a></span>&gt;</span> Function<span class="signature">(<span class="parameter" id="param-peer"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peer</span>, </span><span class="parameter" id="param-message"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/Message-class.html">Message</a></span> <span class="parameter-name">message</span></span>)</span></span>
+    </span>
+    
+
+  </dt>
+  <dd>
+    Type definition for a DHT message handler function
+    
+
+  </dd>
+
+          
+  <dt id="DHTOption" class="callable">
+    <span class="name"><a href="../dart_libp2p_kad_dht/DHTOption.html">DHTOption</a></span><span class="signature">
+      <span class="returntype parameter">= <a href="https://api.flutter.dev/flutter/dart-async/FutureOr-class.html">FutureOr</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span> Function<span class="signature">(<span class="parameter" id="param-config"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/DHTConfig-class.html">DHTConfig</a></span> <span class="parameter-name">config</span></span>)</span></span>
+    </span>
+    
+
+  </dt>
+  <dd>
+    Type definition for a DHT option function
+    
+
+  </dd>
+
+          
+  <dt id="MessageSenderBuilder" class="callable">
+    <span class="name"><a href="../dart_libp2p_kad_dht/MessageSenderBuilder.html">MessageSenderBuilder</a></span><span class="signature">
+      <span class="returntype parameter">= <a href="../dart_libp2p_kad_dht/MessageSenderWithDisconnect-class.html">MessageSenderWithDisconnect</a> Function<span class="signature">(<span class="parameter" id="param-host"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/Host-class.html">Host</a></span> <span class="parameter-name">host</span>, </span><span class="parameter" id="param-protocols"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a></span>&gt;</span></span> <span class="parameter-name">protocols</span></span>)</span></span>
+    </span>
+    
+
+  </dt>
+  <dd>
+    Type definition for a function that builds message senders
+    
+
+  </dd>
+
+          
+  <dt id="ProtocolID" class="">
+  <span class="name"><a href="../dart_libp2p_kad_dht/ProtocolID.html">ProtocolID</a></span>
+    = <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>
+  </span>
+  
+
+</dt>
+<dd>
+  Protocol identifier type
+  
+
+</dd>
+
+
+          
+  <dt id="QueryFilterFunc" class="callable">
+    <span class="name"><a href="../dart_libp2p_kad_dht/QueryFilterFunc.html">QueryFilterFunc</a></span><span class="signature">
+      <span class="returntype parameter">= <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a> Function<span class="signature">(<span class="parameter" id="param-dht"><span class="type-annotation">dynamic</span> <span class="parameter-name">dht</span>, </span><span class="parameter" id="param-peerInfo"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span> <span class="parameter-name">peerInfo</span></span>)</span></span>
+    </span>
+    
+
+  </dt>
+  <dd>
+    Type definition for a function that filters peers for queries
+    
+
+  </dd>
+
+          
+  <dt id="QueryFunction" class="callable">
+    <span class="name"><a href="../dart_libp2p_kad_dht/QueryFunction.html">QueryFunction</a></span><span class="signature">
+      <span class="returntype parameter">= <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span>&gt;</span> Function<span class="signature">(<span class="parameter" id="param-peer"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peer</span></span>)</span></span>
+    </span>
+    
+
+  </dt>
+  <dd>
+    A function that queries a peer and returns a list of closer peers.
+    
+
+  </dd>
+
+          
+  <dt id="RouteTableFilterFunc" class="callable">
+    <span class="name"><a href="../dart_libp2p_kad_dht/RouteTableFilterFunc.html">RouteTableFilterFunc</a></span><span class="signature">
+      <span class="returntype parameter">= <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a> Function<span class="signature">(<span class="parameter" id="param-dht"><span class="type-annotation">dynamic</span> <span class="parameter-name">dht</span>, </span><span class="parameter" id="param-peerId"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">peerId</span></span>)</span></span>
+    </span>
+    
+
+  </dt>
+  <dd>
+    Type definition for a function that filters peers for the routing table
+    
+
+  </dd>
+
+          
+  <dt id="StopFunction" class="callable">
+    <span class="name"><a href="../dart_libp2p_kad_dht/StopFunction.html">StopFunction</a></span><span class="signature">
+      <span class="returntype parameter">= <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a> Function<span class="signature">(<span class="parameter" id="param-peerset"><span class="type-annotation"><a href="../dart_libp2p_kad_dht/QueryPeerset-class.html">QueryPeerset</a></span> <span class="parameter-name">peerset</span></span>)</span></span>
+    </span>
+    
+
+  </dt>
+  <dd>
+    A function that determines when a query should stop.
+    
+
+  </dd>
+
+      </dl>
+    </section>
+
+    <section class="summary offset-anchor" id="exceptions">
+      <h2>Exceptions / Errors</h2>
+      <dl>
+          <dt id="MaxRetriesExceededException">
+  <span class="name "><a href="../dart_libp2p_kad_dht/MaxRetriesExceededException-class.html">MaxRetriesExceededException</a></span> 
+
+</dt>
+<dd>
+  Exception thrown when DHT message retries are exhausted.
+</dd>
+
+      </dl>
+    </section>
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">dart_libp2p_kad_dht</a></li>
+    <li class="self-crumb">dart_libp2p_kad_dht.dart</li>
+</ol>
+
+    <h5><span class="package-name">dart_libp2p_kad_dht</span> <span class="package-kind">package</span></h5>
+    <ol>
+      <li class="section-title">Libraries</li>
+      <li><a href="../dart_libp2p_kad_dht/">dart_libp2p_kad_dht</a></li>
+</ol>
+
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+    <h5>dart_libp2p_kad_dht library</h5>
+  </div><!--/sidebar-offcanvas-right-->
+</main>
+<footer>
+  <span class="no-break">
+    dart_libp2p_kad_dht
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the getClosestPeers method from the IpfsDHT class, for the Dart programming language.">
+  <title>getClosestPeers method - IpfsDHT class - dart_libp2p_kad_dht library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht.dart</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a></li>
+    <li class="self-crumb">getClosestPeers method</li>
+  </ol>
+  <div class="self-name">getClosestPeers</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="dart_libp2p_kad_dht&#47;IpfsDHT-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">getClosestPeers</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/AddrInfo-class.html">AddrInfo</a></span>&gt;</span></span>&gt;</span></span>
+<span class="name ">getClosestPeers</span>(<wbr><ol class="parameter-list"> <li><span class="parameter" id="getClosestPeers-param-target"><span class="type-annotation"><a href="https://pub.dev/documentation/dart_libp2p/0.5.2/dart_libp2p/PeerId-class.html">PeerId</a></span> <span class="parameter-name">target</span>, {</span></li>
+<li><span class="parameter" id="getClosestPeers-param-networkQueryEnabled"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">networkQueryEnabled</span> = <span class="default-value">true</span>, </span></li>
+</ol>})
+
+      
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Gets the closest peers to a target</p>
+<p>This method first checks the local routing table, and if insufficient peers
+are found, performs network queries to discover additional peers.</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">Future&lt;List&lt;AddrInfo&gt;&gt; getClosestPeers(PeerId target, {bool networkQueryEnabled = true}) async {
+  final logPrefix = &#39;[${_host.id.toBase58().substring(0, 6)}.getClosestPeers]&#39;;
+  final targetShortId = target.toBase58().substring(0, 6);
+  print(&#39;$logPrefix *** DEBUG: Finding closest peers to $targetShortId (networkQuery: $networkQueryEnabled)&#39;);
+  print(&#39;$logPrefix *** DEBUG: _options.resiliency = ${_options.resiliency}&#39;);
+
+  &#47;&#47; Phase 1: Get peers from local routing table
+  final localPeerIds = await _routingTable.nearestPeers(target.toBytes(), _options.resiliency);
+  print(&#39;$logPrefix *** DEBUG: Found ${localPeerIds.length} peers in local routing table&#39;);
+  for (int i = 0; i &lt; localPeerIds.length; i++) {
+    print(&#39;$logPrefix *** DEBUG: Local peer $i: ${localPeerIds[i].toBase58().substring(0,6)}&#39;);
+  }
+
+  &#47;&#47; Convert PeerId objects to AddrInfo objects
+  final localResult = &lt;AddrInfo&gt;[];
+  for (final peerId in localPeerIds) {
+    &#47;&#47; Get the peer&#39;s addresses from the peerstore
+    final peerInfoFromStore = await _host.peerStore.getPeer(peerId);
+    localResult.add(AddrInfo(peerId, peerInfoFromStore?.addrs.toList() ?? []));
+  }
+
+  print(&#39;$logPrefix *** DEBUG: Local result count: ${localResult.length}, resiliency: ${_options.resiliency}, networkQueryEnabled: $networkQueryEnabled&#39;);
+
+  &#47;&#47; If we have sufficient peers from local routing table, return them
+  if (localResult.length &gt;= _options.resiliency || !networkQueryEnabled) {
+    print(&#39;$logPrefix *** DEBUG: EARLY RETURN - Returning ${localResult.length} peers from local routing table (sufficient or network query disabled)&#39;);
+    return localResult;
+  }
+
+  &#47;&#47; Phase 2: Network query for additional peers if local results are insufficient
+  print(&#39;$logPrefix *** DEBUG: NETWORK QUERY TRIGGERED - Local routing table has only ${localResult.length} peers (&lt; ${_options.resiliency}). Performing network query...&#39;);
+
+  if (!_started) {
+    _log.fine(&#39;$logPrefix DHT not started, calling start() before network query.&#39;);
+    await start();
+  }
+
+  try {
+    &#47;&#47; Use existing runLookupWithFollowup infrastructure to query the network
+    &#47;&#47; We&#39;ll collect both peer IDs and their addresses from network responses
+    final networkPeersWithAddrs = &lt;PeerId, AddrInfo&gt;{};
+
+    final networkResult = await runLookupWithFollowup(
+      target: target.toBytes(),
+      queryFn: (peer) async {
+        final queryFnLogPrefix = &#39;$logPrefix [networkQuery.queryFn for ${peer.toBase58().substring(0,6)}]&#39;;
+        _log.fine(&#39;$queryFnLogPrefix Sending FIND_NODE for target $targetShortId&#39;);
+
+        final message = Message(
+          type: MessageType.findNode,
+          key: target.toBytes(),
+        );
+
+        final response = await _sendMessage(peer, message);
+        _log.fine(&#39;$queryFnLogPrefix Got FIND_NODE response with ${response.closerPeers.length} closer peers&#39;);
+
+        &#47;&#47; Convert response peers to AddrInfo objects AND store them for later use
+        final addrInfoList = response.closerPeers.map((p) {
+          final peerId = PeerId.fromBytes(p.id);
+          final addrs = p.addrs.map((addr) =&gt; MultiAddr.fromBytes(addr)).toList();
+          final addrInfo = AddrInfo(peerId, addrs);
+
+          &#47;&#47; Store the peer with its addresses from the network response
+          &#47;&#47; This preserves the addresses that came directly from the bootstrap server
+          networkPeersWithAddrs[peerId] = addrInfo;
+          _log.fine(&#39;$queryFnLogPrefix Stored peer ${peerId.toBase58().substring(0,6)} with ${addrs.length} addresses from network response&#39;);
+
+          return addrInfo;
+        }).toList();
+
+        return addrInfoList;
+      },
+      stopFn: (peerset) {
+        &#47;&#47; Stop when we&#39;ve queried enough peers or found sufficient diverse peers
+        final queriedCount = peerset.getClosestInStates([PeerState.queried]).length;
+        final totalPeersFound = peerset.getClosestInStates([
+          PeerState.queried,
+          PeerState.heard,
+          PeerState.waiting
+        ]).length;
+
+        final stop = queriedCount &gt;= _options.resiliency || totalPeersFound &gt;= (_options.resiliency * 2);
+        _log.finer(&#39;$logPrefix [networkQuery.stopFn] Queried: $queriedCount, Total found: $totalPeersFound, Resiliency: ${_options.resiliency}. Stop: $stop&#39;);
+        return stop;
+      },
+    );
+
+    &#47;&#47; Combine local and network results, removing duplicates
+    final combinedPeers = &lt;PeerId, AddrInfo&gt;{};
+
+    &#47;&#47; Add local peers first (they&#39;re already connected)
+    for (final localPeer in localResult) {
+      combinedPeers[localPeer.id] = localPeer;
+    }
+
+    &#47;&#47; Add network-discovered peers using the addresses we preserved from network responses
+    for (final networkPeerId in networkResult.peers) {
+      if (!combinedPeers.containsKey(networkPeerId)) {
+        &#47;&#47; Use the addresses we stored from the actual network response
+        &#47;&#47; This preserves the addresses that came from bootstrap servers
+        final networkPeerWithAddrs = networkPeersWithAddrs[networkPeerId];
+        if (networkPeerWithAddrs != null) {
+          combinedPeers[networkPeerId] = networkPeerWithAddrs;
+          _log.fine(&#39;$logPrefix Using preserved addresses for network peer ${networkPeerId.toBase58().substring(0,6)}: ${networkPeerWithAddrs.addrs.length} addresses&#39;);
+        } else {
+          &#47;&#47; Fallback to peerstore if somehow not found in our preserved map
+          final peerInfoFromStore = await _host.peerStore.getPeer(networkPeerId);
+          combinedPeers[networkPeerId] = AddrInfo(
+            networkPeerId,
+            peerInfoFromStore?.addrs.toList() ?? []
+          );
+          _log.warning(&#39;$logPrefix Fallback to peerstore for network peer ${networkPeerId.toBase58().substring(0,6)} (${peerInfoFromStore?.addrs.length ?? 0} addresses)&#39;);
+        }
+      }
+    }
+
+    final finalResult = combinedPeers.values.toList();
+    _log.info(&#39;$logPrefix Network query completed. Combined result: ${finalResult.length} peers (${localResult.length} local + ${finalResult.length - localResult.length} network)&#39;);
+
+    &#47;&#47; Log the peer IDs for debugging
+    for (int i = 0; i &lt; finalResult.length; i++) {
+      final peer = finalResult[i];
+      final source = localResult.any((p) =&gt; p.id == peer.id) ? &#39;local&#39; : &#39;network&#39;;
+      _log.fine(&#39;$logPrefix Result peer $i: ${peer.id.toBase58().substring(0,6)} ($source, ${peer.addrs.length} addrs)&#39;);
+    }
+
+    return finalResult;
+
+  } catch (e, s) {
+    _log.warning(&#39;$logPrefix Network query failed: $e&#39;, e, s);
+    &#47;&#47; Fall back to local results even if insufficient
+    _log.info(&#39;$logPrefix Falling back to ${localResult.length} local peers due to network query failure&#39;);
+    return localResult;
+  }
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/IpfsDHT-class.html">IpfsDHT</a></li>
+    <li class="self-crumb">getClosestPeers method</li>
+</ol>
+
+    <h5>IpfsDHT class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    dart_libp2p_kad_dht
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

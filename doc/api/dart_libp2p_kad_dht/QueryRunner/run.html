@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the run method from the QueryRunner class, for the Dart programming language.">
+  <title>run method - QueryRunner class - dart_libp2p_kad_dht library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht.dart</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/QueryRunner-class.html">QueryRunner</a></li>
+    <li class="self-crumb">run method</li>
+  </ol>
+  <div class="self-name">run</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="dart_libp2p_kad_dht&#47;QueryRunner-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">run</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../../dart_libp2p_kad_dht/QueryResult-class.html">QueryResult</a></span>&gt;</span></span>
+<span class="name ">run</span>(<wbr>)
+
+      
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Executes the query and returns the result.</p>
+<p>The query process:</p>
+<ol>
+<li>Validates that no query is currently running</li>
+<li>Sets up timeout handling and initializes state</li>
+<li>Executes query rounds until termination condition is met</li>
+<li>Returns the final <a href="../../dart_libp2p_kad_dht/QueryResult-class.html">QueryResult</a></li>
+</ol>
+<p>Query rounds:</p>
+<ul>
+<li>Select up to <code>alpha</code> peers in <code>heard</code> state (closest to target)</li>
+<li>Query all selected peers concurrently</li>
+<li>Add discovered peers to the peerset</li>
+<li>Check stop condition after each round</li>
+<li>Continue until stopped, timed out, cancelled, or no more peers</li>
+</ul>
+<p>Termination conditions:</p>
+<ul>
+<li><a href="../../dart_libp2p_kad_dht/QueryTerminationReason.html">QueryTerminationReason.Success</a>: Stop function returned true</li>
+<li><a href="../../dart_libp2p_kad_dht/QueryTerminationReason.html">QueryTerminationReason.Timeout</a>: Query exceeded timeout duration</li>
+<li><a href="../../dart_libp2p_kad_dht/QueryTerminationReason.html">QueryTerminationReason.Cancelled</a>: Query was cancelled via cancel()</li>
+<li><a href="../../dart_libp2p_kad_dht/QueryTerminationReason.html">QueryTerminationReason.NoMorePeers</a>: No more peers available to query</li>
+</ul>
+<p>Throws <a href="https://api.flutter.dev/flutter/dart-core/StateError-class.html">StateError</a> if a query is already running.</p>
+<p>The QueryRunner can be reused after a query completes by calling
+run() again (unless it has been cancelled or disposed).</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">Future&lt;QueryResult&gt; run() async {
+  if (_running) {
+    throw StateError(&#39;Query is already running&#39;);
+  }
+
+  _running = true;
+  _cancelled = false;
+  _resultCompleter = Completer&lt;QueryResult&gt;();
+  _timeoutCompleter = Completer&lt;void&gt;();
+
+  &#47;&#47; Start timeout handling using Future.delayed instead of Timer
+  _startTimeoutHandler();
+
+  try {
+    if (_peerset.getClosestNInStates(1, [PeerState.heard]).isEmpty) {
+      final result = _terminate(QueryTerminationReason.NoMorePeers);
+      if (!_resultCompleter!.isCompleted) {
+        _resultCompleter!.complete(result);
+      }
+      return result;
+    }
+
+    &#47;&#47; Start the query loop asynchronously
+    _runQueryLoop();
+
+    &#47;&#47; Return the result when completed
+    return await _resultCompleter!.future;
+  } catch (e) {
+    &#47;&#47; Ensure cleanup on unexpected errors
+    final result = _terminate(QueryTerminationReason.Cancelled);
+    if (!_resultCompleter!.isCompleted) {
+      _resultCompleter!.complete(result);
+    }
+    rethrow;
+  }
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/">dart_libp2p_kad_dht</a></li>
+    <li><a href="../../dart_libp2p_kad_dht/QueryRunner-class.html">QueryRunner</a></li>
+    <li class="self-crumb">run method</li>
+</ol>
+
+    <h5>QueryRunner class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    dart_libp2p_kad_dht
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

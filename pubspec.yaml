@@ -1,0 +1,39 @@
+name: dart_libp2p_kad_dht
+description: A Dart implementation of the libp2p Kademlia DHT.
+version: 1.1.0
+repository: https://github.com/stephanfeb/dart_libp2p_kad_dht
+
+environment:
+  sdk: ^3.5.0
+
+# Add regular dependencies here.
+dependencies:
+  crypto: ^3.0.3
+  convert: ^3.1.1
+  equatable: ^2.0.5
+  meta: ^1.9.1
+  fixnum: ^1.1.0
+  async: ^2.11.0
+  lru: ^1.0.0
+  dart_libp2p: ^0.5.2
+  dcid: ^1.0.0
+
+  synchronized: ^3.3.0+3
+  logging: ^1.2.0
+  collection: ^1.18.0
+  multibase: ^1.0.0
+  dart_multihash: ^1.0.0
+  build_runner: ^2.4.13
+  protobuf: ^3.1.0
+  cbor: ^6.3.5
+  yaml: ^3.1.2 
+  pointycastle: ^3.7.0
+  dart_udx: ^0.3.1
+  args: ^2.7.0
+
+dev_dependencies:
+  mockito: ^5.4.5
+  protoc_builder: ^0.4.1
+  test: ^1.24.0
+  protoc_plugin: ^21.0.0
+  lints: ^2.1.0
