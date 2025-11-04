@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../dart-libp2p"
+		}
+	],
+	"settings": {}
+}

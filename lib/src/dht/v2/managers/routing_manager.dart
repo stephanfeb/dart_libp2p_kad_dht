@@ -199,11 +199,9 @@ class RoutingManager {
   /// Extracts peer ID from multiaddr
   PeerId? _extractPeerIdFromMultiaddr(MultiAddr addr) {
     try {
-      final addrString = addr.toString();
-      final p2pIndex = addrString.indexOf('/p2p/');
-      if (p2pIndex != -1) {
-        final peerIdString = addrString.substring(p2pIndex + 5);
-        return PeerId.fromString(peerIdString);
+      final peerIdValue = addr.valueForProtocol('p2p');
+      if (peerIdValue != null && peerIdValue.isNotEmpty) {
+        return PeerId.fromString(peerIdValue);
       }
     } catch (e) {
       _logger.warning('Error extracting peer ID from $addr: $e');

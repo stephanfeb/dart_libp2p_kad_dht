@@ -138,6 +138,10 @@ class Bucket {
   /// Removes the peer with the given ID from the bucket.
   /// Returns true if successful, false otherwise.
   bool remove(PeerId id) {
+    if (_list.isEmpty) {
+      return false;
+    }
+    
     for (PeerInfoEntry? e = _list.first; e != null; e = e.next) {
       if (e.peerInfo.id == id) {
         e.unlink();

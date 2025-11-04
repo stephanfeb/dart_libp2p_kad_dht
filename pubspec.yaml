@@ -18,7 +18,8 @@ dependencies:
   fixnum: ^1.1.0
   async: ^2.11.0
   lru: ^1.0.0
-  dart_libp2p: ^0.5.2
+  dart_libp2p:
+    path: /Users/stephanfeb/IdeaProjects/agentic/dart-libp2p
   dcid: ^1.0.0
 
   synchronized: ^3.3.0+3

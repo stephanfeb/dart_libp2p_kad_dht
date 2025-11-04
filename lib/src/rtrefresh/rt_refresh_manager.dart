@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dart_libp2p/core/host/host.dart';
+import 'package:dart_libp2p/core/network/context.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
 import 'package:dart_libp2p_kad_dht/dart_libp2p_kad_dht.dart';
 import 'package:dart_libp2p_kad_dht/src/kbucket/table/table_refresh.dart';
@@ -206,7 +207,7 @@ class RtRefreshManager {
     try {
       // Try to connect to the peer
       _logger.fine('_pingAndEvictPeer: Dialing ${peerId.toBase58()}');
-      await (host as dynamic).dialPeer(peerId);
+      await host.network.dialPeer(Context(timeout: Duration(seconds: 5)), peerId);
       _logger.fine('_pingAndEvictPeer: Dial successful for ${peerId.toBase58()}');
       
       // Try to ping the peer
