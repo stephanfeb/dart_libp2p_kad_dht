@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dart_libp2p/core/peer/peer_id.dart';
+import 'package:dart_libp2p/p2p/protocol/identify/identify_exceptions.dart';
 import 'package:logging/logging.dart';
 
 /// Base exception for all DHT v2 errors
@@ -102,7 +103,6 @@ class DHTErrorHandler {
   }) async {
     int attempts = 0;
     Duration backoff = initialBackoff;
-    Exception? lastException;
     
     while (true) {
       attempts++;
@@ -111,7 +111,6 @@ class DHTErrorHandler {
         return await operation();
       } on DHTNetworkException catch (e) {
         _logger.warning('Network error querying ${peer.toBase58().substring(0, 6)}${context != null ? ' ($context)' : ''}: ${e.message}');
-        lastException = e;
         
         if (!retryable || attempts >= maxRetries) {
           throw DHTMaxRetriesException(
@@ -126,7 +125,6 @@ class DHTErrorHandler {
         backoff = Duration(milliseconds: (backoff.inMilliseconds * 1.5).round());
       } on DHTTimeoutException catch (e) {
         _logger.warning('Timeout querying ${peer.toBase58().substring(0, 6)}${context != null ? ' ($context)' : ''}: ${e.message}');
-        lastException = e;
         
         if (!retryable || attempts >= maxRetries) {
           throw DHTMaxRetriesException(
@@ -146,7 +144,6 @@ class DHTErrorHandler {
         return null;
       } catch (e, stackTrace) {
         _logger.severe('Unexpected error querying ${peer.toBase58().substring(0, 6)}${context != null ? ' ($context)' : ''}: $e', e, stackTrace);
-        lastException = e is Exception ? e : Exception(e.toString());
         
         if (!retryable || attempts >= maxRetries) {
           throw DHTQueryException(
@@ -161,14 +158,8 @@ class DHTErrorHandler {
         backoff = Duration(milliseconds: (backoff.inMilliseconds * 1.5).round());
       }
     }
-    
-    // This should not be reached due to the conditions above, but just in case
-    throw DHTMaxRetriesException(
-      'Failed to query peer after $maxRetries attempts',
-      maxRetries,
-      peerId: peer,
-      cause: lastException,
-    );
+    // Note: This point is unreachable due to the while(true) loop's exit conditions
+    // All paths either return, throw, or continue
   }
   
   /// Handles network errors with consistent patterns
@@ -219,6 +210,16 @@ class DHTErrorHandler {
   
   /// Checks if an error is retryable based on its type and message
   static bool _isRetryableConnectionError(dynamic error) {
+    // IdentifyTimeoutException is retryable - peer may become available later
+    if (error is IdentifyTimeoutException) {
+      return true;
+    }
+    
+    // Other IdentifyException types are generally retryable (connection issues)
+    if (error is IdentifyException) {
+      return true;
+    }
+    
     if (error is Exception) {
       final errorString = error.toString().toLowerCase();
       return errorString.contains('connection refused') ||
@@ -228,7 +229,9 @@ class DHTErrorHandler {
              errorString.contains('broken pipe') ||
              errorString.contains('socketexception') ||
              errorString.contains('connection timed out') ||
-             errorString.contains('connection is closed');
+             errorString.contains('connection is closed') ||
+             errorString.contains('identify timeout') ||
+             errorString.contains('identifytimeoutexception');
     }
     return false;
   }

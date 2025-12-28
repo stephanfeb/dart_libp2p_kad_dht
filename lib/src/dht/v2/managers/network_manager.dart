@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:dart_libp2p/core/host/host.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
 import 'package:dart_libp2p/core/network/stream.dart';
 import 'package:dart_libp2p/core/network/context.dart';
+import 'package:dart_libp2p/p2p/protocol/identify/identify_exceptions.dart';
 import 'package:logging/logging.dart';
 
 import '../../../pb/dht_message.dart';
@@ -175,6 +175,24 @@ class NetworkManager {
       _metrics?.recordConnectionOpened();
       
       return stream;
+    } on IdentifyTimeoutException catch (e) {
+      // Handle identify protocol timeout specifically
+      // This can happen when the remote peer is unreachable or the connection is stale
+      _logger.warning('Identify timeout creating stream to ${peer.toBase58().substring(0, 6)}: ${e.message}');
+      throw DHTTimeoutException(
+        'Stream creation failed due to identify timeout',
+        e.timeout ?? timeout,
+        peerId: peer,
+        cause: e,
+      );
+    } on IdentifyException catch (e) {
+      // Handle other identify protocol failures
+      _logger.warning('Identify failed creating stream to ${peer.toBase58().substring(0, 6)}: ${e.message}');
+      throw DHTNetworkException(
+        'Stream creation failed due to identify error: ${e.message}',
+        peerId: peer,
+        cause: e,
+      );
     } on TimeoutException catch (e) {
       throw DHTTimeoutException(
         'Stream creation timed out',
