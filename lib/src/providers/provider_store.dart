@@ -80,6 +80,15 @@ class MemoryProviderStore implements ProviderStore {
     }
 
     final keyStr = _keyToString(key.toBytes());
+    
+    // 🔍 DIAGNOSTIC LOGGING
+    print('🔍 [ProviderStore.addProvider] ═══════════════════════════════');
+    print('🔍 CID (toString): ${key.toString()}');
+    print('🔍 CID (bytes hex): ${key.toBytes().map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+    print('🔍 Key string length: ${keyStr.length}');
+    print('🔍 Provider Peer ID: ${provider.id.toBase58()}');
+    print('🔍 Provider Addresses: ${provider.addrs.map((a) => a.toString()).join(", ")}');
+    
     final expiration = DateTime.now().add(_options.provideValidity);
     final record = ProviderRecord(
       provider: provider,
@@ -88,6 +97,13 @@ class MemoryProviderStore implements ProviderStore {
 
     _providers.putIfAbsent(keyStr, () => []).add(record);
     _cleanupExpired(keyStr);
+    
+    print('🔍 Total providers for this CID: ${_providers[keyStr]!.length}');
+    print('🔍 All providers for this CID:');
+    for (final r in _providers[keyStr]!) {
+      print('🔍   - ${r.provider.id.toBase58()}');
+    }
+    print('🔍 ═══════════════════════════════════════════════════════════');
   }
 
   @override
@@ -97,9 +113,24 @@ class MemoryProviderStore implements ProviderStore {
     }
 
     final keyStr = _keyToString(key.toBytes());
+    
+    // 🔍 DIAGNOSTIC LOGGING
+    print('🔍 [ProviderStore.getProviders] ═══════════════════════════════');
+    print('🔍 CID (toString): ${key.toString()}');
+    print('🔍 CID (bytes hex): ${key.toBytes().map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+    print('🔍 Key string length: ${keyStr.length}');
+    print('🔍 Looking up key in store...');
+    
     _cleanupExpired(keyStr);
 
     final records = _providers[keyStr] ?? [];
+    
+    print('🔍 Found ${records.length} provider(s) for this CID:');
+    for (final record in records) {
+      print('🔍   - ${record.provider.id.toBase58()} (expires: ${record.expiration})');
+    }
+    print('🔍 ═══════════════════════════════════════════════════════════');
+    
     final result = records.map((record) => record.provider).toList();
     return result;
   }

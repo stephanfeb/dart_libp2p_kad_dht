@@ -178,6 +178,10 @@ class RoutingManager {
           connected++;
           _metrics?.recordPeerAdded();
           _logger.info('Successfully connected to bootstrap peer: ${peerId.toBase58().substring(0, 6)}');
+          
+          // Protect DHT routing table peer to maintain stable connections
+          _host.connManager.protect(peerId, 'dht-routing-table');
+          _logger.fine('Protected DHT routing table peer: ${peerId.toBase58().substring(0, 6)}');
         }
       } catch (e) {
         final error = 'Failed to connect to bootstrap peer $addr: $e';
@@ -259,6 +263,9 @@ class RoutingManager {
           final refreshed = await _routingTable.tryAddPeer(peer.id, queryPeer: false);
           if (refreshed) {
             refreshedCount++;
+            // Protect refreshed peer
+            _host.connManager.protect(peer.id, 'dht-routing-table');
+            _logger.fine('Protected refreshed DHT peer: ${peer.id.toBase58().substring(0, 6)}');
           }
           _logger.fine('Refreshed peer ${peer.id.toBase58().substring(0, 6)}: $refreshed');
         } else {
@@ -266,6 +273,10 @@ class RoutingManager {
           await _routingTable.removePeer(peer.id);
           removedCount++;
           _logger.warning('Removed unresponsive peer ${peer.id.toBase58().substring(0, 6)}');
+          
+          // Unprotect removed peer
+          _host.connManager.unprotect(peer.id, 'dht-routing-table');
+          _logger.fine('Unprotected removed DHT peer: ${peer.id.toBase58().substring(0, 6)}');
         }
       } catch (e) {
         _logger.warning('Failed to refresh peer ${peer.id.toBase58().substring(0, 6)}: $e');
@@ -273,6 +284,10 @@ class RoutingManager {
         try {
           await _routingTable.removePeer(peer.id);
           removedCount++;
+          
+          // Unprotect removed peer
+          _host.connManager.unprotect(peer.id, 'dht-routing-table');
+          _logger.fine('Unprotected problematic DHT peer: ${peer.id.toBase58().substring(0, 6)}');
         } catch (removeError) {
           _logger.warning('Failed to remove problematic peer: $removeError');
         }
@@ -376,6 +391,10 @@ class RoutingManager {
           connected++;
           _metrics?.recordPeerAdded();
           _logger.info('Connected to additional bootstrap peer: ${addrInfo.id.toBase58().substring(0, 6)}');
+          
+          // Protect additional bootstrap peer
+          _host.connManager.protect(addrInfo.id, 'dht-routing-table');
+          _logger.fine('Protected additional bootstrap DHT peer: ${addrInfo.id.toBase58().substring(0, 6)}');
         }
       } catch (e) {
         _logger.warning('Failed to connect to additional bootstrap peer ${addrInfo.id.toBase58().substring(0, 6)}: $e');
@@ -450,6 +469,10 @@ class RoutingManager {
                 if (added) {
                   discoveredPeers++;
                   _metrics?.recordPeerAdded();
+                  
+                  // Protect discovered peer
+                  _host.connManager.protect(peerId, 'dht-routing-table');
+                  _logger.fine('Protected discovered DHT peer: ${peerId.toBase58().substring(0, 6)}');
                 }
               } catch (e) {
                 _logger.fine('Failed to add discovered peer: $e');
@@ -500,6 +523,10 @@ class RoutingManager {
                 if (added) {
                   discoveredPeers++;
                   _metrics?.recordPeerAdded();
+                  
+                  // Protect discovered peer from self lookup
+                  _host.connManager.protect(peerId, 'dht-routing-table');
+                  _logger.fine('Protected peer discovered in self lookup: ${peerId.toBase58().substring(0, 6)}');
                 }
               } catch (e) {
                 _logger.fine('Failed to add discovered peer: $e');

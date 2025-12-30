@@ -32,7 +32,8 @@ dependencies:
   cbor: ^6.3.5
   yaml: ^3.1.2 
   pointycastle: ^3.7.0
-  dart_udx: ^0.3.1
+  dart_udx: 
+     path: ../dart-udx
   args: ^2.7.0
 
 dev_dependencies:
