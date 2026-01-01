@@ -249,6 +249,7 @@ class QueryManager {
       }
       
       // Perform distributed lookup for the value
+      // ignore: unused_local_variable - result not used; records collected via queryFn
       final result = await runLookupWithFollowup(
         target: keyBytes,
         queryFn: (peer) async {
@@ -700,23 +701,47 @@ class QueryManager {
     final logPrefix = '[${id?.substring((id.length - 6).clamp(0, id.length)) ?? 'unknown'}.runLookupWithFollowup]';
     _logger.info('$logPrefix Starting lookup for target: ${target.take(10).toList()}...');
 
-    // Get bootstrap peers for the query
-    final bootstrapPeers = await _routing?.getBootstrapPeers() ?? [];
-    if (bootstrapPeers.isEmpty) {
-      _logger.warning('$logPrefix No bootstrap peers available for lookup');
+    // Get bootstrap peers for the query from routing table
+    var queryPeers = await _routing?.getBootstrapPeers() ?? [];
+    
+    // FALLBACK: Use configured bootstrap peers if routing table is empty
+    // This is critical for DHT client mode where routing table may be sparse
+    if (queryPeers.isEmpty && _config?.bootstrapPeers != null && _config!.bootstrapPeers!.isNotEmpty) {
+      _logger.info('$logPrefix Routing table empty, falling back to ${_config!.bootstrapPeers!.length} configured bootstrap peers');
+      
+      final configuredPeers = <AddrInfo>[];
+      for (final ma in _config!.bootstrapPeers!) {
+        try {
+          final peerIdStr = ma.peerId;
+          if (peerIdStr != null) {
+            final peerId = PeerId.fromString(peerIdStr);
+            configuredPeers.add(AddrInfo(peerId, [ma]));
+            _logger.fine('$logPrefix Using configured bootstrap peer: ${peerId.toBase58().substring(0, 8)}...');
+          }
+        } catch (e) {
+          _logger.warning('$logPrefix Failed to parse bootstrap multiaddr $ma: $e');
+        }
+      }
+      queryPeers = configuredPeers;
+    }
+    
+    if (queryPeers.isEmpty) {
+      _logger.warning('$logPrefix No bootstrap peers available for lookup (neither from routing table nor config)');
       return LookupWithFollowupResult(
         peers: [],
         terminationReason: LookupTerminationReason.noMorePeers,
         errors: [],
       );
     }
+    
+    _logger.info('$logPrefix Using ${queryPeers.length} peers for DHT query');
 
     // Create QueryRunner with our configuration
     final runner = QueryRunner(
       target: target,
       queryFn: queryFn,
       stopFn: stopFn,
-      initialPeers: bootstrapPeers.map((p) => p.id).toList(),
+      initialPeers: queryPeers.map((p) => p.id).toList(),
       alpha: _config?.concurrency ?? 10, // Use DHT's concurrency setting
       timeout: _config?.queryTimeout ?? Duration(seconds: 30),
     );
