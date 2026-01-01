@@ -465,6 +465,17 @@ class RoutingManager {
             for (final responsePeer in response.closerPeers) {
               try {
                 final peerId = PeerId.fromBytes(responsePeer.id);
+                
+                // CRITICAL FIX: Store addresses in peerstore BEFORE adding to routing table
+                // This ensures addresses are available when we need to dial these peers later
+                if (responsePeer.addrs.isNotEmpty) {
+                  final addresses = responsePeer.addrs
+                      .map((addr) => MultiAddr.fromBytes(addr))
+                      .toList();
+                  await _host.peerStore.addOrUpdatePeer(peerId, addrs: addresses);
+                  _logger.fine('Stored ${addresses.length} address(es) for discovered peer ${peerId.toBase58().substring(0, 6)}');
+                }
+                
                 final added = await _routingTable.tryAddPeer(peerId, queryPeer: true);
                 if (added) {
                   discoveredPeers++;
@@ -518,6 +529,16 @@ class RoutingManager {
                 final peerId = PeerId.fromBytes(responsePeer.id);
                 // Skip self
                 if (peerId == _host.id) continue;
+                
+                // CRITICAL FIX: Store addresses in peerstore BEFORE adding to routing table
+                // This ensures addresses are available when we need to dial these peers later
+                if (responsePeer.addrs.isNotEmpty) {
+                  final addresses = responsePeer.addrs
+                      .map((addr) => MultiAddr.fromBytes(addr))
+                      .toList();
+                  await _host.peerStore.addOrUpdatePeer(peerId, addrs: addresses);
+                  _logger.fine('Stored ${addresses.length} address(es) for discovered peer ${peerId.toBase58().substring(0, 6)}');
+                }
                 
                 final added = await _routingTable.tryAddPeer(peerId, queryPeer: true);
                 if (added) {
