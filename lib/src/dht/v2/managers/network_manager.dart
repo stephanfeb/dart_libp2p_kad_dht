@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:dart_libp2p/core/host/host.dart';
+import 'package:dart_libp2p_kad_dht/src/pb/dht_codec.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
 import 'package:dart_libp2p/core/network/stream.dart';
 import 'package:dart_libp2p/core/network/context.dart';
@@ -214,25 +215,21 @@ class NetworkManager {
     final timeout = _config?.networkTimeout ?? Duration(seconds: 30);
     
     try {
-      // Serialize and send the message
-      final messageJson = message.toJson();
-      final messageJsonString = jsonEncode(messageJson);
-      final messageBytes = utf8.encode(messageJsonString);
-      
+      // Serialize and send the protobuf message
+      final messageBytes = encodeMessage(message);
+
       _logger.fine('Sending message: ${message.type} (${messageBytes.length} bytes)');
-      
+
       await stream.write(messageBytes);
-      
+
       // Read the response with timeout
       final responseBytes = await stream.read().timeout(timeout);
-      
+
       _logger.fine('Received response: ${responseBytes.length} bytes');
-      
-      // Deserialize the response
-      final responseJsonString = utf8.decode(responseBytes);
-      final responseJson = jsonDecode(responseJsonString) as Map<String, dynamic>;
-      final responseMessage = Message.fromJson(responseJson);
-      
+
+      // Deserialize the protobuf response
+      final responseMessage = decodeMessage(Uint8List.fromList(responseBytes));
+
       return responseMessage;
     } on TimeoutException catch (e) {
       throw DHTTimeoutException(
@@ -248,6 +245,35 @@ class NetworkManager {
     }
   }
   
+  /// Sends a message to a peer without expecting a response (fire-and-forget).
+  /// Used for ADD_PROVIDER per the libp2p Kademlia DHT spec.
+  Future<void> sendMessageFireAndForget(PeerId peer, Message message) async {
+    _ensureStarted();
+
+    final peerShortId = peer.toBase58().substring(0, 6);
+    final selfShortId = _host.id.toBase58().substring(0, 6);
+
+    if (peer == _host.id) {
+      throw DHTNetworkException('Cannot send message to self', peerId: peer);
+    }
+
+    _logger.info('[$selfShortId] Sending fire-and-forget ${message.type} to $peerShortId');
+
+    try {
+      final stream = await _createStream(peer);
+      try {
+        final messageBytes = encodeMessage(message);
+        await stream.write(messageBytes);
+      } finally {
+        try { await stream.close(); } catch (_) {}
+      }
+      _logger.fine('[$selfShortId] Fire-and-forget ${message.type} sent to $peerShortId');
+    } catch (e) {
+      _logger.warning('[$selfShortId] Fire-and-forget ${message.type} to $peerShortId failed: $e');
+      rethrow;
+    }
+  }
+
   /// Ensures the network manager is started
   void _ensureStarted() {
     if (_closed) throw DHTClosedException();

@@ -902,6 +902,10 @@ class MockStream implements StreamSink<Uint8List>, P2PStream<Uint8List> {
   Stream<S> transform<S>(StreamTransformer<Uint8List, S> streamTransformer) => _incomingController.stream.transform(streamTransformer);
   @override
   Stream<Uint8List> where(bool Function(Uint8List event) test) => _incomingController.stream.where(test);
+
+  @override
+  // TODO: implement isWritable
+  bool get isWritable => throw UnimplementedError();
 }
 
 /// Creates a mock network with the specified number of hosts

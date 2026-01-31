@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:collection/collection.dart';
 import 'package:dcid/dcid.dart';
 import 'package:dart_libp2p_kad_dht/dart_libp2p_kad_dht.dart';
+import 'package:dart_libp2p_kad_dht/src/pb/dht_codec.dart';
 import 'package:dart_libp2p_kad_dht/src/dht/routing.dart';
 import 'package:dart_libp2p_kad_dht/src/dht/v2/managers/query_manager.dart';
 import 'package:dart_libp2p_kad_dht/src/internal/protocol_messenger.dart';
@@ -346,9 +347,8 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
         return;
       }
 
-      // Parse the message
-      final messageJson = jsonDecode(utf8.decode(messageBytes));
-      final message = Message.fromJson(messageJson as Map<String, dynamic>);
+      // Parse the message (protobuf with varint-length framing)
+      final message = decodeMessage(messageBytes);
 
       // Store remote peer addresses in peerstore if we have them
       if (remotePeerAddrs != null && remotePeerAddrs.isNotEmpty) {
@@ -366,10 +366,15 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       // Handle the message
       final response = await handler(remotePeer, message);
 
-      // Send the response back on the stream
-      final responseBytes = utf8.encode(jsonEncode(response.toJson()));
-      await stream.write(responseBytes); // Write response to the input stream
-      await stream.close(); // Close the stream after successfully sending the response
+      // ADD_PROVIDER is fire-and-forget per the libp2p spec — no response sent
+      if (message.type == MessageType.addProvider) {
+        await stream.close();
+      } else {
+        // Send the response back on the stream (protobuf with varint-length framing)
+        final responseBytes = encodeMessage(response);
+        await stream.write(responseBytes);
+        await stream.close();
+      }
     } catch (e) {
       // If there was an error, reset the stream to signal the failure to the other side
       // A more sophisticated error handling might involve sending an error message if the protocol supports it.
@@ -1030,7 +1035,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
               ),
             ],
           );
-          await _sendMessage(peer, message);
+          await _sendMessageFireAndForget(peer, message);
           _log.info('$logPrefix Successfully sent ADD_PROVIDER for CID ${cid.toString()} to peer $peerShortId');
         } catch (e, s) {
           _log.warning('$logPrefix Error sending ADD_PROVIDER for CID ${cid.toString()} to peer $peerShortId: $e\n$s');
@@ -1078,7 +1083,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       final quorumValue = DHTRouting.getQuorum(options);
 
       // Convert the key to bytes
-      final keyBytes = Uint8List.fromList(utf8.encode(key));
+      final keyBytes = Uint8List.fromList(key.codeUnits);
 
       // Create a channel for received values
       final valCh = StreamController<ReceivedValue>();
@@ -1341,8 +1346,10 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       putLogger.fine('[${_host.id.toBase58().substring(0,6)}] DHT start() completed.');
     }
 
-    // Create a record with the key and value
-    final keyBytes = Uint8List.fromList(utf8.encode(key));
+    // Create a record with the key and value.
+    // Use codeUnits (not utf8.encode) to preserve raw binary bytes in keys
+    // like /pk/<multihash-bytes> where the suffix is raw binary, not UTF-8 text.
+    final keyBytes = Uint8List.fromList(key.codeUnits);
     final record = Record(
       key: keyBytes,
       value: Uint8List.fromList(value),
@@ -1408,7 +1415,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     }
 
     // Convert the key to bytes
-    final keyBytes = Uint8List.fromList(utf8.encode(key));
+    final keyBytes = Uint8List.fromList(key.codeUnits);
 
     // Check if the value is stored locally
     final localRecord = await checkLocalDatastore(keyBytes);
@@ -1486,12 +1493,12 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     List<Uint8List> validRecordValues = [];
     for (final record in receivedRecords) {
         try {
-            getValueLogger.finer('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Validating record from ${PeerId.fromBytes(record.author)} with value: ${utf8.decode(record.value, allowMalformed: true)}');
+            getValueLogger.finer('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Validating record (${record.value.length} bytes)');
             _recordValidator.validate(key, record.value); 
-            getValueLogger.finer('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Record from ${PeerId.fromBytes(record.author)} PASSED validation.');
+            getValueLogger.finer('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Record PASSED validation.');
             validRecordValues.add(record.value);
         } catch (e) {
-            getValueLogger.warning('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Record from ${PeerId.fromBytes(record.author)} failed validation: $e. Value: ${utf8.decode(record.value, allowMalformed: true)}');
+            getValueLogger.warning('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Record failed validation: $e.');
         }
     }
 
@@ -1547,9 +1554,8 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
         }
         _log.fine('[$selfShortId] Attempt $attempt: Stream ${stream!.id()} opened to $shortPeerId.');
 
-        final messageJsonString = jsonEncode(message.toJson());
-        final messageBytes = utf8.encode(messageJsonString);
-        _log.fine('[$selfShortId] Attempt $attempt: Writing message to stream ${stream.id()}: $messageJsonString (Size: ${messageBytes.length})');
+        final messageBytes = encodeMessage(message);
+        _log.fine('[$selfShortId] Attempt $attempt: Writing protobuf message to stream ${stream.id()} (Size: ${messageBytes.length})');
         
         // Add timeout protection to stream operations
         await stream.write(messageBytes).timeout(Duration(seconds: 5), onTimeout: () {
@@ -1571,34 +1577,18 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
         
         stream = null; // Clear stream variable after successful close
 
-        // Parse the response
-        String? responseJsonString;
-        try {
-          responseJsonString = utf8.decode(responseBytes);
-        } catch (e, s) {
-          _log.severe('[$selfShortId] Attempt $attempt: Error UTF-8 decoding response from $shortPeerId. Length: ${responseBytes.length}. Error: $e', e, s);
-          throw Exception('Failed to UTF-8 decode response from $shortPeerId: $e');
-        }
-
-        Map<String, dynamic>? responseJson;
-        try {
-          responseJson = jsonDecode(responseJsonString) as Map<String, dynamic>;
-        } catch (e, s) {
-          _log.severe('[$selfShortId] Attempt $attempt: Error JSON decoding response from $shortPeerId. String: "$responseJsonString". Error: $e', e, s);
-          throw Exception('Failed to JSON decode response from $shortPeerId: $e');
-        }
-        
+        // Parse the protobuf response
         Message responseMessage;
         try {
-          responseMessage = Message.fromJson(responseJson);
+          responseMessage = decodeMessage(Uint8List.fromList(responseBytes));
           _log.info('[$selfShortId] Attempt $attempt: Parsed ${responseMessage.type} response from $shortPeerId. Success.');
           if (responseMessage.record != null) {
             _log.finer('[$selfShortId] Received record in response: key=${base64Encode(responseMessage.record!.key)}, value=${base64Encode(responseMessage.record!.value)} (decoded: ${utf8.decode(responseMessage.record!.value, allowMalformed: true)})');
           }
-          return responseMessage; // Successful attempt, return response
+          return responseMessage;
         } catch (e, s) {
-          _log.severe('[$selfShortId] Attempt $attempt: Error creating Message from JSON from $shortPeerId. JSON: "$responseJson". Error: $e', e, s);
-          throw Exception('Failed to create Message from JSON from $shortPeerId: $e');
+          _log.severe('[$selfShortId] Attempt $attempt: Error decoding protobuf response from $shortPeerId. Length: ${responseBytes.length}. Error: $e', e, s);
+          throw Exception('Failed to decode protobuf response from $shortPeerId: $e');
         }
 
       } catch (e, s) {
@@ -1644,6 +1634,38 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     // Should not be reached if logic is correct, but as a safeguard:
     throw MaxRetriesExceededException(
         'Exhausted retries sending ${message.type} to ${peer.toBase58()} after $attempt attempts', lastError);
+  }
+
+  /// Sends a message to a peer without expecting a response (fire-and-forget).
+  /// Used for ADD_PROVIDER per the libp2p Kademlia DHT spec.
+  Future<void> _sendMessageFireAndForget(PeerId peer, Message message) async {
+    final String shortPeerId = peer.toBase58().substring(0, 6);
+    final String selfShortId = _host.id.toBase58().substring(0, 6);
+    _log.info('[$selfShortId] Sending fire-and-forget ${message.type} to $shortPeerId');
+
+    P2PStream<Uint8List>? stream;
+    try {
+      await dialPeer(peer);
+
+      stream = await _host.newStream(peer, [AminoConstants.protocolID], Context())
+          .timeout(Duration(seconds: 10)) as P2PStream<Uint8List>?;
+
+      if (stream == null) {
+        throw Exception('Failed to create stream, newStream returned null.');
+      }
+
+      final messageBytes = encodeMessage(message);
+      await stream.write(messageBytes).timeout(Duration(seconds: 5));
+      await stream.close();
+      stream = null;
+      _log.info('[$selfShortId] Fire-and-forget ${message.type} sent to $shortPeerId');
+    } catch (e, s) {
+      _log.warning('[$selfShortId] Fire-and-forget ${message.type} to $shortPeerId failed: $e', e, s);
+      if (stream != null) {
+        try { await stream!.reset(); } catch (_) {}
+      }
+      rethrow;
+    }
   }
 
   /// Helper method to compare byte arrays

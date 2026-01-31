@@ -1,9 +1,8 @@
 import 'dart:typed_data';
-import 'package:convert/convert.dart'; // For hex encoding if needed for debugging
-import 'package:dart_libp2p/core/peer/peer_id.dart'; 
-import 'package:dart_libp2p/core/crypto/keys.dart' as p2pkeys; 
-import 'package:dart_libp2p/core/crypto/pb/crypto.pb.dart' as libp2p_crypto_pb; // Import for libp2p's own crypto proto
-import 'package:dart_libp2p_kad_dht/src/record/pb/crypto.pb.dart' as record_pb; // Protobuf for this project's record structure
+import 'package:dart_libp2p/core/peer/peer_id.dart';
+import 'package:dart_libp2p/core/crypto/keys.dart' as p2pkeys;
+import 'package:dart_libp2p/core/crypto/pb/crypto.pb.dart' as libp2p_crypto_pb;
+import 'package:dart_libp2p_kad_dht/src/record/pb/crypto.pb.dart' as record_pb;
 import 'package:dart_libp2p_kad_dht/src/record/validator.dart';
 
 // Custom Error Classes
@@ -34,38 +33,49 @@ class PublicKeyValidator implements Validator {
 
   @override
   Future<void> validate(String key, Uint8List value) async {
-    // 1. Validate the key format and extract PeerId string
+    // 1. Validate the key format and extract the peer ID portion
     if (!key.startsWith(keyPrefix)) {
-      throw InvalidRecordKeyError('Key "$key" does not start with prefix "$keyPrefix"');
+      throw InvalidRecordKeyError('Key does not start with prefix "$keyPrefix"');
     }
-    final expectedPeerIdStr = key.substring(keyPrefix.length);
-    if (expectedPeerIdStr.isEmpty) {
-      throw InvalidRecordKeyError('Key "$key" is missing PeerId part');
-    }
-    // Validate if expectedPeerIdStr is a valid PeerId.
-    // PeerId.fromString will throw if it's not a valid multihash.
-    try {
-      PeerId.fromString(expectedPeerIdStr);
-    } catch (e) {
-      throw InvalidRecordKeyError('PeerId part "$expectedPeerIdStr" in key "$key" is invalid: ${e.toString()}');
+    final peerIdPart = key.substring(keyPrefix.length);
+    if (peerIdPart.isEmpty) {
+      throw InvalidRecordKeyError('Key is missing PeerId part');
     }
 
-    // 2. Deserialize the public key from the value (using this project's record_pb.PublicKey)
+    // The peer ID portion may be either:
+    // a) A base58/CID-encoded PeerId string (as used by some Dart callers)
+    // b) Raw multihash bytes (as used by Go and the spec — binary key)
+    //
+    // Try base58 string first (more specific), then raw bytes.
+    PeerId expectedPeerId;
+    try {
+      expectedPeerId = PeerId.fromString(peerIdPart);
+    } catch (_) {
+      // Fall back to interpreting as raw multihash bytes (spec-compliant binary key).
+      // Go DHT embeds raw multihash bytes directly after /pk/.
+      try {
+        final rawBytes = Uint8List.fromList(peerIdPart.codeUnits);
+        expectedPeerId = PeerId.fromBytes(rawBytes);
+      } catch (e) {
+        throw InvalidRecordKeyError(
+            'PeerId part in key is neither valid PeerId string nor raw multihash bytes: $e');
+      }
+    }
+
+    // 2. Deserialize the public key from the value
     record_pb.PublicKey recordPubKeyProto;
     try {
       recordPubKeyProto = record_pb.PublicKey.fromBuffer(value);
     } catch (e) {
-      throw InvalidPublicKeyProtoError('Failed to parse record PublicKey protobuf for key "$key": ${e.toString()}');
+      throw InvalidPublicKeyProtoError('Failed to parse record PublicKey protobuf: $e');
     }
 
-    // 3. Construct a libp2p p2pkeys.PublicKey
+    // 3. Construct a libp2p PublicKey
     p2pkeys.PublicKey p2pLibp2pPubKey;
     try {
-      // Create an instance of libp2p's own crypto_pb.PublicKey
       final libp2pProtoKey = libp2p_crypto_pb.PublicKey();
       libp2pProtoKey.data = recordPubKeyProto.data;
 
-      // Map KeyType from record_pb to libp2p_crypto_pb
       switch (recordPubKeyProto.type) {
         case record_pb.KeyType.RSA:
           libp2pProtoKey.type = libp2p_crypto_pb.KeyType.RSA;
@@ -80,29 +90,31 @@ class PublicKeyValidator implements Validator {
           libp2pProtoKey.type = libp2p_crypto_pb.KeyType.ECDSA;
           break;
         default:
-          throw InvalidPublicKeyProtoError('Unsupported PublicKey type in record proto: ${recordPubKeyProto.type}');
+          throw InvalidPublicKeyProtoError(
+              'Unsupported PublicKey type: ${recordPubKeyProto.type}');
       }
-      
-      p2pLibp2pPubKey = p2pkeys.publicKeyFromProto(libp2pProtoKey);
 
+      p2pLibp2pPubKey = p2pkeys.publicKeyFromProto(libp2pProtoKey);
     } catch (e) {
-      throw InvalidPublicKeyProtoError('Failed to construct libp2p PublicKey from record proto for key "$key": ${e.toString()}');
+      if (e is InvalidPublicKeyProtoError) rethrow;
+      throw InvalidPublicKeyProtoError(
+          'Failed to construct libp2p PublicKey from record proto: $e');
     }
 
-    // 4. Derive PeerId from the libp2p PublicKey
-    PeerId derivedPeerId; // Use PeerId directly
+    // 4. Derive PeerId from the public key
+    PeerId derivedPeerId;
     try {
       derivedPeerId = PeerId.fromPublicKey(p2pLibp2pPubKey);
     } catch (e) {
-      throw InvalidPublicKeyProtoError('Failed to derive PeerId from libp2p PublicKey for key "$key": ${e.toString()}');
+      throw InvalidPublicKeyProtoError('Failed to derive PeerId from PublicKey: $e');
     }
 
     // 5. Compare derived PeerId with the one from the key
-    if (derivedPeerId.toString() != expectedPeerIdStr) {
+    if (derivedPeerId.toBase58() != expectedPeerId.toBase58()) {
       throw PublicKeyMismatchError(
-          'PublicKey in record for key "$key" does not match PeerId. Expected: "$expectedPeerIdStr", Got: "${derivedPeerId.toString()}"');
+          'PublicKey does not match PeerId in key. '
+          'Expected: "${expectedPeerId.toBase58()}", Got: "${derivedPeerId.toBase58()}"');
     }
-    // If all checks pass, validation is successful.
   }
 
   @override
@@ -111,28 +123,16 @@ class PublicKeyValidator implements Validator {
       throw Exception("can't select from no values for key '$key'");
     }
 
-    int? firstValidIndex;
-
     for (int i = 0; i < values.length; i++) {
       try {
-        // Validate the current value.
-        await validate(key, values[i]); // Added await
-        
-        // If validation passes, this is a candidate.
-        // For public keys, the first valid one is generally considered the best/only one.
-        firstValidIndex = i;
-        break; // Found a valid record, no need to check further for basic selection.
+        await validate(key, values[i]);
+        return i;
       } catch (e) {
-        // This value is invalid, log or ignore and try the next one.
-        // print('DEBUG: Record at index $i for key "$key" is invalid: $e');
+        // This value is invalid, try the next one.
       }
     }
 
-    if (firstValidIndex != null) {
-      return firstValidIndex;
-    }
-
-    // If no valid record was found in the list.
-    throw Exception("No valid public key record found for key '$key' among ${values.length} candidate(s)");
+    throw Exception(
+        "No valid public key record found for key '$key' among ${values.length} candidate(s)");
   }
 }

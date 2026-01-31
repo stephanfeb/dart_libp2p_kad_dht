@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:dart_libp2p_kad_dht/src/pb/dht_codec.dart';
+
 import 'package:dcid/dcid.dart';
 import 'package:dart_libp2p/core/host/host.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
@@ -128,22 +130,22 @@ class ProtocolManager {
       // Read the message from the stream
       final messageBytes = await stream.read();
       
-      // Parse the message
-      final messageJson = jsonDecode(utf8.decode(messageBytes));
-      final message = Message.fromJson(messageJson as Map<String, dynamic>);
-      
+      // Parse the protobuf message
+      final message = decodeMessage(Uint8List.fromList(messageBytes));
+
       _logger.fine('[$selfShortId] Received ${message.type} message from $remotePeerShortId');
-      
+
       // Route the message to the appropriate handler
       final response = await _routeMessage(remotePeer, message);
-      
-      // Send the response back
-      final responseJson = jsonEncode(response.toJson());
-      final responseBytes = utf8.encode(responseJson);
-      
-      await stream.write(responseBytes);
-      
-      _logger.fine('[$selfShortId] Sent response to $remotePeerShortId');
+
+      // ADD_PROVIDER is fire-and-forget per the libp2p spec — no response sent
+      if (message.type != MessageType.addProvider) {
+        final responseBytes = encodeMessage(response);
+        await stream.write(responseBytes);
+        _logger.fine('[$selfShortId] Sent response to $remotePeerShortId');
+      } else {
+        _logger.fine('[$selfShortId] ADD_PROVIDER handled (fire-and-forget, no response)');
+      }
       
     } catch (e, stackTrace) {
       _logger.severe('[$selfShortId] Error handling stream from $remotePeerShortId: $e', e, stackTrace);
@@ -151,8 +153,7 @@ class ProtocolManager {
       // Send error response if possible
       try {
         final errorResponse = Message(type: MessageType.ping); // Default error response
-        final errorResponseJson = jsonEncode(errorResponse.toJson());
-        final errorResponseBytes = utf8.encode(errorResponseJson);
+        final errorResponseBytes = encodeMessage(errorResponse);
         await stream.write(errorResponseBytes);
       } catch (responseError) {
         _logger.warning('[$selfShortId] Failed to send error response: $responseError');
@@ -269,7 +270,7 @@ class ProtocolManager {
       }
       
       // Check local datastore for the record
-      final keyString = utf8.decode(message.key!);
+      final keyString = String.fromCharCodes(message.key!);
       final localRecord = _datastore[keyString];
       
       // Get closer peers from routing table
@@ -313,7 +314,7 @@ class ProtocolManager {
       
       // Validate the record signature
       final record = message.record!;
-      final keyString = utf8.decode(message.key!);
+      final keyString = String.fromCharCodes(message.key!);
       
       _logger.fine('Validating record signature for key: ${keyString.substring(0, 10)}...');
       
@@ -519,7 +520,7 @@ class ProtocolManager {
     
     // Extract key from record - this assumes the record has a key field
     // In a real implementation, you'd need to determine the key from the record
-    final keyString = utf8.decode(record.key ?? Uint8List(0));
+    final keyString = String.fromCharCodes(record.key ?? Uint8List(0));
     if (keyString.isEmpty) {
       throw DHTProtocolException('Record missing key field');
     }

@@ -6,6 +6,7 @@ import 'package:dart_libp2p/core/peer/peer_id.dart';
 import 'package:logging/logging.dart';
 
 import '../config/dht_config.dart';
+import 'dht_metrics_observer.dart';
 
 /// Metrics data structure for DHT operations
 class DHTMetrics {
@@ -190,6 +191,9 @@ class MetricsManager {
   // Configuration
   DHTConfigV2? _config;
   
+  // Observer
+  DHTMetricsObserver? observer;
+  
   // State
   bool _started = false;
   bool _closed = false;
@@ -312,21 +316,31 @@ class MetricsManager {
     );
   }
   
+  /// Notifies the observer with current metrics
+  void _notifyObserver() {
+    if (observer != null) {
+      observer!.onMetricsUpdated(getMetrics());
+    }
+  }
+  
   // Query metrics
   
   void recordQueryStart() {
     _totalQueries.increment();
     _queryRate.recordEvent();
+    _notifyObserver();
   }
   
   void recordQuerySuccess(Duration latency) {
     _successfulQueries.increment();
     _queryLatency.record(latency);
+    _notifyObserver();
   }
   
   void recordQueryFailure(String errorType, {PeerId? peer}) {
     _failedQueries.increment();
     _recordError(errorType, peer: peer);
+    _notifyObserver();
   }
   
   // Network metrics
@@ -334,52 +348,71 @@ class MetricsManager {
   void recordNetworkRequest() {
     _totalNetworkRequests.increment();
     _networkRate.recordEvent();
+    _notifyObserver();
   }
   
   void recordNetworkSuccess() {
     _successfulNetworkRequests.increment();
+    observer?.onNetworkRequest(true);
+    _notifyObserver();
   }
   
   void recordNetworkFailure(String errorType, {PeerId? peer}) {
     _failedNetworkRequests.increment();
     _recordError(errorType, peer: peer);
+    observer?.onNetworkRequest(false, peer: peer, errorType: errorType);
+    _notifyObserver();
   }
   
   void recordNetworkTimeout({PeerId? peer}) {
     _timeoutNetworkRequests.increment();
     _recordError('timeout', peer: peer);
+    observer?.onNetworkRequest(false, peer: peer, errorType: 'timeout');
+    _notifyObserver();
   }
   
   // Routing table metrics
   
   void recordRoutingTableSize(int size) {
     _routingTableSize.set(size.toDouble());
+    _notifyObserver();
   }
   
   void recordPeerAdded() {
     _peersAdded.increment();
+    observer?.onRoutingTableUpdated(_routingTableSize.value.toInt(), 1, 0);
+    _notifyObserver();
   }
   
   void recordPeerRemoved() {
     _peersRemoved.increment();
+    observer?.onRoutingTableUpdated(_routingTableSize.value.toInt(), 0, 1);
+    _notifyObserver();
   }
   
   void recordBucketRefresh() {
     _bucketRefreshes.increment();
+    _notifyObserver();
   }
   
   // Provider metrics
   
   void recordProviderStored() {
     _providersStored.increment();
+    observer?.onProviderOperation('stored', true);
+    _notifyObserver();
   }
   
   void recordProviderRetrieved() {
     _providersRetrieved.increment();
+    observer?.onProviderOperation('retrieved', true);
+    _notifyObserver();
   }
   
   void recordProviderQuery() {
     _providerQueries.increment();
+    observer?.onProviderOperation('query', true);
+    _notifyObserver();
   }
   
   // Connection metrics

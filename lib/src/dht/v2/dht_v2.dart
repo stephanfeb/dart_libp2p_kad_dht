@@ -35,6 +35,7 @@ import 'managers/query_manager.dart';
 import 'managers/routing_manager.dart';
 import 'managers/protocol_manager.dart';
 import 'managers/metrics_manager.dart';
+import 'managers/dht_metrics_observer.dart';
 import 'config/dht_config.dart';
 import 'errors/dht_errors.dart';
 
@@ -85,6 +86,14 @@ class IpfsDHTv2 implements IpfsDHT {
   bool _started = false;
   bool _closed = false;
   final Completer<void> _startCompleter = Completer<void>();
+  
+  /// Sets the metrics observer for DHT operations
+  set metricsObserver(DHTMetricsObserver? observer) {
+    _metrics.observer = observer;
+  }
+  
+  /// Gets the metrics observer
+  DHTMetricsObserver? get metricsObserver => _metrics.observer;
   
   /// Creates a new IpfsDHTv2 instance
   /// 

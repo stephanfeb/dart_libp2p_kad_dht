@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:convert'; // Added for utf8.encode
 
 import 'package:dcid/dcid.dart';
 import 'package:dart_libp2p/core/discovery.dart';
@@ -235,7 +234,7 @@ class QueryManager {
     try {
       _logger.info('Getting value for key: ${key.substring(0, 10)}...');
       
-      final keyBytes = Uint8List.fromList(utf8.encode(key));
+      final keyBytes = Uint8List.fromList(key.codeUnits);
       final foundRecords = <Record>[];
       
       // Check local datastore first
@@ -326,7 +325,7 @@ class QueryManager {
     try {
       _logger.info('Putting value for key: ${key.substring(0, 10)}...');
       
-      final keyBytes = Uint8List.fromList(utf8.encode(key));
+      final keyBytes = Uint8List.fromList(key.codeUnits);
       
       // Create a properly signed record
       final hostPrivateKey = await _network?.host.peerStore.keyBook.privKey(_network!.host.id);
@@ -411,7 +410,7 @@ class QueryManager {
     
     _logger.info('Searching for values for key: ${key.substring(0, 10)}...');
     
-    final keyBytes = Uint8List.fromList(utf8.encode(key));
+    final keyBytes = Uint8List.fromList(key.codeUnits);
     final controller = StreamController<Uint8List>();
     
     // Run the search asynchronously
@@ -601,7 +600,7 @@ class QueryManager {
               ],
             );
             
-            await _network?.sendMessage(peer, addProviderMessage);
+            await _network?.sendMessageFireAndForget(peer, addProviderMessage);
             successCount++;
             _logger.fine('Successfully announced provider to ${peer.toBase58().substring(0, 6)}');
           } catch (e) {

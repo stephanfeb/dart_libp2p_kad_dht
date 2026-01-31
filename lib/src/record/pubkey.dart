@@ -242,7 +242,9 @@ extension PublicKeyExtension on IpfsDHT {
   }
 }
 
-/// Creates a key for a public key
+/// Creates a DHT record key for a public key.
+/// Per the libp2p spec, the key is `/pk/` followed by the raw peer ID bytes
+/// (multihash), not a base58-encoded string.
 String keyForPublicKey(PeerId id) {
-  return '/pk/${id.toString()}';
+  return '/pk/${String.fromCharCodes(id.toBytes())}';
 }

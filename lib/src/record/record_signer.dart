@@ -31,7 +31,7 @@ class RecordSigner {
     required PrivateKey privateKey,
     required PeerId peerId,
   }) async {
-    final keyBytes = Uint8List.fromList(utf8.encode(key));
+    final keyBytes = Uint8List.fromList(key.codeUnits);
     final timeReceived = DateTime.now().millisecondsSinceEpoch;
     final author = peerId.toBytes();
     
@@ -188,7 +188,7 @@ class DHTRecordValidator implements Validator {
       final record = Record.fromJson(jsonDecode(utf8.decode(value)));
       
       // Validate the record key matches the lookup key
-      final recordKeyString = utf8.decode(record.key);
+      final recordKeyString = String.fromCharCodes(record.key);
       if (recordKeyString != key) {
         throw Exception('Record key mismatch: expected "$key", got "$recordKeyString"');
       }

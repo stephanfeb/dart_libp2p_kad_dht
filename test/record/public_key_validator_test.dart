@@ -103,7 +103,7 @@ void main() {
         const badKey = '/pk/notAValidPeerIdString';
         expect(
           () => validator.validate(badKey, validRecordValueBytes),
-          throwsA(isA<InvalidRecordKeyError>().having((e) => e.message, 'message', contains('PeerId part "notAValidPeerIdString" in key'))),
+          throwsA(isA<InvalidRecordKeyError>().having((e) => e.message, 'message', contains('neither valid PeerId string nor raw multihash bytes'))),
         );
       });
     });
