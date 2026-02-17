@@ -1,6 +1,6 @@
 name: dart_libp2p_kad_dht
 description: A comprehensive Dart implementation of the libp2p Kademlia DHT with modular architecture, built-in observability, and production-ready features. Features IpfsDHTv2 with enhanced performance, error handling, and monitoring capabilities.
-version: 1.1.0
+version: 1.2.0
 repository: https://github.com/stephanfeb/dart_libp2p_kad_dht
 homepage: https://github.com/stephanfeb/dart_libp2p_kad_dht
 documentation: https://github.com/stephanfeb/dart_libp2p_kad_dht/blob/main/DEVELOPER_GUIDE.md
@@ -18,8 +18,7 @@ dependencies:
   fixnum: ^1.1.0
   async: ^2.11.0
   lru: ^1.0.0
-  dart_libp2p:
-    path: /Users/stephanfeb/IdeaProjects/agentic/dart-libp2p
+  dart_libp2p: ^1.0.0
   dcid: ^1.0.0
 
   synchronized: ^3.3.0+3
@@ -32,8 +31,7 @@ dependencies:
   cbor: ^6.3.5
   yaml: ^3.1.2 
   pointycastle: ^3.7.0
-  dart_udx: 
-     path: ../dart-udx
+  dart_udx: ^2.0.1
   args: ^2.7.0
 
 dev_dependencies:

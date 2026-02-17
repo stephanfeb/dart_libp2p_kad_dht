@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-02-17
+
+### Changed (Breaking)
+- **Wire format**: Switched DHT wire format from JSON to protobuf with spec-compliant keys for go-libp2p interoperability
+- Updated `dart_libp2p` dependency to `^1.0.0`
+- Updated `dart_udx` dependency to `^2.0.1`
+
+### Added
+- Bootstrap fallback for routing table building
+
+### Fixed
+- Critical fix: store addresses in peerstore before adding to routing table
+- Added protection to connections
+- Addressed timeout issues
+- Routing manager crash fix
+
 ## [1.1.0] - 2025-07-29
 
 ### Added
