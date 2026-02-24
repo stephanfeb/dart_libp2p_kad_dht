@@ -114,6 +114,27 @@ Future<void> main() async {
 }
 ```
 
+### Critical: Initialization Order
+
+**You must start the DHT _before_ starting the host.** When `host.start()` is called, AutoRelay immediately connects to relay servers and triggers an Identify exchange. If the DHT hasn't registered its protocol handler yet, the first Identify response will be missing `/ipfs/kad/1.0.0`. Go-based peers that receive this will mark your node as "peer stopped dht" and refuse to open DHT streams to it — breaking peer discovery permanently for that connection.
+
+```dart
+// CORRECT — DHT starts first, then host
+final host = await createLibp2pHost(); // Do NOT call host.start() yet
+final dht = IpfsDHTv2(host: host, providerStore: store, options: options);
+await dht.start();       // Registers /ipfs/kad/1.0.0 protocol handler
+await host.start();      // Now AutoRelay's Identify will include DHT protocol
+await dht.bootstrap();
+
+// WRONG — host starts before DHT
+final host = await createLibp2pHost();
+await host.start();      // AutoRelay connects, Identify sent WITHOUT /ipfs/kad/1.0.0
+final dht = IpfsDHTv2(host: host, providerStore: store, options: options);
+await dht.start();       // Too late — Go already marked us "peer stopped dht"
+```
+
+This applies to any protocol handler that must be advertised via Identify — always register handlers before `host.start()`.
+
 ### Advanced Configuration with Builder Pattern
 
 ```dart
