@@ -27,7 +27,9 @@ enum DHTMode {
   /// between Client and Server modes based on network conditions
   auto,
 
-  /// ModeClient operates the DHT as a client only, it cannot respond to incoming queries
+  /// ModeClient operates the DHT as a client — it does not proactively
+  /// participate in routing, but still responds to incoming DHT queries
+  /// (matching Go libp2p's ModeClient behaviour).
   client,
 
   /// ModeServer operates the DHT as a server, it can both send and respond to queries

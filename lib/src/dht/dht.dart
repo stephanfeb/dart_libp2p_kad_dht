@@ -220,9 +220,13 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     _started = true;
     _log.info('$logPrefix DHT starting in mode: $_mode');
 
-    // Set up protocol handlers if in server mode
-    if (_mode == DHTMode.server) {
-      _log.info('$logPrefix Initial mode is server, setting up protocol handlers.');
+    // Set up protocol handlers for server and client modes.
+    // Client mode still responds to incoming DHT queries (FIND_NODE, PING,
+    // GET_PROVIDERS, etc.) — matching Go libp2p's ModeClient behaviour.
+    // Without this, DHT server nodes that add us to their routing table will
+    // mark us as unresponsive and evict us, breaking peer discovery.
+    if (_mode == DHTMode.server || _mode == DHTMode.client) {
+      _log.info('$logPrefix Setting up protocol handlers for mode: $_mode');
       _setupProtocolHandlers();
     }
 
@@ -311,38 +315,32 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
 
   /// Handles an incoming stream
   // Reverted stream type to dynamic to match potential StreamHandler typedef, will cast internally.
-  Future<void> _handleIncomingStream(dynamic streamInput, PeerId remotePeer) async { 
+  Future<void> _handleIncomingStream(dynamic streamInput, PeerId remotePeer) async {
     // Cast to P2PStream<Uint8List> for type safety within the method.
     // This assumes the actual stream passed will conform to this.
     final P2PStream<Uint8List> stream = streamInput as P2PStream<Uint8List>;
 
-    // Extract remote peer addresses from the connection
+    // Extract remote peer addresses from the connection (cheap, no I/O)
     List<MultiAddr>? remotePeerAddrs;
     try {
-      // Try to get the remote address from the stream's connection
       final conn = stream.conn;
       final remoteAddr = conn.remoteMultiaddr;
       remotePeerAddrs = [remoteAddr];
-      _log.fine('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Extracted remote address for ${remotePeer.toBase58().substring(0,6)}: $remoteAddr');
     } catch (e) {
       _log.fine('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Could not extract remote address for ${remotePeer.toBase58().substring(0,6)}: $e');
     }
 
     try {
-      // Read the message from the stream using read()
-      final dynamic rawMessageData = await stream.read(); 
+      // Read the message from the stream
+      final dynamic rawMessageData = await stream.read();
       Uint8List messageBytes;
 
       if (rawMessageData is Uint8List) {
         messageBytes = rawMessageData;
       } else if (rawMessageData is List<int>) {
-        // This case should ideally be handled by MockStream directly returning Uint8List,
-        // but as a fallback, convert List<int> to Uint8List.
-        print('[IpfsDHT._handleIncomingStream] Warning: Received List<int>, converting to Uint8List. Peer: $remotePeer');
         messageBytes = Uint8List.fromList(rawMessageData);
       } else {
-        print('[IpfsDHT._handleIncomingStream] Error: Unexpected data type from stream.first: ${rawMessageData.runtimeType}. Peer: $remotePeer. Data: $rawMessageData');
-        // Reset the stream as we can't process this.
+        _log.warning('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Unexpected data type: ${rawMessageData.runtimeType}. Peer: $remotePeer');
         await stream.reset();
         return;
       }
@@ -350,38 +348,31 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       // Parse the message (protobuf with varint-length framing)
       final message = decodeMessage(messageBytes);
 
-      // Store remote peer addresses in peerstore if we have them
-      if (remotePeerAddrs != null && remotePeerAddrs.isNotEmpty) {
-        try {
-          await _host.peerStore.addrBook.addAddrs(remotePeer, remotePeerAddrs, Duration(hours: 1));
-          _log.fine('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Stored ${remotePeerAddrs.length} addresses for ${remotePeer.toBase58().substring(0,6)} in peerstore');
-        } catch (e) {
-          _log.warning('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Error storing addresses for ${remotePeer.toBase58().substring(0,6)}: $e');
-        }
-      }
-
       // Get the handler for this message type
       final handler = _handlers.handlerForMsgType(message.type);
 
-      // Handle the message
+      // Handle the message — response is built with deferred RT insertion
       final response = await handler(remotePeer, message);
 
       // ADD_PROVIDER is fire-and-forget per the libp2p spec — no response sent
       if (message.type == MessageType.addProvider) {
         await stream.close();
       } else {
-        // Send the response back on the stream (protobuf with varint-length framing)
+        // Send the response back FIRST, then do bookkeeping
         final responseBytes = encodeMessage(response);
         await stream.write(responseBytes);
         await stream.close();
       }
+
+      // Defer peerstore address storage to AFTER response is sent (non-blocking)
+      if (remotePeerAddrs != null && remotePeerAddrs.isNotEmpty) {
+        _host.peerStore.addrBook.addAddrs(remotePeer, remotePeerAddrs, Duration(hours: 1)).catchError((e) {
+          _log.warning('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Error storing addresses for ${remotePeer.toBase58().substring(0,6)}: $e');
+        });
+      }
     } catch (e) {
-      // If there was an error, reset the stream to signal the failure to the other side
-      // A more sophisticated error handling might involve sending an error message if the protocol supports it.
       print('[IpfsDHT._handleIncomingStream] Error handling incoming stream from $remotePeer: $e');
-      // Ensure the stream is terminated. reset() is often used for abrupt termination.
-      // MockStream's reset also calls close().
-      await stream.reset(); 
+      await stream.reset();
     }
   }
 
@@ -1760,16 +1751,27 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       
       _log.info('$logPrefix Query completed with reason: ${result.reason}. Found ${result.peerset.getClosestInStates([PeerState.queried, PeerState.heard]).length} peers');
 
-      // Handle peer eviction for failed queries
+      // Handle peer eviction for failed queries — with liveness check
       final unreachablePeers = result.peerset.getClosestInStates([PeerState.unreachable]);
       if (unreachablePeers.isNotEmpty) {
-        _log.info('$logPrefix Evicting ${unreachablePeers.length} unreachable peers from routing table');
+        _log.info('$logPrefix ${unreachablePeers.length} peers marked unreachable, performing liveness checks before eviction');
         for (final peer in unreachablePeers) {
+          bool reachable = false;
           try {
-            await _routingTable.removePeer(peer);
-            _log.fine('$logPrefix Evicted peer ${peer.toBase58().substring(0,6)} from routing table after failed query');
-          } catch (e) {
-            _log.warning('$logPrefix Failed to evict peer ${peer.toBase58().substring(0,6)} from routing table: $e');
+            // Give high-latency networks time to establish connection
+            await dialPeer(peer).timeout(const Duration(seconds: 15));
+            reachable = true;
+          } catch (_) {}
+
+          if (!reachable) {
+            try {
+              await _routingTable.removePeer(peer);
+              _log.fine('$logPrefix Evicted peer ${peer.toBase58().substring(0,6)} from routing table after failed liveness check');
+            } catch (e) {
+              _log.warning('$logPrefix Failed to evict peer ${peer.toBase58().substring(0,6)} from routing table: $e');
+            }
+          } else {
+            _log.info('$logPrefix Peer ${peer.toBase58().substring(0,6)} survived eviction via liveness ping');
           }
         }
       }

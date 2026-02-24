@@ -79,7 +79,10 @@ class DHTHandlers {
     Future<Message> handlePing(PeerId peer, Message message) async {
       final peerShortId = peer.toBase58().substring(0,6);
       _log.info('$_logPrefix handlePing: Received PING from $peerShortId.');
-      await _tryAddSenderToRT(peer, 'handlePing');
+      // Defer RT insertion (non-blocking) — respond to ping as fast as possible
+      _tryAddSenderToRT(peer, 'handlePing').catchError((e) {
+        _log.warning('$_logPrefix handlePing: Deferred RT insertion failed: $e');
+      });
       return Message(type: MessageType.ping);
     }
 
@@ -88,7 +91,6 @@ class DHTHandlers {
       final peerShortId = peer.toBase58().substring(0,6);
       final keyString = message.key != null ? base64Encode(message.key!) : "null";
       _log.info('$_logPrefix handleFindPeer: Received FIND_NODE from $peerShortId for key $keyString.');
-      await _tryAddSenderToRT(peer, 'handleFindPeer');
 
       if (message.key == null) {
         _log.warning('$_logPrefix handleFindPeer: FIND_NODE message from $peerShortId missing key.');
@@ -105,32 +107,27 @@ class DHTHandlers {
         final closestPeerIds = await dht.routingTable.nearestPeers(message.key!, dht.options.bucketSize);
         _log.fine('$_logPrefix handleFindPeer: Found ${closestPeerIds.length} closest peers in RT for key $keyString.');
 
-        for (final pId in closestPeerIds) {
-          // Skip the querying peer to prevent self-dial attempts
-          if (pId == peer) {
-            _log.fine('$_logPrefix handleFindPeer: Skipping querying peer $peerShortId from response to prevent self-dial.');
-            continue;
-          }
+        // Filter out the querying peer
+        final filteredPeerIds = closestPeerIds.where((pId) => pId != peer).toList();
 
-          final peerInfoFromStore = await dht.host().peerStore.getPeer(pId);
-          var peerAddrs = peerInfoFromStore?.addrs.toList() ?? <MultiAddr>[];
+        // Parallel peerstore lookups instead of sequential
+        final peerInfoFutures = filteredPeerIds.map((pId) => dht.host().peerStore.getPeer(pId));
+        final peerInfoResults = await Future.wait(peerInfoFutures);
+
+        for (var i = 0; i < filteredPeerIds.length; i++) {
+          final pId = filteredPeerIds[i];
+          var peerAddrs = peerInfoResults[i]?.addrs.toList() ?? <MultiAddr>[];
 
           // Filter out localhost addresses if the option is enabled
           if (dht.options.filterLocalhostInResponses) {
-            final originalCount = peerAddrs.length;
             peerAddrs = filterLocalhostAddrs(peerAddrs);
-            if (originalCount > peerAddrs.length) {
-              _log.fine('$_logPrefix handleFindPeer: Filtered out ${originalCount - peerAddrs.length} localhost addresses for peer ${pId.toBase58().substring(0,6)}');
-            }
           }
 
           final addrsBytesList = peerAddrs.map((addr) => addr.toBytes()).toList();
 
           if (addrsBytesList.isEmpty) {
-            _log.warning('$_logPrefix handleFindPeer: Peer ${pId.toBase58().substring(0,6)} has no ${dht.options.filterLocalhostInResponses ? "non-localhost " : ""}addresses after filtering');
-            continue; // Skip this peer entirely if no valid addresses remain
-          } else {
-            _log.fine('$_logPrefix handleFindPeer: Peer ${pId.toBase58().substring(0,6)} has ${addrsBytesList.length} ${dht.options.filterLocalhostInResponses ? "non-localhost " : ""}addresses: ${peerAddrs.map((a) => a.toString()).join(", ")}');
+            _log.warning('$_logPrefix handleFindPeer: Peer ${pId.toBase58().substring(0,6)} has no addresses after filtering');
+            continue;
           }
 
           response.closerPeers.add(Peer(
@@ -140,8 +137,12 @@ class DHTHandlers {
           ));
         }
         _log.info('$_logPrefix handleFindPeer: Responding to $peerShortId for key $keyString with ${response.closerPeers.length} closerPeers.');
-        List<String> peerList = response.closerPeers.map((e) => e.toString()).toList();
-        _log.info('Closer peers : ${peerList}');
+
+        // Defer sender RT insertion to after response is built (non-blocking)
+        _tryAddSenderToRT(peer, 'handleFindPeer').catchError((e) {
+          _log.warning('$_logPrefix handleFindPeer: Deferred RT insertion failed: $e');
+        });
+
         return response;
       } catch (e, s) {
         _log.severe('$_logPrefix handleFindPeer: Error processing FIND_NODE from $peerShortId for key $keyString: $e\n$s');
@@ -155,7 +156,6 @@ class DHTHandlers {
       final peerShortId = peer.toBase58().substring(0,6);
       final keyString = message.key != null ? base64Encode(message.key!) : "null";
       _log.info('$_logPrefix handleGetValue: Received GET_VALUE from $peerShortId for key $keyString.');
-      await _tryAddSenderToRT(peer, 'handleGetValue');
 
       if (message.key == null) {
         _log.warning('$_logPrefix handleGetValue: GET_VALUE message from $peerShortId missing key.');
@@ -173,61 +173,61 @@ class DHTHandlers {
         final record = await dht.checkLocalDatastore(message.key!);
         if (record != null) {
           _log.info('$_logPrefix handleGetValue: Found record locally for key $keyString. Responding to $peerShortId with record.');
+          // Defer RT insertion (non-blocking)
+          _tryAddSenderToRT(peer, 'handleGetValue').catchError((e) {
+            _log.warning('$_logPrefix handleGetValue: Deferred RT insertion failed: $e');
+          });
           return Message(
             type: MessageType.getValue,
             key: message.key,
             record: record,
-            closerPeers: response.closerPeers, // Typically empty if record is found
+            closerPeers: response.closerPeers,
           );
         }
         _log.fine('$_logPrefix handleGetValue: Record for key $keyString not found locally. Finding closer peers.');
 
-        _log.fine('$_logPrefix handleGetValue: Finding closest peers directly from routing table using raw key bytes.');
-        // Get the closest peer IDs directly from the routing table using the raw key
         final closestPeerIdsFromRT = await dht.routingTable.nearestPeers(message.key!, dht.options.bucketSize);
         _log.fine('$_logPrefix handleGetValue: Found ${closestPeerIdsFromRT.length} closest peer IDs in RT for key $keyString.');
 
-        for (final pId in closestPeerIdsFromRT) {
-          // Skip the querying peer to prevent self-dial attempts
-          if (pId == peer) {
-            _log.fine('$_logPrefix handleGetValue: Skipping querying peer $peerShortId from response to prevent self-dial.');
-            continue;
-          }
+        // Filter out the querying peer
+        final filteredPeerIds = closestPeerIdsFromRT.where((pId) => pId != peer).toList();
 
-          final peerInfoFromStore = await dht.host().peerStore.getPeer(pId);
-          var peerAddrs = peerInfoFromStore?.addrs.toList() ?? <MultiAddr>[];
+        // Parallel peerstore lookups instead of sequential
+        final peerInfoFutures = filteredPeerIds.map((pId) => dht.host().peerStore.getPeer(pId));
+        final peerInfoResults = await Future.wait(peerInfoFutures);
 
-          // Filter out localhost addresses if the option is enabled
+        for (var i = 0; i < filteredPeerIds.length; i++) {
+          final pId = filteredPeerIds[i];
+          var peerAddrs = peerInfoResults[i]?.addrs.toList() ?? <MultiAddr>[];
+
           if (dht.options.filterLocalhostInResponses) {
-            final originalCount = peerAddrs.length;
             peerAddrs = filterLocalhostAddrs(peerAddrs);
-            if (originalCount > peerAddrs.length) {
-              _log.fine('$_logPrefix handleGetValue: Filtered out ${originalCount - peerAddrs.length} localhost addresses for peer ${pId.toBase58().substring(0,6)}');
-            }
           }
 
           final addrsBytesList = peerAddrs.map((addr) => addr.toBytes()).toList();
 
           if (addrsBytesList.isEmpty) {
-            _log.warning('$_logPrefix handleGetValue: Peer ${pId.toBase58().substring(0,6)} has no ${dht.options.filterLocalhostInResponses ? "non-localhost " : ""}addresses after filtering');
-            continue; // Skip this peer entirely if no valid addresses remain
-          } else {
-            _log.fine('$_logPrefix handleGetValue: Peer ${pId.toBase58().substring(0,6)} has ${addrsBytesList.length} ${dht.options.filterLocalhostInResponses ? "non-localhost " : ""}addresses: ${peerAddrs.map((a) => a.toString()).join(", ")}');
+            _log.warning('$_logPrefix handleGetValue: Peer ${pId.toBase58().substring(0,6)} has no addresses after filtering');
+            continue;
           }
 
           response.closerPeers.add(Peer(
             id: pId.toBytes(),
             addrs: addrsBytesList,
-            // Using NotConnected for consistency with handleFindPeer,
-            // as we're returning peers from the RT, not necessarily connected ones.
             connection: ConnectionType.notConnected,
           ));
         }
         _log.info('$_logPrefix handleGetValue: Responding to $peerShortId for key $keyString with ${response.closerPeers.length} closerPeers (no local record).');
+
+        // Defer sender RT insertion to after response is built (non-blocking)
+        _tryAddSenderToRT(peer, 'handleGetValue').catchError((e) {
+          _log.warning('$_logPrefix handleGetValue: Deferred RT insertion failed: $e');
+        });
+
         return response;
       } catch (e, s) {
         _log.severe('$_logPrefix handleGetValue: Error processing GET_VALUE from $peerShortId for key $keyString: $e\n$s');
-        return response; // Return with empty record and potentially empty closerPeers
+        return response;
       }
     }
 
@@ -277,7 +277,6 @@ class DHTHandlers {
       final peerShortId = peer.toBase58().substring(0,6);
       final keyString = message.key != null ? base64Encode(message.key!) : "null";
       _log.info('$_logPrefix handleGetProviders: Received GET_PROVIDERS from $peerShortId for key $keyString.');
-      await _tryAddSenderToRT(peer, 'handleGetProviders');
 
       if (message.key == null) {
         _log.warning('$_logPrefix handleGetProviders: GET_PROVIDERS message from $peerShortId missing key.');
@@ -319,10 +318,16 @@ class DHTHandlers {
           ));
         }
         _log.info('$_logPrefix handleGetProviders: Responding to $peerShortId for key $keyString with ${response.closerPeers.length} closerPeers (no local providers).');
+
+        // Defer sender RT insertion (non-blocking)
+        _tryAddSenderToRT(peer, 'handleGetProviders').catchError((e) {
+          _log.warning('$_logPrefix handleGetProviders: Deferred RT insertion failed: $e');
+        });
+
         return response;
       } catch (e, s) {
         _log.severe('$_logPrefix handleGetProviders: Error processing GET_PROVIDERS from $peerShortId for key $keyString: $e\n$s');
-        return response; // Return with empty providers/closerPeers on error
+        return response;
       }
     }
 
@@ -331,7 +336,6 @@ class DHTHandlers {
       final peerShortId = peer.toBase58().substring(0,6); // Peer who sent the ADD_PROVIDER msg
       final keyString = message.key != null ? base64Encode(message.key!) : "null";
       _log.info('$_logPrefix handleAddProvider: Received ADD_PROVIDER from $peerShortId for key $keyString.');
-      await _tryAddSenderToRT(peer, 'handleAddProvider'); // Add the sender of ADD_PROVIDER to RT
 
       if (message.key == null) {
         _log.warning('$_logPrefix handleAddProvider: ADD_PROVIDER message from $peerShortId missing key.');
@@ -366,6 +370,10 @@ class DHTHandlers {
           }
         }
         _log.info('$_logPrefix handleAddProvider: Successfully processed ADD_PROVIDER from $peerShortId for key $keyString.');
+        // Defer sender RT insertion (non-blocking)
+        _tryAddSenderToRT(peer, 'handleAddProvider').catchError((e) {
+          _log.warning('$_logPrefix handleAddProvider: Deferred RT insertion failed: $e');
+        });
         return response;
       } catch (e, s) {
         _log.severe('$_logPrefix handleAddProvider: Error processing ADD_PROVIDER from $peerShortId for key $keyString: $e\n$s');

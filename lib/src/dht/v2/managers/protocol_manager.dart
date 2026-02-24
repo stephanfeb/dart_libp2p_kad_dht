@@ -110,26 +110,18 @@ class ProtocolManager {
     
     _logger.info('[$selfShortId] Handling incoming stream from $remotePeerShortId');
     
+    // Capture address (cheap, no I/O)
+    MultiAddr? remoteAddr;
     try {
-      // CRITICAL FIX: Capture address information from connecting peer
-      // This is how bootstrap servers collect address info!
-      try {
-        final connection = stream.conn;
-        final remoteAddr = connection.remoteMultiaddr;
-        // Store the peer's address in peerstore
-        await _host.peerStore.addOrUpdatePeer(
-          remotePeer, 
-          addrs: [remoteAddr]
-        );
-        _logger.fine('[$selfShortId] Stored address $remoteAddr for peer $remotePeerShortId');
-      } catch (e) {
-        _logger.warning('[$selfShortId] Failed to store address for peer $remotePeerShortId: $e');
-        // Continue processing - address capture failure shouldn't block protocol handling
-      }
-      
+      remoteAddr = stream.conn.remoteMultiaddr;
+    } catch (e) {
+      _logger.fine('[$selfShortId] Could not extract remote address for $remotePeerShortId: $e');
+    }
+
+    try {
       // Read the message from the stream
       final messageBytes = await stream.read();
-      
+
       // Parse the protobuf message
       final message = decodeMessage(Uint8List.fromList(messageBytes));
 
@@ -146,22 +138,28 @@ class ProtocolManager {
       } else {
         _logger.fine('[$selfShortId] ADD_PROVIDER handled (fire-and-forget, no response)');
       }
-      
+
+      // Defer peerstore address storage to AFTER response is sent (non-blocking)
+      if (remoteAddr != null) {
+        _host.peerStore.addOrUpdatePeer(remotePeer, addrs: [remoteAddr]).catchError((e) {
+          _logger.warning('[$selfShortId] Failed to store address for peer $remotePeerShortId: $e');
+        });
+      }
+
     } catch (e, stackTrace) {
       _logger.severe('[$selfShortId] Error handling stream from $remotePeerShortId: $e', e, stackTrace);
-      
+
       // Send error response if possible
       try {
-        final errorResponse = Message(type: MessageType.ping); // Default error response
+        final errorResponse = Message(type: MessageType.ping);
         final errorResponseBytes = encodeMessage(errorResponse);
         await stream.write(errorResponseBytes);
       } catch (responseError) {
         _logger.warning('[$selfShortId] Failed to send error response: $responseError');
       }
     } finally {
-      // NOTE: Don't close the stream here! 
+      // NOTE: Don't close the stream here!
       // The client (NetworkManager) will close it to avoid race conditions.
-      // Server-side should not close streams initiated by clients.
     }
   }
   
@@ -187,66 +185,62 @@ class ProtocolManager {
   }
   
   /// Creates peer list with addresses populated from peerstore
+  /// Uses parallel lookups for all peers to minimize latency
   Future<List<Peer>> _createPeerListWithAddresses(List<PeerId> peerIds) async {
-    final result = <Peer>[];
-    
-    for (final peerId in peerIds) {
-      try {
-        // Look up addresses from peerstore
-        final peerInfo = await _host.peerStore.getPeer(peerId);
-        final addresses = peerInfo?.addrs.map((addr) => addr.toBytes()).toList() ?? <Uint8List>[];
-        
-        result.add(Peer(
-          id: peerId.toBytes(),
-          addrs: addresses, // CRITICAL FIX: Actually populate addresses from peerstore!
-          connection: ConnectionType.notConnected,
-        ));
-        
-        if (addresses.isNotEmpty) {
-          _logger.finest('Including peer ${peerId.toBase58().substring(0, 6)} with ${addresses.length} addresses');
-        } else {
-          _logger.finest('Including peer ${peerId.toBase58().substring(0, 6)} with no known addresses');
-        }
-      } catch (e) {
+    // Parallel peerstore lookups instead of sequential
+    final peerInfoFutures = peerIds.map((peerId) =>
+      _host.peerStore.getPeer(peerId).catchError((e) {
         _logger.warning('Failed to get addresses for peer ${peerId.toBase58().substring(0, 6)}: $e');
-        // Still include the peer but without addresses
-        result.add(Peer(
-          id: peerId.toBytes(),
-          addrs: [],
-          connection: ConnectionType.notConnected,
-        ));
-      }
+        return null;
+      })
+    ).toList();
+    final peerInfoResults = await Future.wait(peerInfoFutures);
+
+    final result = <Peer>[];
+    for (var i = 0; i < peerIds.length; i++) {
+      final peerId = peerIds[i];
+      final addresses = peerInfoResults[i]?.addrs.map((addr) => addr.toBytes()).toList() ?? <Uint8List>[];
+
+      result.add(Peer(
+        id: peerId.toBytes(),
+        addrs: addresses,
+        connection: ConnectionType.notConnected,
+      ));
     }
-    
+
     return result;
   }
 
   /// Handles a FIND_NODE message
   Future<Message> handleFindNode(PeerId sender, Message message) async {
     _ensureStarted();
-    
+
     final senderShortId = sender.toBase58().substring(0, 6);
     _logger.info('Handling FIND_NODE from $senderShortId');
-    
+
     try {
-      // Add sender to routing table
-      await _routing?.addPeer(sender, queryPeer: true, isReplaceable: true);
-      
       if (message.key == null) {
         throw DHTProtocolException('FIND_NODE message missing key', peerId: sender);
       }
-      
+
       // Find closest peers
       final closestPeers = await _routing?.getNearestPeers(message.key!, _config?.bucketSize ?? 20) ?? [];
-      
-      // Create response
+
+      // Create response (parallel peerstore lookups inside)
       final response = Message(
         type: MessageType.findNode,
         key: message.key,
         closerPeers: await _createPeerListWithAddresses(closestPeers),
       );
-      
+
       _logger.fine('Responding to FIND_NODE with ${response.closerPeers.length} peers');
+
+      // Defer sender RT insertion (non-blocking)
+      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+        return false;
+      });
+
       return response;
     } catch (e) {
       _logger.warning('Error handling FIND_NODE: $e');
@@ -257,39 +251,42 @@ class ProtocolManager {
   /// Handles a GET_VALUE message
   Future<Message> handleGetValue(PeerId sender, Message message) async {
     _ensureStarted();
-    
+
     final senderShortId = sender.toBase58().substring(0, 6);
     _logger.info('Handling GET_VALUE from $senderShortId');
-    
+
     try {
-      // Add sender to routing table (important for bootstrap servers to collect peer info)
-      await _routing?.addPeer(sender, queryPeer: true, isReplaceable: true);
-      
       if (message.key == null) {
         throw DHTProtocolException('GET_VALUE message missing key', peerId: sender);
       }
-      
+
       // Check local datastore for the record
       final keyString = String.fromCharCodes(message.key!);
       final localRecord = _datastore[keyString];
-      
-      // Get closer peers from routing table
+
+      // Get closer peers from routing table (parallel peerstore lookups inside)
       final closestPeers = await _routing?.getNearestPeers(message.key!, _config?.bucketSize ?? 20) ?? [];
       final closerPeers = await _createPeerListWithAddresses(closestPeers);
-      
+
       final response = Message(
         type: MessageType.getValue,
         key: message.key,
-        record: localRecord, // Include the record if found
+        record: localRecord,
         closerPeers: closerPeers,
       );
-      
+
       if (localRecord != null) {
         _logger.fine('Responding to GET_VALUE with record and ${closerPeers.length} closer peers');
       } else {
         _logger.fine('Responding to GET_VALUE with ${closerPeers.length} closer peers (no local record)');
       }
-      
+
+      // Defer sender RT insertion (non-blocking)
+      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+        return false;
+      });
+
       return response;
     } catch (e) {
       _logger.warning('Error handling GET_VALUE: $e');
@@ -300,14 +297,11 @@ class ProtocolManager {
   /// Handles a PUT_VALUE message
   Future<Message> handlePutValue(PeerId sender, Message message) async {
     _ensureStarted();
-    
+
     final senderShortId = sender.toBase58().substring(0, 6);
     _logger.info('Handling PUT_VALUE from $senderShortId');
-    
+
     try {
-      // Add sender to routing table
-      await _routing?.addPeer(sender, queryPeer: true, isReplaceable: true);
-      
       if (message.key == null || message.record == null) {
         throw DHTProtocolException('PUT_VALUE message missing key or record', peerId: sender);
       }
@@ -344,7 +338,13 @@ class ProtocolManager {
         type: MessageType.putValue,
         key: message.key,
       );
-      
+
+      // Defer sender RT insertion (non-blocking)
+      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+        return false;
+      });
+
       return response;
     } catch (e) {
       _logger.warning('Error handling PUT_VALUE: $e');
@@ -355,14 +355,11 @@ class ProtocolManager {
   /// Handles a GET_PROVIDERS message
   Future<Message> handleGetProviders(PeerId sender, Message message) async {
     _ensureStarted();
-    
+
     final senderShortId = sender.toBase58().substring(0, 6);
     _logger.info('Handling GET_PROVIDERS from $senderShortId');
-    
+
     try {
-      // Add sender to routing table
-      await _routing?.addPeer(sender, queryPeer: true, isReplaceable: true);
-      
       if (message.key == null) {
         throw DHTProtocolException('GET_PROVIDERS message missing key', peerId: sender);
       }
@@ -390,6 +387,13 @@ class ProtocolManager {
       );
       
       _logger.fine('Responding to GET_PROVIDERS with ${providerPeers.length} providers and ${closerPeers.length} closer peers');
+
+      // Defer sender RT insertion (non-blocking)
+      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+        return false;
+      });
+
       return response;
     } catch (e) {
       _logger.warning('Error handling GET_PROVIDERS: $e');
@@ -400,14 +404,11 @@ class ProtocolManager {
   /// Handles an ADD_PROVIDER message
   Future<Message> handleAddProvider(PeerId sender, Message message) async {
     _ensureStarted();
-    
+
     final senderShortId = sender.toBase58().substring(0, 6);
     _logger.info('Handling ADD_PROVIDER from $senderShortId');
-    
+
     try {
-      // Add sender to routing table
-      await _routing?.addPeer(sender, queryPeer: true, isReplaceable: true);
-      
       if (message.key == null || message.providerPeers.isEmpty) {
         throw DHTProtocolException('ADD_PROVIDER message missing key or providers', peerId: sender);
       }
@@ -432,13 +433,19 @@ class ProtocolManager {
       }
       
       _logger.fine('Stored $storedCount/${message.providerPeers.length} providers');
-      
+
       // Create response
       final response = Message(
         type: MessageType.addProvider,
         key: message.key,
       );
-      
+
+      // Defer sender RT insertion (non-blocking)
+      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+        return false;
+      });
+
       return response;
     } catch (e) {
       _logger.warning('Error handling ADD_PROVIDER: $e');
@@ -449,22 +456,17 @@ class ProtocolManager {
   /// Handles a PING message
   Future<Message> handlePing(PeerId sender, Message message) async {
     _ensureStarted();
-    
+
     final senderShortId = sender.toBase58().substring(0, 6);
     _logger.fine('Handling PING from $senderShortId');
-    
-    try {
-      // Add sender to routing table
-      await _routing?.addPeer(sender, queryPeer: true, isReplaceable: true);
-      
-      // Create response
-      final response = Message(type: MessageType.ping);
-      
-      return response;
-    } catch (e) {
-      _logger.warning('Error handling PING: $e');
-      throw DHTProtocolException('Failed to handle PING: $e', peerId: sender, cause: e);
-    }
+
+    // Defer RT insertion (non-blocking) — respond to ping as fast as possible
+    _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+      _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+      return false;
+    });
+
+    return Message(type: MessageType.ping);
   }
   
   // Public datastore interface methods
