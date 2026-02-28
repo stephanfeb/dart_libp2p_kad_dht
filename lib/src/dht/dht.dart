@@ -220,12 +220,11 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     _started = true;
     _log.info('$logPrefix DHT starting in mode: $_mode');
 
-    // Set up protocol handlers for server and client modes.
-    // Client mode still responds to incoming DHT queries (FIND_NODE, PING,
-    // GET_PROVIDERS, etc.) — matching Go libp2p's ModeClient behaviour.
-    // Without this, DHT server nodes that add us to their routing table will
-    // mark us as unresponsive and evict us, breaking peer discovery.
-    if (_mode == DHTMode.server || _mode == DHTMode.client) {
+    // Set up protocol handlers only in server mode.
+    // Client mode does NOT register stream handlers — matching Go libp2p's
+    // ModeClient behaviour where moveToClientMode() calls RemoveStreamHandler
+    // and resets inbound DHT streams.
+    if (_mode == DHTMode.server) {
       _log.info('$logPrefix Setting up protocol handlers for mode: $_mode');
       _setupProtocolHandlers();
     }

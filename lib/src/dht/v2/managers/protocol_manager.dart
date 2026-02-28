@@ -64,15 +64,20 @@ class ProtocolManager {
     _metrics = metrics;
   }
   
-  /// Starts the protocol manager
-  Future<void> start() async {
+  /// Starts the protocol manager.
+  /// When [serverMode] is false (client mode), protocol handlers are NOT
+  /// registered — matching Go libp2p's ModeClient behaviour where the node
+  /// does not serve incoming DHT queries.
+  Future<void> start({bool serverMode = true}) async {
     if (_started || _closed) return;
-    
-    _logger.info('Starting ProtocolManager...');
-    
-    // Set up protocol handlers
-    _setupProtocolHandlers();
-    
+
+    _logger.info('Starting ProtocolManager (serverMode=$serverMode)...');
+
+    // Only register stream handlers in server mode
+    if (serverMode) {
+      _setupProtocolHandlers();
+    }
+
     _started = true;
     _logger.info('ProtocolManager started');
   }

@@ -197,7 +197,9 @@ class IpfsDHTv2 implements IpfsDHT {
       await _metrics.start();
       await _network.start();
       await _routing.start();
-      await _protocol.start();
+      await _protocol.start(
+        serverMode: _config.mode == DHTMode.server || _config.mode == DHTMode.autoServer,
+      );
       await _queries.start();
       
       if (_refreshManager != null) {
