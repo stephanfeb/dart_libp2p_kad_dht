@@ -2,18 +2,17 @@ import 'dart:typed_data';
 
 import 'package:dcid/dcid.dart';
 import 'package:dart_libp2p/core/peer/addr_info.dart';
-import 'package:dart_libp2p/core/routing/routing.dart';
 
 /// ProviderStore represents a store that associates peers and their addresses to keys.
 abstract class ProviderStore {
   /// Adds a provider for the given key
-  /// 
+  ///
   /// The provider will be associated with the key and can be retrieved later
   /// using [getProviders].
   Future<void> addProvider(CID key, AddrInfo provider);
 
   /// Gets providers for the given key
-  /// 
+  ///
   /// Returns a list of providers that have been associated with the key
   Future<List<AddrInfo>> getProviders(CID key);
 
@@ -53,10 +52,7 @@ class ProviderRecord {
   final DateTime expiration;
 
   /// Creates a new provider record
-  ProviderRecord({
-    required this.provider,
-    required this.expiration,
-  });
+  ProviderRecord({required this.provider, required this.expiration});
 
   /// Checks if this record has expired
   bool isExpired() {
@@ -79,31 +75,13 @@ class MemoryProviderStore implements ProviderStore {
       throw StateError('Provider store is closed');
     }
 
-    final keyStr = _keyToString(key.toBytes());
-    
-    // 🔍 DIAGNOSTIC LOGGING
-    print('🔍 [ProviderStore.addProvider] ═══════════════════════════════');
-    print('🔍 CID (toString): ${key.toString()}');
-    print('🔍 CID (bytes hex): ${key.toBytes().map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
-    print('🔍 Key string length: ${keyStr.length}');
-    print('🔍 Provider Peer ID: ${provider.id.toBase58()}');
-    print('🔍 Provider Addresses: ${provider.addrs.map((a) => a.toString()).join(", ")}');
-    
+    final keyStr = _keyToString(key.multihash);
+
     final expiration = DateTime.now().add(_options.provideValidity);
-    final record = ProviderRecord(
-      provider: provider,
-      expiration: expiration,
-    );
+    final record = ProviderRecord(provider: provider, expiration: expiration);
 
     _providers.putIfAbsent(keyStr, () => []).add(record);
     _cleanupExpired(keyStr);
-    
-    print('🔍 Total providers for this CID: ${_providers[keyStr]!.length}');
-    print('🔍 All providers for this CID:');
-    for (final r in _providers[keyStr]!) {
-      print('🔍   - ${r.provider.id.toBase58()}');
-    }
-    print('🔍 ═══════════════════════════════════════════════════════════');
   }
 
   @override
@@ -112,25 +90,11 @@ class MemoryProviderStore implements ProviderStore {
       throw StateError('Provider store is closed');
     }
 
-    final keyStr = _keyToString(key.toBytes());
-    
-    // 🔍 DIAGNOSTIC LOGGING
-    print('🔍 [ProviderStore.getProviders] ═══════════════════════════════');
-    print('🔍 CID (toString): ${key.toString()}');
-    print('🔍 CID (bytes hex): ${key.toBytes().map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
-    print('🔍 Key string length: ${keyStr.length}');
-    print('🔍 Looking up key in store...');
-    
+    final keyStr = _keyToString(key.multihash);
+
     _cleanupExpired(keyStr);
 
     final records = _providers[keyStr] ?? [];
-    
-    print('🔍 Found ${records.length} provider(s) for this CID:');
-    for (final record in records) {
-      print('🔍   - ${record.provider.id.toBase58()} (expires: ${record.expiration})');
-    }
-    print('🔍 ═══════════════════════════════════════════════════════════');
-    
     final result = records.map((record) => record.provider).toList();
     return result;
   }
@@ -146,7 +110,8 @@ class MemoryProviderStore implements ProviderStore {
     final records = _providers[key];
     if (records == null) return;
 
-    final validRecords = records.where((record) => !record.isExpired()).toList();
+    final validRecords =
+        records.where((record) => !record.isExpired()).toList();
     if (validRecords.isEmpty) {
       _providers.remove(key);
     } else {

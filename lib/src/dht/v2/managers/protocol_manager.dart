@@ -9,7 +9,6 @@ import 'package:dart_libp2p/core/host/host.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
 import 'package:dart_libp2p/core/peer/addr_info.dart';
 import 'package:dart_libp2p/core/network/stream.dart';
-import 'package:dart_libp2p/core/network/context.dart';
 import 'package:dart_libp2p/core/multiaddr.dart';
 import 'package:logging/logging.dart';
 
@@ -25,7 +24,7 @@ import 'metrics_manager.dart';
 import 'routing_manager.dart';
 
 /// Manages protocol message handling for DHT v2
-/// 
+///
 /// This component handles:
 /// - Protocol message processing
 /// - Request/response handling
@@ -33,24 +32,24 @@ import 'routing_manager.dart';
 /// - Protocol-specific logic
 class ProtocolManager {
   static final Logger _logger = Logger('ProtocolManager');
-  
+
   final Host _host;
-  
+
   // Configuration
   DHTConfigV2? _config;
   MetricsManager? _metrics;
   RoutingManager? _routing;
   ProviderStore? _providerStore;
-  
+
   // State
   bool _started = false;
   bool _closed = false;
-  
+
   // Local datastore for records
   final Map<String, Record> _datastore = {};
-  
+
   ProtocolManager(this._host);
-  
+
   /// Initializes the protocol manager
   void initialize({
     required RoutingManager routing,
@@ -63,69 +62,81 @@ class ProtocolManager {
     _config = config;
     _metrics = metrics;
   }
-  
+
   /// Starts the protocol manager
   Future<void> start() async {
     if (_started || _closed) return;
-    
+
     _logger.info('Starting ProtocolManager...');
-    
+
     // Set up protocol handlers
     _setupProtocolHandlers();
-    
+
     _started = true;
     _logger.info('ProtocolManager started');
   }
-  
+
   /// Stops the protocol manager
   Future<void> close() async {
     if (_closed) return;
     _closed = true;
-    
+
     _logger.info('Closing ProtocolManager...');
-    
+
     // Remove protocol handlers
     _removeProtocolHandlers();
-    
+
     _logger.info('ProtocolManager closed');
   }
-  
+
   /// Sets up protocol handlers for incoming messages
   void _setupProtocolHandlers() {
-    _logger.info('Setting up protocol handlers for ${AminoConstants.protocolID}');
+    _logger.info(
+      'Setting up protocol handlers for ${AminoConstants.protocolID}',
+    );
     _host.setStreamHandler(AminoConstants.protocolID, _handleIncomingStream);
   }
-  
+
   /// Removes protocol handlers
   void _removeProtocolHandlers() {
     _logger.info('Removing protocol handlers');
     // Note: Host interface might not have removeStreamHandler method
     // This is typically handled by the host's cleanup during shutdown
   }
-  
+
   /// Handles incoming protocol streams
-  Future<void> _handleIncomingStream(P2PStream stream, PeerId remotePeer) async {
+  Future<void> _handleIncomingStream(
+    P2PStream stream,
+    PeerId remotePeer,
+  ) async {
     final remotePeerShortId = remotePeer.toBase58().substring(0, 6);
     final selfShortId = _host.id.toBase58().substring(0, 6);
-    
-    _logger.info('[$selfShortId] Handling incoming stream from $remotePeerShortId');
-    
+
+    _logger.info(
+      '[$selfShortId] Handling incoming stream from $remotePeerShortId',
+    );
+
     // Capture address (cheap, no I/O)
     MultiAddr? remoteAddr;
     try {
       remoteAddr = stream.conn.remoteMultiaddr;
     } catch (e) {
-      _logger.fine('[$selfShortId] Could not extract remote address for $remotePeerShortId: $e');
+      _logger.fine(
+        '[$selfShortId] Could not extract remote address for $remotePeerShortId: $e',
+      );
     }
 
     try {
-      // Read the message from the stream
-      final messageBytes = await stream.read();
+      // Read the full varint-length-prefixed protobuf frame. Network streams
+      // are chunked and may not return a complete DHT message in one read.
+      final messageBytes = await _readDhtFrame(stream);
 
       // Parse the protobuf message
       final message = decodeMessage(Uint8List.fromList(messageBytes));
 
-      _logger.fine('[$selfShortId] Received ${message.type} message from $remotePeerShortId');
+      _logger.fine(
+        '[$selfShortId] Received ${message.type} message from $remotePeerShortId',
+      );
 
       // Route the message to the appropriate handler
       final response = await _routeMessage(remotePeer, message);
@@ -136,18 +147,26 @@ class ProtocolManager {
         await stream.write(responseBytes);
         _logger.fine('[$selfShortId] Sent response to $remotePeerShortId');
       } else {
-        _logger.fine('[$selfShortId] ADD_PROVIDER handled (fire-and-forget, no response)');
+        _logger.fine(
+          '[$selfShortId] ADD_PROVIDER handled (fire-and-forget, no response)',
+        );
       }
 
       // Defer peerstore address storage to AFTER response is sent (non-blocking)
       if (remoteAddr != null) {
-        _host.peerStore.addOrUpdatePeer(remotePeer, addrs: [remoteAddr]).catchError((e) {
-          _logger.warning('[$selfShortId] Failed to store address for peer $remotePeerShortId: $e');
+        _host.peerStore
+            .addOrUpdatePeer(remotePeer, addrs: [remoteAddr]).catchError((e) {
+          _logger.warning(
+            '[$selfShortId] Failed to store address for peer $remotePeerShortId: $e',
+          );
         });
       }
-
     } catch (e, stackTrace) {
-      _logger.severe('[$selfShortId] Error handling stream from $remotePeerShortId: $e', e, stackTrace);
+      _logger.severe(
+        '[$selfShortId] Error handling stream from $remotePeerShortId: $e',
+        e,
+        stackTrace,
+      );
 
       // Send error response if possible
       try {
@@ -155,14 +174,60 @@ class ProtocolManager {
         final errorResponseBytes = encodeMessage(errorResponse);
         await stream.write(errorResponseBytes);
       } catch (responseError) {
-        _logger.warning('[$selfShortId] Failed to send error response: $responseError');
+        _logger.warning(
+          '[$selfShortId] Failed to send error response: $responseError',
+        );
       }
     } finally {
       // NOTE: Don't close the stream here!
       // The client (NetworkManager) will close it to avoid race conditions.
     }
   }
-  
+
+  Future<Uint8List> _readDhtFrame(P2PStream stream) async {
+    final prefix = <int>[];
+    var length = 0;
+    var shift = 0;
+    while (true) {
+      final chunk = await stream.read(1);
+      if (chunk.isEmpty) {
+        throw const FormatException('DHT stream closed before frame length');
+      }
+      final byte = chunk[0];
+      prefix.add(byte);
+      length |= (byte & 0x7f) << shift;
+      if (byte & 0x80 == 0) {
+        break;
+      }
+      shift += 7;
+      if (shift > 28) {
+        throw const FormatException('DHT frame length varint is too long');
+      }
+    }
+    final payload = await _readExact(stream, length);
+    final framed = Uint8List(prefix.length + payload.length);
+    framed.setRange(0, prefix.length, prefix);
+    framed.setRange(prefix.length, framed.length, payload);
+    return framed;
+  }
+
+  Future<Uint8List> _readExact(P2PStream stream, int length) async {
+    final out = BytesBuilder(copy: false);
+    while (out.length < length) {
+      final remaining = length - out.length;
+      final chunk = await stream.read(remaining);
+      if (chunk.isEmpty) {
+        throw const FormatException('DHT stream closed before frame payload');
+      }
+      if (chunk.length > remaining) {
+        out.add(Uint8List.sublistView(chunk, 0, remaining));
+      } else {
+        out.add(chunk);
+      }
+    }
+    return out.takeBytes();
+  }
+
   /// Routes a message to the appropriate handler
   Future<Message> _routeMessage(PeerId sender, Message message) async {
     switch (message.type) {
@@ -180,32 +245,43 @@ class ProtocolManager {
         return await handleAddProvider(sender, message);
       default:
         _logger.warning('Unknown message type: ${message.type}');
-        throw DHTProtocolException('Unknown message type: ${message.type}', peerId: sender);
+        throw DHTProtocolException(
+          'Unknown message type: ${message.type}',
+          peerId: sender,
+        );
     }
   }
-  
+
   /// Creates peer list with addresses populated from peerstore
   /// Uses parallel lookups for all peers to minimize latency
   Future<List<Peer>> _createPeerListWithAddresses(List<PeerId> peerIds) async {
     // Parallel peerstore lookups instead of sequential
-    final peerInfoFutures = peerIds.map((peerId) =>
-      _host.peerStore.getPeer(peerId).catchError((e) {
-        _logger.warning('Failed to get addresses for peer ${peerId.toBase58().substring(0, 6)}: $e');
-        return null;
-      })
-    ).toList();
+    final peerInfoFutures = peerIds
+        .map(
+          (peerId) => _host.peerStore.getPeer(peerId).catchError((e) {
+            _logger.warning(
+              'Failed to get addresses for peer ${peerId.toBase58().substring(0, 6)}: $e',
+            );
+            return null;
+          }),
+        )
+        .toList();
     final peerInfoResults = await Future.wait(peerInfoFutures);
 
     final result = <Peer>[];
     for (var i = 0; i < peerIds.length; i++) {
       final peerId = peerIds[i];
-      final addresses = peerInfoResults[i]?.addrs.map((addr) => addr.toBytes()).toList() ?? <Uint8List>[];
+      final addresses =
+          peerInfoResults[i]?.addrs.map((addr) => addr.toBytes()).toList() ??
+              <Uint8List>[];
 
-      result.add(Peer(
-        id: peerId.toBytes(),
-        addrs: addresses,
-        connection: ConnectionType.notConnected,
-      ));
+      result.add(
+        Peer(
+          id: peerId.toBytes(),
+          addrs: addresses,
+          connection: ConnectionType.notConnected,
+        ),
+      );
     }
 
     return result;
@@ -220,11 +296,18 @@ class ProtocolManager {
 
     try {
       if (message.key == null) {
-        throw DHTProtocolException('FIND_NODE message missing key', peerId: sender);
+        throw DHTProtocolException(
+          'FIND_NODE message missing key',
+          peerId: sender,
+        );
       }
 
       // Find closest peers
-      final closestPeers = await _routing?.getNearestPeers(message.key!, _config?.bucketSize ?? 20) ?? [];
+      final closestPeers = await _routing?.getNearestPeers(
+            message.key!,
+            _config?.bucketSize ?? 20,
+          ) ??
+          [];
 
       // Create response (parallel peerstore lookups inside)
       final response = Message(
@@ -233,21 +316,31 @@ class ProtocolManager {
         closerPeers: await _createPeerListWithAddresses(closestPeers),
       );
 
-      _logger.fine('Responding to FIND_NODE with ${response.closerPeers.length} peers');
+      _logger.fine(
+        'Responding to FIND_NODE with ${response.closerPeers.length} peers',
+      );
 
       // Defer sender RT insertion (non-blocking)
-      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
-        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+      _routing
+          ?.addPeer(sender, queryPeer: true, isReplaceable: true)
+          .catchError((e) {
+        _logger.warning(
+          'Deferred RT insertion failed for $senderShortId: $e',
+        );
         return false;
       });
 
       return response;
     } catch (e) {
       _logger.warning('Error handling FIND_NODE: $e');
-      throw DHTProtocolException('Failed to handle FIND_NODE: $e', peerId: sender, cause: e);
+      throw DHTProtocolException(
+        'Failed to handle FIND_NODE: $e',
+        peerId: sender,
+        cause: e,
+      );
     }
   }
-  
+
   /// Handles a GET_VALUE message
   Future<Message> handleGetValue(PeerId sender, Message message) async {
     _ensureStarted();
@@ -257,7 +350,10 @@ class ProtocolManager {
 
     try {
       if (message.key == null) {
-        throw DHTProtocolException('GET_VALUE message missing key', peerId: sender);
+        throw DHTProtocolException(
+          'GET_VALUE message missing key',
+          peerId: sender,
+        );
       }
 
       // Check local datastore for the record
@@ -265,7 +361,11 @@ class ProtocolManager {
       final localRecord = _datastore[keyString];
 
       // Get closer peers from routing table (parallel peerstore lookups inside)
-      final closestPeers = await _routing?.getNearestPeers(message.key!, _config?.bucketSize ?? 20) ?? [];
+      final closestPeers = await _routing?.getNearestPeers(
+            message.key!,
+            _config?.bucketSize ?? 20,
+          ) ??
+          [];
       final closerPeers = await _createPeerListWithAddresses(closestPeers);
 
       final response = Message(
@@ -276,24 +376,36 @@ class ProtocolManager {
       );
 
       if (localRecord != null) {
-        _logger.fine('Responding to GET_VALUE with record and ${closerPeers.length} closer peers');
+        _logger.fine(
+          'Responding to GET_VALUE with record and ${closerPeers.length} closer peers',
+        );
       } else {
-        _logger.fine('Responding to GET_VALUE with ${closerPeers.length} closer peers (no local record)');
+        _logger.fine(
+          'Responding to GET_VALUE with ${closerPeers.length} closer peers (no local record)',
+        );
       }
 
       // Defer sender RT insertion (non-blocking)
-      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
-        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+      _routing
+          ?.addPeer(sender, queryPeer: true, isReplaceable: true)
+          .catchError((e) {
+        _logger.warning(
+          'Deferred RT insertion failed for $senderShortId: $e',
+        );
         return false;
       });
 
       return response;
     } catch (e) {
       _logger.warning('Error handling GET_VALUE: $e');
-      throw DHTProtocolException('Failed to handle GET_VALUE: $e', peerId: sender, cause: e);
+      throw DHTProtocolException(
+        'Failed to handle GET_VALUE: $e',
+        peerId: sender,
+        cause: e,
+      );
     }
   }
-  
+
   /// Handles a PUT_VALUE message
   Future<Message> handlePutValue(PeerId sender, Message message) async {
     _ensureStarted();
@@ -303,55 +415,73 @@ class ProtocolManager {
 
     try {
       if (message.key == null || message.record == null) {
-        throw DHTProtocolException('PUT_VALUE message missing key or record', peerId: sender);
+        throw DHTProtocolException(
+          'PUT_VALUE message missing key or record',
+          peerId: sender,
+        );
       }
-      
+
       // Validate the record signature
       final record = message.record!;
       final keyString = String.fromCharCodes(message.key!);
-      
-      _logger.fine('Validating record signature for key: ${keyString.substring(0, 10)}...');
-      
+
+      _logger.fine(
+        'Validating record signature for key: ${keyString.substring(0, 10)}...',
+      );
+
       final isValid = await RecordSigner.validateRecordSignature(record);
       if (!isValid) {
-        _logger.warning('Invalid record signature from $senderShortId for key: ${keyString.substring(0, 10)}...');
+        _logger.warning(
+          'Invalid record signature from $senderShortId for key: ${keyString.substring(0, 10)}...',
+        );
         throw DHTProtocolException('Invalid record signature', peerId: sender);
       }
-      
+
       // Check if this is a newer record than what we have
       final existingRecord = _datastore[keyString];
       if (existingRecord != null) {
         if (record.timeReceived <= existingRecord.timeReceived) {
-          _logger.fine('Rejecting older record from $senderShortId for key: ${keyString.substring(0, 10)}...');
+          _logger.fine(
+            'Rejecting older record from $senderShortId for key: ${keyString.substring(0, 10)}...',
+          );
           // Still return success - we just don't store the older record
         } else {
-          _logger.fine('Accepting newer record from $senderShortId for key: ${keyString.substring(0, 10)}...');
+          _logger.fine(
+            'Accepting newer record from $senderShortId for key: ${keyString.substring(0, 10)}...',
+          );
           _datastore[keyString] = record;
         }
       } else {
-        _logger.fine('Storing new record from $senderShortId for key: ${keyString.substring(0, 10)}...');
+        _logger.fine(
+          'Storing new record from $senderShortId for key: ${keyString.substring(0, 10)}...',
+        );
         _datastore[keyString] = record;
       }
-      
+
       // Create response
-      final response = Message(
-        type: MessageType.putValue,
-        key: message.key,
-      );
+      final response = Message(type: MessageType.putValue, key: message.key);
 
       // Defer sender RT insertion (non-blocking)
-      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
-        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+      _routing
+          ?.addPeer(sender, queryPeer: true, isReplaceable: true)
+          .catchError((e) {
+        _logger.warning(
+          'Deferred RT insertion failed for $senderShortId: $e',
+        );
         return false;
       });
 
       return response;
     } catch (e) {
       _logger.warning('Error handling PUT_VALUE: $e');
-      throw DHTProtocolException('Failed to handle PUT_VALUE: $e', peerId: sender, cause: e);
+      throw DHTProtocolException(
+        'Failed to handle PUT_VALUE: $e',
+        peerId: sender,
+        cause: e,
+      );
     }
   }
-  
+
   /// Handles a GET_PROVIDERS message
   Future<Message> handleGetProviders(PeerId sender, Message message) async {
     _ensureStarted();
@@ -361,46 +491,67 @@ class ProtocolManager {
 
     try {
       if (message.key == null) {
-        throw DHTProtocolException('GET_PROVIDERS message missing key', peerId: sender);
+        throw DHTProtocolException(
+          'GET_PROVIDERS message missing key',
+          peerId: sender,
+        );
       }
-      
+
       // Get providers from local provider store
       final cid = CID.fromBytes(message.key!);
       final providers = await _providerStore?.getProviders(cid) ?? [];
-      
+
       // Convert providers to protocol format
-      final providerPeers = providers.map((provider) => Peer(
-        id: provider.id.toBytes(),
-        addrs: provider.addrs.map((addr) => addr.toBytes()).toList(),
-        connection: ConnectionType.notConnected,
-      )).toList();
-      
+      final providerPeers = providers
+          .map(
+            (provider) => Peer(
+              id: provider.id.toBytes(),
+              addrs: provider.addrs.map((addr) => addr.toBytes()).toList(),
+              connection: ConnectionType.notConnected,
+            ),
+          )
+          .toList();
+
       // Get closer peers from routing table
-      final closestPeers = await _routing?.getNearestPeers(message.key!, _config?.bucketSize ?? 20) ?? [];
+      final closestPeers = await _routing?.getNearestPeers(
+            message.key!,
+            _config?.bucketSize ?? 20,
+          ) ??
+          [];
       final closerPeers = await _createPeerListWithAddresses(closestPeers);
-      
+
       final response = Message(
         type: MessageType.getProviders,
         key: message.key,
         providerPeers: providerPeers,
         closerPeers: closerPeers,
       );
-      
-      _logger.fine('Responding to GET_PROVIDERS with ${providerPeers.length} providers and ${closerPeers.length} closer peers');
+
+      _logger.fine(
+        'Responding to GET_PROVIDERS with ${providerPeers.length} providers and ${closerPeers.length} closer peers',
+      );
 
       // Defer sender RT insertion (non-blocking)
-      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
-        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+      _routing
+          ?.addPeer(sender, queryPeer: true, isReplaceable: true)
+          .catchError((e) {
+        _logger.warning(
+          'Deferred RT insertion failed for $senderShortId: $e',
+        );
         return false;
       });
 
       return response;
     } catch (e) {
       _logger.warning('Error handling GET_PROVIDERS: $e');
-      throw DHTProtocolException('Failed to handle GET_PROVIDERS: $e', peerId: sender, cause: e);
+      throw DHTProtocolException(
+        'Failed to handle GET_PROVIDERS: $e',
+        peerId: sender,
+        cause: e,
+      );
     }
   }
-  
+
   /// Handles an ADD_PROVIDER message
   Future<Message> handleAddProvider(PeerId sender, Message message) async {
     _ensureStarted();
@@ -410,49 +561,63 @@ class ProtocolManager {
 
     try {
       if (message.key == null || message.providerPeers.isEmpty) {
-        throw DHTProtocolException('ADD_PROVIDER message missing key or providers', peerId: sender);
+        throw DHTProtocolException(
+          'ADD_PROVIDER message missing key or providers',
+          peerId: sender,
+        );
       }
-      
+
       // Store providers in local provider store
       final cid = CID.fromBytes(message.key!);
       var storedCount = 0;
-      
+
       for (final providerPeer in message.providerPeers) {
         try {
           final providerId = PeerId.fromBytes(providerPeer.id);
-          final providerAddrs = providerPeer.addrs.map((addr) => MultiAddr.fromBytes(addr)).toList();
+          final providerAddrs = providerPeer.addrs
+              .map((addr) => MultiAddr.fromBytes(addr))
+              .toList();
           final providerInfo = AddrInfo(providerId, providerAddrs);
-          
+
           await _providerStore?.addProvider(cid, providerInfo);
           storedCount++;
-          
-          _logger.fine('Stored provider ${providerId.toBase58().substring(0, 6)} for key');
+
+          _logger.fine(
+            'Stored provider ${providerId.toBase58().substring(0, 6)} for key',
+          );
         } catch (e) {
           _logger.warning('Failed to store provider: $e');
         }
       }
-      
-      _logger.fine('Stored $storedCount/${message.providerPeers.length} providers');
 
-      // Create response
-      final response = Message(
-        type: MessageType.addProvider,
-        key: message.key,
+      _logger.fine(
+        'Stored $storedCount/${message.providerPeers.length} providers',
       );
 
+      // Create response
+      final response = Message(type: MessageType.addProvider, key: message.key);
+
       // Defer sender RT insertion (non-blocking)
-      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
-        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+      _routing
+          ?.addPeer(sender, queryPeer: true, isReplaceable: true)
+          .catchError((e) {
+        _logger.warning(
+          'Deferred RT insertion failed for $senderShortId: $e',
+        );
         return false;
       });
 
       return response;
     } catch (e) {
       _logger.warning('Error handling ADD_PROVIDER: $e');
-      throw DHTProtocolException('Failed to handle ADD_PROVIDER: $e', peerId: sender, cause: e);
+      throw DHTProtocolException(
+        'Failed to handle ADD_PROVIDER: $e',
+        peerId: sender,
+        cause: e,
+      );
     }
   }
-  
+
   /// Handles a PING message
   Future<Message> handlePing(PeerId sender, Message message) async {
     _ensureStarted();
@@ -461,16 +626,18 @@ class ProtocolManager {
     _logger.fine('Handling PING from $senderShortId');
 
     // Defer RT insertion (non-blocking) — respond to ping as fast as possible
-    _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+    _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((
+      e,
+    ) {
       _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
       return false;
     });
 
     return Message(type: MessageType.ping);
   }
-  
+
   // Public datastore interface methods
-  
+
   /// Gets a record from the local datastore
   Future<Record?> getRecordFromDatastore(String key) async {
     _ensureStarted();
@@ -482,23 +649,23 @@ class ProtocolManager {
     }
     return record;
   }
-  
+
   /// Gets a record from the local datastore using byte key
   Future<Record?> getRecordFromDatastoreBytes(Uint8List keyBytes) async {
     final keyString = utf8.decode(keyBytes);
     return await getRecordFromDatastore(keyString);
   }
-  
+
   /// Puts a record into the local datastore
   Future<void> putRecordToDatastore(String key, Record record) async {
     _ensureStarted();
-    
+
     // Validate the record signature before storing
     final isValid = await RecordSigner.validateRecordSignature(record);
     if (!isValid) {
       throw DHTProtocolException('Cannot store record with invalid signature');
     }
-    
+
     // Check if this is a newer record than what we have
     final existingRecord = _datastore[key];
     if (existingRecord != null) {
@@ -507,29 +674,31 @@ class ProtocolManager {
         return; // Don't store older records
       }
     }
-    
+
     _datastore[key] = record;
     // Use existing metrics method
     _metrics?.recordQuerySuccess(Duration.zero);
     _logger.fine('Stored record in datastore for key: ${key}...');
   }
-  
+
   /// Puts a record into the local datastore using dynamic record
   Future<void> putRecordToDatastoreDynamic(dynamic record) async {
     if (record is! Record) {
-      throw DHTProtocolException('Invalid record type: expected Record, got ${record.runtimeType}');
+      throw DHTProtocolException(
+        'Invalid record type: expected Record, got ${record.runtimeType}',
+      );
     }
-    
+
     // Extract key from record - this assumes the record has a key field
     // In a real implementation, you'd need to determine the key from the record
     final keyString = String.fromCharCodes(record.key ?? Uint8List(0));
     if (keyString.isEmpty) {
       throw DHTProtocolException('Record missing key field');
     }
-    
+
     await putRecordToDatastore(keyString, record as Record);
   }
-  
+
   /// Checks if a record exists in the local datastore
   Future<bool> hasRecordInDatastore(String key) async {
     _ensureStarted();
@@ -537,7 +706,7 @@ class ProtocolManager {
     _logger.fine('Datastore contains key ${key}...: $hasRecord');
     return hasRecord;
   }
-  
+
   /// Removes a record from the local datastore
   Future<void> removeRecordFromDatastore(String key) async {
     _ensureStarted();
@@ -548,23 +717,23 @@ class ProtocolManager {
       _logger.fine('Removed record from datastore for key: ${key}...');
     }
   }
-  
+
   /// Gets all keys from the local datastore
   Stream<String> getKeysFromDatastore() async* {
     _ensureStarted();
     _logger.fine('Getting all keys from datastore (${_datastore.length} keys)');
-    
+
     for (final key in _datastore.keys) {
       yield key;
     }
   }
-  
+
   /// Gets the current size of the local datastore
   Future<int> getDatastoreSize() async {
     _ensureStarted();
     return _datastore.length;
   }
-  
+
   /// Clears all records from the local datastore
   Future<void> clearDatastore() async {
     _ensureStarted();
@@ -572,27 +741,39 @@ class ProtocolManager {
     _datastore.clear();
     _logger.info('Cleared datastore (removed $count records)');
   }
-  
+
   /// Gets datastore statistics
   Future<Map<String, dynamic>> getDatastoreStatistics() async {
     _ensureStarted();
-    
+
     final stats = <String, dynamic>{
       'total_records': _datastore.length,
-      'total_size_bytes': _datastore.values.fold<int>(0, (sum, record) => sum + record.value.length),
-      'oldest_record_timestamp': _datastore.values.isEmpty ? null : _datastore.values.map((r) => r.timeReceived).reduce((a, b) => a < b ? a : b),
-      'newest_record_timestamp': _datastore.values.isEmpty ? null : _datastore.values.map((r) => r.timeReceived).reduce((a, b) => a > b ? a : b),
+      'total_size_bytes': _datastore.values.fold<int>(
+        0,
+        (sum, record) => sum + record.value.length,
+      ),
+      'oldest_record_timestamp': _datastore.values.isEmpty
+          ? null
+          : _datastore.values
+              .map((r) => r.timeReceived)
+              .reduce((a, b) => a < b ? a : b),
+      'newest_record_timestamp': _datastore.values.isEmpty
+          ? null
+          : _datastore.values
+              .map((r) => r.timeReceived)
+              .reduce((a, b) => a > b ? a : b),
     };
-    
+
     return stats;
   }
-  
+
   /// Ensures the protocol manager is started
   void _ensureStarted() {
     if (_closed) throw DHTClosedException();
     if (!_started) throw DHTNotStartedException();
   }
-  
+
   @override
-  String toString() => 'ProtocolManager(${_host.id.toBase58().substring(0, 6)})';
-} 
+  String toString() =>
+      'ProtocolManager(${_host.id.toBase58().substring(0, 6)})';
+}
