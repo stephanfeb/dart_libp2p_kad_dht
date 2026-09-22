@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-09-23
+
+### Changed
+- **Dependency constraints widened so this package works with dart_libp2p 2.x**: `dart_libp2p` is now `>=1.0.0 <3.0.0` and `dart_udx` is `>=2.0.1 <4.0.0`. dart_libp2p 2.0.0 changes no API used here; it requires dart_udx 3.0.0, whose wire protocol v3 does not interoperate with v2. Pinning to `^1.0.0` and `^2.0.1` made this package unresolvable alongside dart_libp2p 2.x, so a consumer could not upgrade either.
+
+### Fixed
+- **Client mode no longer serves DHT queries.** Go's kad-dht `ModeClient` explicitly removes its stream handler and resets inbound DHT streams. Registering the `/ipfs/kad/1.0.0` handler in client mode made server nodes refresh their routing tables against mobile clients that cannot serve responses properly, which tore connections down. Both v1 (`IpfsDHT`) and v2 (`ProtocolManager`) register the handler only in server and autoServer modes.
+
+### Documentation
+- README now records the initialization order that matters: start the DHT before `host.start()`, or AutoRelay's first Identify exchange omits `/ipfs/kad/1.0.0` and Go peers mark the node as "peer stopped dht".
+
 ## [1.2.0] - 2026-02-17
 
 ### Changed (Breaking)
