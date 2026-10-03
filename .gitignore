@@ -15,3 +15,6 @@ go-libp2p-kbucket
 lib/go-ipns
 
 *.swp
+
+# Local development only: point dependencies at sibling checkouts.
+pubspec_overrides.yaml

@@ -55,7 +55,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dart_libp2p_kad_dht: ^1.1.0
+  dart_libp2p_kad_dht: ^1.4.0
   dart_libp2p: ^0.5.2
   dcid: ^1.0.0
 ```
@@ -315,6 +315,23 @@ The test suite includes:
 - Integration tests with real network scenarios
 - Performance benchmarks
 - Mobile device simulation tests
+
+A fresh clone builds against the published packages. To develop against local
+checkouts of [dart_libp2p](https://github.com/stephanfeb/dart_libp2p) or
+[dart-udx](https://github.com/stephanfeb/dart-udx), create a
+`pubspec_overrides.yaml` (git-ignored) next to `pubspec.yaml`:
+
+```yaml
+dependency_overrides:
+  dart_libp2p:
+    path: ../dart-libp2p
+  dart_udx:
+    path: ../dart-udx
+```
+
+The Go interop tests in `test/interop` build the go-libp2p peer from a
+dart_libp2p checkout (`GO_PEER_DIR`, or `../dart-libp2p/interop/go-peer` by
+default) and need Go.
 
 ## 📖 Documentation
 

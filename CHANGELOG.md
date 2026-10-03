@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-10-04
+
+### Changed
+- **Works with dart_libp2p 3.x and 4.x**: `dart_libp2p` is now `>=1.0.0 <5.0.0` and `dart_udx` is `>=2.0.1 <5.0.0`. Neither release changes an API this package uses; the test suite gives the same results against dart_libp2p 3.0.0 and 4.0.0, and the Go interop tests pass against 4.0.0. The upper bounds had made this package unresolvable alongside dart_libp2p 3.0.0 or later.
+- **A fresh clone builds from published packages.** The local path overrides moved out of `pubspec.yaml` into a git-ignored `pubspec_overrides.yaml` (see README).
+- The Go DHT interop tests moved here from dart_libp2p. They build the go-libp2p peer from a dart_libp2p checkout (`GO_PEER_DIR`, or `../dart-libp2p/interop/go-peer`).
+
 ## [1.3.0] - 2026-09-23
 
 ### Changed
