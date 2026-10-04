@@ -129,7 +129,7 @@ class MessageSenderImpl implements MessageSender {
       final sender = await _messageSenderForPeer(peerId);
       if (sender == null) {
         DhtMetrics.recordRequestSendErr();
-        logger.warning('Request failed to open message sender to $peerId');
+        logger.fine('Request failed to open message sender to $peerId');
         throw Exception('Failed to open message sender');
       }
       
@@ -147,7 +147,7 @@ class MessageSenderImpl implements MessageSender {
         return response;
       } catch (e) {
         DhtMetrics.recordRequestSendErr();
-        logger.warning('Request failed to $peerId: $e');
+        logger.fine('Request failed to $peerId: $e');
         rethrow;
       }
     }, [DhtMetrics.upsertMessageType(message.type)]);
@@ -160,7 +160,7 @@ class MessageSenderImpl implements MessageSender {
       final sender = await _messageSenderForPeer(peerId);
       if (sender == null) {
         DhtMetrics.recordMessageSendErr();
-        logger.warning('Message failed to open message sender to $peerId');
+        logger.fine('Message failed to open message sender to $peerId');
         throw Exception('Failed to open message sender');
       }
       
@@ -171,7 +171,7 @@ class MessageSenderImpl implements MessageSender {
         DhtMetrics.recordMessageSendOK(marshalled.length);
       } catch (e) {
         DhtMetrics.recordMessageSendErr();
-        logger.warning('Message failed to $peerId: $e');
+        logger.fine('Message failed to $peerId: $e');
         rethrow;
       }
     }, [DhtMetrics.upsertMessageType(message.type)]);
@@ -274,7 +274,7 @@ class PeerMessageSender {
       stream = newStream;
       return true;
     } catch (e) {
-      logger.warning('Failed to create stream to $peerId: $e');
+      logger.fine('Failed to create stream to $peerId: $e');
       return false;
     }
   }
@@ -308,7 +308,7 @@ class PeerMessageSender {
           stream = null;
           
           if (retry) {
-            logger.warning('Error writing message: $e');
+            logger.fine('Error writing message: $e');
             rethrow;
           }
           
@@ -351,7 +351,7 @@ class PeerMessageSender {
           }
           
           if (retry) {
-            logger.warning('Error reading/writing message: $e');
+            logger.fine('Error reading/writing message: $e');
             rethrow;
           }
           

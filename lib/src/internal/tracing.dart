@@ -3,6 +3,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:multibase/multibase.dart' as mb;
+import 'package:logging/logging.dart';
+
+final _log = Logger('Tracing');
 
 /// A simple tracer implementation for DHT operations.
 /// 
@@ -66,7 +69,7 @@ class Span {
   void end() {
     final duration = DateTime.now().difference(startTime);
     // In a real implementation, this would record the span to a tracing system
-    print('Span $name completed in ${duration.inMilliseconds}ms');
+    _log.finest('Span $name completed in ${duration.inMilliseconds}ms');
   }
 }
 

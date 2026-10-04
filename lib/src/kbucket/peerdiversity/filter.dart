@@ -204,14 +204,14 @@ class Filter {
     for (final addr in addrs) {
       final ip = _extractIP(addr);
       if (ip == null) {
-        _dfLog.warning('failed to parse IP from multiaddr: appKey=$_logKey, multiaddr=${addr.toString()}');
+        _dfLog.fine('failed to parse IP from multiaddr: appKey=$_logKey, multiaddr=${addr.toString()}');
         return false;
       }
       
       // Reject the peer if we can't determine a grouping for one of its addresses
       final key = ipGroupKey(ip);
       if (key.isEmpty) {
-        _dfLog.warning('group key is empty: appKey=$_logKey, ip=${ip.address}, peer=$peerId');
+        _dfLog.fine('group key is empty: appKey=$_logKey, ip=${ip.address}, peer=$peerId');
         return false;
       }
       
@@ -282,7 +282,7 @@ class Filter {
         }
       }
     } catch (e) {
-      _dfLog.warning('Error extracting IP: $e');
+      _dfLog.fine('Error extracting IP: $e');
     }
     return null;
   }

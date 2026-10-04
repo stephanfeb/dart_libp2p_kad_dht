@@ -238,19 +238,19 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
 
     // Subscribe to local address changes to trigger a bootstrap (self-walk)
     // This is crucial for the DHT to update its view of the network when its own addresses change.
-    print('[IpfsDHT.start] Subscribing to EvtLocalAddressesUpdated...');
+    _log.fine('[IpfsDHT.start] Subscribing to EvtLocalAddressesUpdated...');
     _addressUpdateSubscription = _host.eventBus.subscribe(EvtLocalAddressesUpdated).stream.listen((event) {
-      print('[IpfsDHT.start] Received event from eventBus: ${event.runtimeType}');
+      _log.fine('[IpfsDHT.start] Received event from eventBus: ${event.runtimeType}');
       // Cast the event, as the stream from subscribe might be Stream<dynamic> or Stream<Object>
       if (event is EvtLocalAddressesUpdated) {
         if (!_closed && _started) { // Ensure DHT is active and not closed
           // Using a print statement for now to observe this path being taken during tests.
           // Consider a more formal logging mechanism for production.
-          print('IpfsDHT: Detected local address update. Triggering bootstrap/self-walk.');
+          _log.fine('IpfsDHT: Detected local address update. Triggering bootstrap/self-walk.');
           bootstrap().then((_) {
-            print('IpfsDHT: Bootstrap after address update completed.');
+            _log.fine('IpfsDHT: Bootstrap after address update completed.');
           }).catchError((e, s) { // Added StackTrace
-            print('IpfsDHT: Error during bootstrap triggered by address update: $e\n$s');
+            _log.warning('IpfsDHT: Error during bootstrap triggered by address update: $e\n$s');
             // Potentially log this error more formally
           });
         }
@@ -264,7 +264,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       await _refreshManager!.refresh(true);
     }
     
-    print('[IpfsDHT.start] Subscribed to EvtLocalAddressesUpdated. Start method continuing.');
+    _log.fine('[IpfsDHT.start] Subscribed to EvtLocalAddressesUpdated. Start method continuing.');
   }
 
   /// Starts the auto mode checker using Future.delayed instead of Timer.periodic.
@@ -306,7 +306,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
 
   /// Sets up protocol handlers for incoming requests
   void _setupProtocolHandlers() {
-    print('Setting up protocol handlers for ${AminoConstants.protocolID} directly on host.');
+    _log.fine('Setting up protocol handlers for ${AminoConstants.protocolID} directly on host.');
     // Changed from _host.network.setStreamHandler to _host.setStreamHandler
     // to match where MockHost.newStream looks for handlers.
     _host.setStreamHandler(AminoConstants.protocolID, _handleIncomingStream);
@@ -339,7 +339,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       } else if (rawMessageData is List<int>) {
         messageBytes = Uint8List.fromList(rawMessageData);
       } else {
-        _log.warning('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Unexpected data type: ${rawMessageData.runtimeType}. Peer: $remotePeer');
+        _log.fine('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Unexpected data type: ${rawMessageData.runtimeType}. Peer: $remotePeer');
         await stream.reset();
         return;
       }
@@ -366,11 +366,11 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       // Defer peerstore address storage to AFTER response is sent (non-blocking)
       if (remotePeerAddrs != null && remotePeerAddrs.isNotEmpty) {
         _host.peerStore.addrBook.addAddrs(remotePeer, remotePeerAddrs, Duration(hours: 1)).catchError((e) {
-          _log.warning('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Error storing addresses for ${remotePeer.toBase58().substring(0,6)}: $e');
+          _log.fine('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Error storing addresses for ${remotePeer.toBase58().substring(0,6)}: $e');
         });
       }
     } catch (e) {
-      print('[IpfsDHT._handleIncomingStream] Error handling incoming stream from $remotePeer: $e');
+      _log.fine('[IpfsDHT._handleIncomingStream] Error handling incoming stream from $remotePeer: $e');
       await stream.reset();
     }
   }
@@ -455,14 +455,14 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
   Future<List<AddrInfo>> getClosestPeers(PeerId target, {bool networkQueryEnabled = true}) async {
     final logPrefix = '[${_host.id.toBase58().substring(0, 6)}.getClosestPeers]';
     final targetShortId = target.toBase58().substring(0, 6);
-    print('$logPrefix *** DEBUG: Finding closest peers to $targetShortId (networkQuery: $networkQueryEnabled)');
-    print('$logPrefix *** DEBUG: _options.resiliency = ${_options.resiliency}');
+    _log.fine('$logPrefix *** DEBUG: Finding closest peers to $targetShortId (networkQuery: $networkQueryEnabled)');
+    _log.fine('$logPrefix *** DEBUG: _options.resiliency = ${_options.resiliency}');
 
     // Phase 1: Get peers from local routing table
     final localPeerIds = await _routingTable.nearestPeers(target.toBytes(), _options.resiliency);
-    print('$logPrefix *** DEBUG: Found ${localPeerIds.length} peers in local routing table');
+    _log.fine('$logPrefix *** DEBUG: Found ${localPeerIds.length} peers in local routing table');
     for (int i = 0; i < localPeerIds.length; i++) {
-      print('$logPrefix *** DEBUG: Local peer $i: ${localPeerIds[i].toBase58().substring(0,6)}');
+      _log.fine('$logPrefix *** DEBUG: Local peer $i: ${localPeerIds[i].toBase58().substring(0,6)}');
     }
 
     // Convert PeerId objects to AddrInfo objects
@@ -473,16 +473,16 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       localResult.add(AddrInfo(peerId, peerInfoFromStore?.addrs.toList() ?? []));
     }
 
-    print('$logPrefix *** DEBUG: Local result count: ${localResult.length}, resiliency: ${_options.resiliency}, networkQueryEnabled: $networkQueryEnabled');
+    _log.fine('$logPrefix *** DEBUG: Local result count: ${localResult.length}, resiliency: ${_options.resiliency}, networkQueryEnabled: $networkQueryEnabled');
 
     // If we have sufficient peers from local routing table, return them
     if (localResult.length >= _options.resiliency || !networkQueryEnabled) {
-      print('$logPrefix *** DEBUG: EARLY RETURN - Returning ${localResult.length} peers from local routing table (sufficient or network query disabled)');
+      _log.fine('$logPrefix *** DEBUG: EARLY RETURN - Returning ${localResult.length} peers from local routing table (sufficient or network query disabled)');
       return localResult;
     }
 
     // Phase 2: Network query for additional peers if local results are insufficient
-    print('$logPrefix *** DEBUG: NETWORK QUERY TRIGGERED - Local routing table has only ${localResult.length} peers (< ${_options.resiliency}). Performing network query...');
+    _log.fine('$logPrefix *** DEBUG: NETWORK QUERY TRIGGERED - Local routing table has only ${localResult.length} peers (< ${_options.resiliency}). Performing network query...');
 
     if (!_started) {
       _log.fine('$logPrefix DHT not started, calling start() before network query.');
@@ -563,7 +563,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
               networkPeerId, 
               peerInfoFromStore?.addrs.toList() ?? []
             );
-            _log.warning('$logPrefix Fallback to peerstore for network peer ${networkPeerId.toBase58().substring(0,6)} (${peerInfoFromStore?.addrs.length ?? 0} addresses)');
+            _log.fine('$logPrefix Fallback to peerstore for network peer ${networkPeerId.toBase58().substring(0,6)} (${peerInfoFromStore?.addrs.length ?? 0} addresses)');
           }
         }
       }
@@ -581,7 +581,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       return finalResult;
       
     } catch (e, s) {
-      _log.warning('$logPrefix Network query failed: $e', e, s);
+      _log.fine('$logPrefix Network query failed: $e', e, s);
       // Fall back to local results even if insufficient
       _log.info('$logPrefix Falling back to ${localResult.length} local peers due to network query failure');
       return localResult;
@@ -643,7 +643,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     // Get AddrInfo for the peer from the peerstore
     final peerInfo = await _host.peerStore.getPeer(peer); 
     if (peerInfo == null || peerInfo.addrs.isEmpty) {
-      dialLogger.warning('[${_host.id.toBase58().substring(0,6)}] No addresses found for peer ${peer.toBase58().substring(0,6)} in peerstore. Cannot dial.');
+      dialLogger.fine('[${_host.id.toBase58().substring(0,6)}] No addresses found for peer ${peer.toBase58().substring(0,6)} in peerstore. Cannot dial.');
       return; 
     }
 
@@ -658,7 +658,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
         try {
           effectiveAddrs.add(MultiAddr(addrStr.replaceFirst('/ip4/0.0.0.0/', '/ip4/127.0.0.1/')));
         } catch (e) {
-          dialLogger.warning("Failed to transform 0.0.0.0 address '$addrStr' to 127.0.0.1 for connect: $e");
+          dialLogger.fine("Failed to transform 0.0.0.0 address '$addrStr' to 127.0.0.1 for connect: $e");
           effectiveAddrs.add(addr); // Fallback to original on error
         }
       } else {
@@ -672,7 +672,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       await _host.connect(addrInfoToConnect);
       dialLogger.info('[${_host.id.toBase58().substring(0,6)}] Successfully connected to peer ${peer.toBase58().substring(0,6)}.');
     } catch (e, s) {
-      dialLogger.severe('[${_host.id.toBase58().substring(0,6)}] Error connecting to peer ${peer.toBase58().substring(0,6)}: $e', e, s);
+      dialLogger.fine('[${_host.id.toBase58().substring(0,6)}] Error connecting to peer ${peer.toBase58().substring(0,6)}: $e', e, s);
       rethrow; // Rethrow the error so the caller (e.g., _sendMessage) can handle it.
     }
   }
@@ -874,7 +874,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
                 bool added = await _routingTable.tryAddPeer(peerAddrInfo.id, queryPeer: false);
                 _log.finer('$logPrefix Refreshed peer from table $peerShortId. Added to RT (likely updated): $added. RT size: ${await _routingTable.size()}');
             } catch (e, s) {
-                _log.warning('$logPrefix Error refreshing peer from table $peerShortId: $e\n$s');
+                _log.fine('$logPrefix Error refreshing peer from table $peerShortId: $e\n$s');
             }
         }
     } catch (e,s) {
@@ -1028,7 +1028,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
           await _sendMessageFireAndForget(peer, message);
           _log.info('$logPrefix Successfully sent ADD_PROVIDER for CID ${cid.toString()} to peer $peerShortId');
         } catch (e, s) {
-          _log.warning('$logPrefix Error sending ADD_PROVIDER for CID ${cid.toString()} to peer $peerShortId: $e\n$s');
+          _log.fine('$logPrefix Error sending ADD_PROVIDER for CID ${cid.toString()} to peer $peerShortId: $e\n$s');
         }
       }
     } else {
@@ -1312,16 +1312,16 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
           if (peerInfoFromStore.addrs.isNotEmpty) {
             return AddrInfo(p_id_from_result, peerInfoFromStore.addrs.toList());
           } else {
-            _log.warning('$logPrefix For target $targetShortId, PeerInfo found in peerstore BUT addrs list is EMPTY. Returning AddrInfo with empty addrs.');
+            _log.fine('$logPrefix For target $targetShortId, PeerInfo found in peerstore BUT addrs list is EMPTY. Returning AddrInfo with empty addrs.');
             return AddrInfo(p_id_from_result, []);
           }
         } else {
-          _log.warning('$logPrefix For target $targetShortId, PeerInfo was NOT found in local peerstore after lookup. Returning AddrInfo with empty addrs.');
+          _log.fine('$logPrefix For target $targetShortId, PeerInfo was NOT found in local peerstore after lookup. Returning AddrInfo with empty addrs.');
           return AddrInfo(p_id_from_result, []);
         }
       }
     }
-    _log.warning('$logPrefix Target peer $targetShortId was NOT found in the final result.peers list from lookup. Returning null.');
+    _log.fine('$logPrefix Target peer $targetShortId was NOT found in the final result.peers list from lookup. Returning null.');
     return null;
   }
 
@@ -1458,7 +1458,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     
     getValueLogger.info('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": runLookupWithFollowup completed. TerminationReason: ${lookupResult.terminationReason}, ErrorsInResult: ${lookupResult.errors.length}');
     for (final err in lookupResult.errors) {
-        getValueLogger.warning('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Error reported in lookupResult: $err');
+        getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Error reported in lookupResult: $err');
     }
 
     List<Record> receivedRecords = [];
@@ -1471,7 +1471,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
 
     if (receivedRecords.isEmpty) {
       if (maxRetriesError != null) {
-        getValueLogger.warning('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": No records received AND MaxRetriesExceededException found in lookup result. Rethrowing.');
+        getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": No records received AND MaxRetriesExceededException found in lookup result. Rethrowing.');
         throw maxRetriesError;
       }
       getValueLogger.info('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": No records received from network (after processing controller). Returning null.');
@@ -1488,16 +1488,16 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
             getValueLogger.finer('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Record PASSED validation.');
             validRecordValues.add(record.value);
         } catch (e) {
-            getValueLogger.warning('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Record failed validation: $e.');
+            getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Record failed validation: $e.');
         }
     }
 
     if (validRecordValues.isEmpty) {
         if (maxRetriesError != null) {
-            getValueLogger.warning('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": No VALID records AND MaxRetriesExceededException found in lookup result. Rethrowing.');
+            getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": No VALID records AND MaxRetriesExceededException found in lookup result. Rethrowing.');
             throw maxRetriesError;
         }
-        getValueLogger.warning('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": No records passed validation. Returning null.');
+        getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": No records passed validation. Returning null.');
         return null;
     }
     
@@ -1535,7 +1535,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
           stream = await _host.newStream(peer, [AminoConstants.protocolID], Context())
               .timeout(Duration(seconds: 10)) as P2PStream<Uint8List>?;
         } on TimeoutException catch (e) {
-          _log.warning('[$selfShortId] Attempt $attempt: Stream creation timed out for $shortPeerId: $e');
+          _log.fine('[$selfShortId] Attempt $attempt: Stream creation timed out for $shortPeerId: $e');
           throw Exception('Stream creation timed out: $e');
         }
         
@@ -1549,14 +1549,14 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
         
         // Add timeout protection to stream operations
         await stream.write(messageBytes).timeout(Duration(seconds: 5), onTimeout: () {
-          _log.warning('[$selfShortId] Attempt $attempt: Write operation timed out for $shortPeerId');
+          _log.fine('[$selfShortId] Attempt $attempt: Write operation timed out for $shortPeerId');
           throw TimeoutException('Write operation timed out', Duration(seconds: 5));
         });
         
         _log.fine('[$selfShortId] Attempt $attempt: Message written to stream ${stream.id()}. Reading response...');
 
         responseBytes = await stream.read().timeout(Duration(seconds: 10), onTimeout: () {
-          _log.warning('[$selfShortId] Attempt $attempt: Read operation timed out for $shortPeerId');
+          _log.fine('[$selfShortId] Attempt $attempt: Read operation timed out for $shortPeerId');
           throw TimeoutException('Read operation timed out', Duration(seconds: 10));
         });
         
@@ -1577,20 +1577,20 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
           }
           return responseMessage;
         } catch (e, s) {
-          _log.severe('[$selfShortId] Attempt $attempt: Error decoding protobuf response from $shortPeerId. Length: ${responseBytes.length}. Error: $e', e, s);
+          _log.fine('[$selfShortId] Attempt $attempt: Error decoding protobuf response from $shortPeerId. Length: ${responseBytes.length}. Error: $e', e, s);
           throw Exception('Failed to decode protobuf response from $shortPeerId: $e');
         }
 
       } catch (e, s) {
         lastError = e;
-        _log.warning('[$selfShortId] Attempt $attempt to send ${message.type} to $shortPeerId failed: $e', e, s);
+        _log.fine('[$selfShortId] Attempt $attempt to send ${message.type} to $shortPeerId failed: $e', e, s);
 
         if (stream != null) {
           try {
             await stream!.reset(); // Use reset for abrupt closure on error
             _log.fine('[$selfShortId] Stream ${stream.id()} reset after error on attempt $attempt.');
           } catch (resetErr, resetStack) {
-            _log.warning('[$selfShortId] Error resetting stream ${stream.id()} after error on attempt $attempt: $resetErr', resetErr, resetStack);
+            _log.fine('[$selfShortId] Error resetting stream ${stream.id()} after error on attempt $attempt: $resetErr', resetErr, resetStack);
           }
           stream = null;
         }
@@ -1612,7 +1612,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
           await Future.delayed(delay);
           continue; // Next attempt
         } else {
-          _log.severe('[$selfShortId] Final attempt $attempt failed for ${message.type} to $shortPeerId or error not retryable: $e', e, s);
+          _log.fine('[$selfShortId] Final attempt $attempt failed for ${message.type} to $shortPeerId or error not retryable: $e', e, s);
           if (_isRetryableConnectionError(e)) { // Max attempts reached for a retryable error
             throw MaxRetriesExceededException(
                 'Failed to send ${message.type} to ${peer.toBase58()} after $attempt attempts', e);
@@ -1650,7 +1650,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       stream = null;
       _log.info('[$selfShortId] Fire-and-forget ${message.type} sent to $shortPeerId');
     } catch (e, s) {
-      _log.warning('[$selfShortId] Fire-and-forget ${message.type} to $shortPeerId failed: $e', e, s);
+      _log.fine('[$selfShortId] Fire-and-forget ${message.type} to $shortPeerId failed: $e', e, s);
       if (stream != null) {
         try { await stream!.reset(); } catch (_) {}
       }
@@ -1767,7 +1767,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
               await _routingTable.removePeer(peer);
               _log.fine('$logPrefix Evicted peer ${peer.toBase58().substring(0,6)} from routing table after failed liveness check');
             } catch (e) {
-              _log.warning('$logPrefix Failed to evict peer ${peer.toBase58().substring(0,6)} from routing table: $e');
+              _log.fine('$logPrefix Failed to evict peer ${peer.toBase58().substring(0,6)} from routing table: $e');
             }
           } else {
             _log.info('$logPrefix Peer ${peer.toBase58().substring(0,6)} survived eviction via liveness ping');
@@ -1786,7 +1786,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
         errors: result.errors,
       );
     } catch (e, s) {
-      _log.severe('$logPrefix Query failed with exception: $e', e, s);
+      _log.warning('$logPrefix Query failed with exception: $e', e, s);
       return LookupWithFollowupResult(
         peers: [],
         terminationReason: LookupTerminationReason.cancelled,
@@ -1900,7 +1900,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       
       _log.fine('RefreshQuery: Added $addedCount new peers for CPL $cplToQuery');
     } catch (e, s) {
-      _log.warning('RefreshQuery: Error during query for CPL $cplToQuery: $e', e, s);
+      _log.fine('RefreshQuery: Error during query for CPL $cplToQuery: $e', e, s);
     }
   }
 

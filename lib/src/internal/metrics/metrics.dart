@@ -59,14 +59,14 @@ class DhtMetrics {
     _receivedMessages++;
     _receivedMessageErrors++;
     _receivedBytes.add(msgLen);
-    _logger.warning('Error receiving message: $messageType, $msgLen bytes, attributes: ${attrs.toMap()}');
+    _logger.fine('Error receiving message: $messageType, $msgLen bytes, attributes: ${attrs.toMap()}');
   }
   
   /// Records an error during message handling.
   static void recordMessageHandleErr() {
     final attrs = attributesFromZone();
     _receivedMessageErrors++;
-    _logger.warning('Error handling message, attributes: ${attrs.toMap()}');
+    _logger.fine('Error handling message, attributes: ${attrs.toMap()}');
   }
   
   /// Records the latency of an inbound request.
@@ -81,7 +81,7 @@ class DhtMetrics {
     final attrs = attributesFromZone();
     _sentRequests++;
     _sentRequestErrors++;
-    _logger.warning('Error sending request, attributes: ${attrs.toMap()}');
+    _logger.fine('Error sending request, attributes: ${attrs.toMap()}');
   }
   
   /// Records a successful request send operation.
@@ -106,7 +106,7 @@ class DhtMetrics {
     final attrs = attributesFromZone();
     _sentMessages++;
     _sentMessageErrors++;
-    _logger.warning('Error sending message, attributes: ${attrs.toMap()}');
+    _logger.fine('Error sending message, attributes: ${attrs.toMap()}');
   }
   
   /// Records the estimated network size.

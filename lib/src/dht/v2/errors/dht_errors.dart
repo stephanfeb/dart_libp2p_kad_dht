@@ -110,7 +110,7 @@ class DHTErrorHandler {
       try {
         return await operation();
       } on DHTNetworkException catch (e) {
-        _logger.warning('Network error querying ${peer.toBase58().substring(0, 6)}${context != null ? ' ($context)' : ''}: ${e.message}');
+        _logger.fine('Network error querying ${peer.toBase58().substring(0, 6)}${context != null ? ' ($context)' : ''}: ${e.message}');
         
         if (!retryable || attempts >= maxRetries) {
           throw DHTMaxRetriesException(
@@ -124,7 +124,7 @@ class DHTErrorHandler {
         await Future.delayed(backoff);
         backoff = Duration(milliseconds: (backoff.inMilliseconds * 1.5).round());
       } on DHTTimeoutException catch (e) {
-        _logger.warning('Timeout querying ${peer.toBase58().substring(0, 6)}${context != null ? ' ($context)' : ''}: ${e.message}');
+        _logger.fine('Timeout querying ${peer.toBase58().substring(0, 6)}${context != null ? ' ($context)' : ''}: ${e.message}');
         
         if (!retryable || attempts >= maxRetries) {
           throw DHTMaxRetriesException(
@@ -138,12 +138,12 @@ class DHTErrorHandler {
         await Future.delayed(backoff);
         backoff = Duration(milliseconds: (backoff.inMilliseconds * 1.5).round());
       } on DHTProtocolException catch (e) {
-        _logger.warning('Protocol error querying ${peer.toBase58().substring(0, 6)}${context != null ? ' ($context)' : ''}: ${e.message}');
+        _logger.fine('Protocol error querying ${peer.toBase58().substring(0, 6)}${context != null ? ' ($context)' : ''}: ${e.message}');
         
         // Protocol errors are usually not retryable
         return null;
       } catch (e, stackTrace) {
-        _logger.severe('Unexpected error querying ${peer.toBase58().substring(0, 6)}${context != null ? ' ($context)' : ''}: $e', e, stackTrace);
+        _logger.fine('Unexpected error querying ${peer.toBase58().substring(0, 6)}${context != null ? ' ($context)' : ''}: $e', e, stackTrace);
         
         if (!retryable || attempts >= maxRetries) {
           throw DHTQueryException(
@@ -248,7 +248,7 @@ class DHTErrorHandler {
     final contextStr = context != null ? ' ($context)' : '';
     
     if (error is DHTException) {
-      _logger.warning('$operation failed$peerStr$contextStr: ${error.message}');
+      _logger.fine('$operation failed$peerStr$contextStr: ${error.message}');
     } else {
       _logger.severe('$operation failed$peerStr$contextStr: $error', error, stackTrace);
     }

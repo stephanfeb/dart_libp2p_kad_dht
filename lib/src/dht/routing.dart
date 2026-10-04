@@ -7,6 +7,9 @@ import 'package:dart_libp2p/core/routing/options.dart';
 import '../record/validator.dart' show Validator; 
 
 import '../internal/config/quorum.dart';
+import 'package:logging/logging.dart';
+
+final _log = Logger('DHTRouting');
 
 /// This file implements the routing functionality for the DHT.
 
@@ -68,7 +71,7 @@ class DHTRouting {
         // Validation failed (e.g., InvalidRecordError from validator.validate)
         // Log or handle as appropriate, but this record is skipped.
         // Consider using a logger instance if available, or rethrow if critical.
-        print('DHTRouting.processValues: Record validation failed for key "$key" from peer ${receivedVal.from}: $e');
+        _log.fine('DHTRouting.processValues: Record validation failed for key "$key" from peer ${receivedVal.from}: $e');
       }
     }
 

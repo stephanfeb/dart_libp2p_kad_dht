@@ -147,7 +147,7 @@ class SubscriberNotifee {
       // For now, just try to add the peer to the routing table
       await dht.routingTable.tryAddPeer(peer, queryPeer: true);
     } catch (e) {
-      _logger.warning('Could not add peer to routing table: $e');
+      _logger.fine('Could not add peer to routing table: $e');
     }
   }
 

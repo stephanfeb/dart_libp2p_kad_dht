@@ -69,7 +69,7 @@ class RecordSigner {
         final authorPeerId = PeerId.fromBytes(record.author);
         final derivedKey = await authorPeerId.extractPublicKey();
         if (derivedKey == null) {
-          _logger.warning('Could not derive public key from author peer ID');
+          _logger.fine('Could not derive public key from author peer ID');
           return false;
         }
         verificationKey = derivedKey;
@@ -89,12 +89,12 @@ class RecordSigner {
       if (isValid) {
         _logger.fine('Record signature validation successful');
       } else {
-        _logger.warning('Record signature validation failed');
+        _logger.fine('Record signature validation failed');
       }
       
       return isValid;
     } catch (e) {
-      _logger.warning('Error validating record signature: $e');
+      _logger.fine('Error validating record signature: $e');
       return false;
     }
   }
@@ -207,7 +207,7 @@ class DHTRecordValidator implements Validator {
       
       _logger.fine('Record validation successful for key: ${key}...');
     } catch (e) {
-      _logger.warning('Record validation failed for key: ${key}...: $e');
+      _logger.fine('Record validation failed for key: ${key}...: $e');
       rethrow;
     }
   }

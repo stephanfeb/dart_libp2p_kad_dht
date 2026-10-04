@@ -55,7 +55,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dart_libp2p_kad_dht: ^1.4.0
+  dart_libp2p_kad_dht: ^1.4.1
   dart_libp2p: ^0.5.2
   dcid: ^1.0.0
 ```
@@ -205,9 +205,9 @@ final dhtOptions = DHTOptions(
   bucketSize: 20,            // K-bucket size
   concurrency: 10,           // Concurrent operations
   resiliency: 3,             // Query redundancy
-  bootstrapPeers: [          // Network entry points
-    AddrInfo(peerId1, [addr1]),
-    AddrInfo(peerId2, [addr2]),
+  bootstrapPeers: [          // Network entry points; each address must end in /p2p/<peer ID>
+    MultiAddr('/ip4/203.0.113.7/udp/4001/udx/p2p/12D3KooW...'),
+    MultiAddr('/ip4/203.0.113.8/tcp/4001/p2p/12D3KooW...'),
   ],
 );
 ```

@@ -4,6 +4,9 @@ import 'package:dart_libp2p/core/peer/addr_info.dart';
 import 'package:dart_libp2p/core/multiaddr.dart';
 
 import 'dht.dart';
+import 'package:logging/logging.dart';
+
+final _log = Logger('DHTBootstrap');
 
 /// DefaultBootstrapPeers is a set of public DHT bootstrap peers provided by libp2p.
 final List<MultiAddr> defaultBootstrapPeers = _initDefaultBootstrapPeers();
@@ -35,7 +38,7 @@ List<MultiAddr> _initDefaultBootstrapPeers() {
       final addr = MultiAddr(addrStr);
       peers.add(addr);
     } catch (e) {
-      print('Error parsing bootstrap address: $addrStr - $e');
+      _log.warning('Error parsing bootstrap address: $addrStr - $e');
     }
   }
   
@@ -54,7 +57,7 @@ List<AddrInfo> getDefaultBootstrapPeerAddrInfos() {
       final info = AddrInfo.fromMultiaddr(addr);
       addrInfos.add(info);
     } catch (e) {
-      print('Failed to convert bootstrapper address to peer addr info: ${addr.toString()} - $e');
+      _log.warning('Failed to convert bootstrapper address to peer addr info: ${addr.toString()} - $e');
     }
   }
   

@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:dart_libp2p/core/event/bus.dart';
+import 'package:dart_libp2p/core/event/identify.dart';
+import 'package:dart_libp2p/core/event/protocol.dart';
 import 'package:dart_libp2p/core/host/host.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
 import 'package:dart_libp2p/core/peer/addr_info.dart';
@@ -42,6 +45,7 @@ class RoutingManager {
   bool _started = false;
   bool _closed = false;
   Timer? _refreshTimer;
+  Subscription<dynamic>? _identifySubscription;
   
   RoutingManager(this._host, DHTOptions options) {
     _routingTable = RoutingTable(
@@ -79,7 +83,43 @@ class RoutingManager {
     }
     
     _started = true;
+    _watchPeerProtocols();
     _logger.info('RoutingManager started');
+  }
+
+  /// Keeps the routing table in step with what Identify learns, as
+  /// go-libp2p-kad-dht does: a connected peer that serves the DHT protocol
+  /// goes into the table, and a peer that stops serving it comes out.
+  ///
+  /// Only servers enter the table, and a peer's protocols are often still
+  /// unknown when its first request arrives, so this is how a server that
+  /// connects to us (rather than one we query) gets into the table.
+  void _watchPeerProtocols() {
+    try {
+      _identifySubscription = _host.eventBus
+          .subscribe([EvtPeerIdentificationCompleted, EvtPeerProtocolsUpdated]);
+    } catch (e) {
+      _logger.fine('No event bus to watch peer protocols on: $e');
+      return;
+    }
+    _identifySubscription!.stream.listen((dynamic event) async {
+      if (_closed) return;
+      try {
+        if (event is EvtPeerIdentificationCompleted) {
+          if (event.peer != _host.id && event.protocols.contains(AminoConstants.protocolID)) {
+            await addPeer(event.peer, queryPeer: false);
+          }
+        } else if (event is EvtPeerProtocolsUpdated) {
+          if (event.added.contains(AminoConstants.protocolID)) {
+            await addPeer(event.peer, queryPeer: false);
+          } else if (event.removed.contains(AminoConstants.protocolID)) {
+            await _routingTable.removePeer(event.peer);
+          }
+        }
+      } catch (e) {
+        _logger.fine('Routing table update from Identify failed: $e');
+      }
+    });
   }
   
   /// Stops the routing manager
@@ -91,6 +131,8 @@ class RoutingManager {
     
     _refreshTimer?.cancel();
     _refreshTimer = null;
+    await _identifySubscription?.close();
+    _identifySubscription = null;
     
     // Note: RoutingTable doesn't have a close method, so we just clean up our state
     _logger.info('RoutingManager closed');
@@ -121,7 +163,7 @@ class RoutingManager {
       // Only throw exception for critical failures, not for network connectivity issues
       if (e is TimeoutException || e.toString().contains('TimeoutException')) {
         // Log the timeout but complete bootstrap gracefully
-        _logger.warning('Bootstrap timed out but completing gracefully: $e');
+        _logger.fine('Bootstrap timed out but completing gracefully: $e');
         _logger.info('Bootstrap process completed with timeout (graceful completion)');
       } else {
         // For other types of exceptions, still throw
@@ -235,7 +277,7 @@ class RoutingManager {
     } catch (e, stackTrace) {
       _logger.severe('Failed to populate routing table', e, stackTrace);
       // Don't rethrow - allow bootstrap to complete even if population fails
-      _logger.warning('Bootstrap continuing despite routing table population failure');
+      _logger.fine('Bootstrap continuing despite routing table population failure');
     }
   }
   
@@ -272,14 +314,14 @@ class RoutingManager {
           // Remove unresponsive peer
           await _routingTable.removePeer(peer.id);
           removedCount++;
-          _logger.warning('Removed unresponsive peer ${peer.id.toBase58().substring(0, 6)}');
+          _logger.fine('Removed unresponsive peer ${peer.id.toBase58().substring(0, 6)}');
           
           // Unprotect removed peer
           _host.connManager.unprotect(peer.id, 'dht-routing-table');
           _logger.fine('Unprotected removed DHT peer: ${peer.id.toBase58().substring(0, 6)}');
         }
       } catch (e) {
-        _logger.warning('Failed to refresh peer ${peer.id.toBase58().substring(0, 6)}: $e');
+        _logger.fine('Failed to refresh peer ${peer.id.toBase58().substring(0, 6)}: $e');
         // Try to remove problematic peer
         try {
           await _routingTable.removePeer(peer.id);
@@ -289,7 +331,7 @@ class RoutingManager {
           _host.connManager.unprotect(peer.id, 'dht-routing-table');
           _logger.fine('Unprotected problematic DHT peer: ${peer.id.toBase58().substring(0, 6)}');
         } catch (removeError) {
-          _logger.warning('Failed to remove problematic peer: $removeError');
+          _logger.fine('Failed to remove problematic peer: $removeError');
         }
       }
     }
@@ -336,7 +378,7 @@ class RoutingManager {
       
       // Break if we're not making progress
       if (currentSize == 0) {
-        _logger.warning('No peers discovered in round $round. Breaking discovery loop.');
+        _logger.fine('No peers discovered in round $round. Breaking discovery loop.');
         break;
       }
     }
@@ -352,14 +394,14 @@ class RoutingManager {
     final minSize = _config?.resiliency ?? AminoConstants.defaultResiliency;
     
     if (currentSize < minSize) {
-      _logger.warning('Routing table size ($currentSize) is below minimum ($minSize)');
+      _logger.info('Routing table size ($currentSize) is below minimum ($minSize)');
       
       // Try to connect to more bootstrap peers if available
       await _connectToAdditionalBootstrapPeers();
       
       final finalSize = await _routingTable.size();
       if (finalSize < minSize) {
-        _logger.warning('Network health check failed. Final size: $finalSize, Required: $minSize');
+        _logger.info('Network health check failed. Final size: $finalSize, Required: $minSize');
       } else {
         _logger.info('Network health restored. Final size: $finalSize');
       }
@@ -397,7 +439,7 @@ class RoutingManager {
           _logger.fine('Protected additional bootstrap DHT peer: ${addrInfo.id.toBase58().substring(0, 6)}');
         }
       } catch (e) {
-        _logger.warning('Failed to connect to additional bootstrap peer ${addrInfo.id.toBase58().substring(0, 6)}: $e');
+        _logger.fine('Failed to connect to additional bootstrap peer ${addrInfo.id.toBase58().substring(0, 6)}: $e');
       }
     }
     
@@ -476,6 +518,14 @@ class RoutingManager {
                   _logger.fine('Stored ${addresses.length} address(es) for discovered peer ${peerId.toBase58().substring(0, 6)}');
                 }
                 
+                // A peer named in a response may be a client-mode peer.
+                // Add it now if it is known to be a DHT server; otherwise
+                // vet it in the background first.
+                if (peerId == _host.id) continue;
+                if (!await supportsDht(peerId)) {
+                  _vetAndAdd(peerId);
+                  continue;
+                }
                 final added = await _routingTable.tryAddPeer(peerId, queryPeer: true);
                 if (added) {
                   discoveredPeers++;
@@ -497,7 +547,7 @@ class RoutingManager {
       
       _logger.info('Random key lookup completed. Discovered $discoveredPeers new peers');
     } catch (e) {
-      _logger.warning('Random key lookup failed: $e');
+      _logger.fine('Random key lookup failed: $e');
     }
   }
   
@@ -540,6 +590,14 @@ class RoutingManager {
                   _logger.fine('Stored ${addresses.length} address(es) for discovered peer ${peerId.toBase58().substring(0, 6)}');
                 }
                 
+                // A peer named in a response may be a client-mode peer.
+                // Add it now if it is known to be a DHT server; otherwise
+                // vet it in the background first.
+                if (peerId == _host.id) continue;
+                if (!await supportsDht(peerId)) {
+                  _vetAndAdd(peerId);
+                  continue;
+                }
                 final added = await _routingTable.tryAddPeer(peerId, queryPeer: true);
                 if (added) {
                   discoveredPeers++;
@@ -561,7 +619,7 @@ class RoutingManager {
       
       _logger.info('Self lookup completed. Discovered $discoveredPeers new peers');
     } catch (e) {
-      _logger.warning('Self lookup failed: $e');
+      _logger.fine('Self lookup failed: $e');
     }
   }
   
@@ -582,10 +640,84 @@ class RoutingManager {
     try {
       await _populateRoutingTable();
     } catch (e) {
-      _logger.warning('Periodic refresh failed: $e');
+      _logger.fine('Periodic refresh failed: $e');
     }
   }
   
+  /// Whether the peerstore records [peer] as speaking the DHT protocol.
+  ///
+  /// Identify fills in a peer's protocols. A client-mode DHT peer does not
+  /// register the protocol handler, so it never advertises it, and a peer
+  /// that Identify has not finished with yet is not known to speak it.
+  Future<bool> supportsDht(PeerId peer) async {
+    try {
+      final supported = await _host.peerStore.protoBook
+          .supportsProtocols(peer, [AminoConstants.protocolID]);
+      return supported.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Whether [peer] is a DHT server: known to speak the protocol, or able
+  /// to answer a FIND_NODE query now. Like go-libp2p-kad-dht's lookup check,
+  /// this vets a peer that another peer named in a response before it goes
+  /// into the routing table.
+  Future<bool> _checkServer(PeerId peer) async {
+    if (await supportsDht(peer)) return true;
+    try {
+      final response = await _network
+          ?.sendMessage(peer, Message(type: MessageType.findNode, key: _host.id.toBytes()))
+          .timeout(const Duration(seconds: 5));
+      return response != null;
+    } catch (e) {
+      _logger.finer('Peer ${peer.toBase58().substring(0, 6)} did not answer a lookup check: $e');
+      return false;
+    }
+  }
+
+  /// Peers with a lookup check in progress.
+  final Set<PeerId> _vetting = {};
+
+  /// Runs [_checkServer] on [peer] in the background and adds it to the
+  /// routing table if it passes. A lookup does not wait for the check, so a
+  /// peer that cannot be reached does not slow it down.
+  void _vetAndAdd(PeerId peer) {
+    if (_closed || !_vetting.add(peer)) return;
+    () async {
+      try {
+        if (await _routingTable.find(peer) != null) return;
+        if (await _checkServer(peer) && !_closed) {
+          if (await _routingTable.tryAddPeer(peer, queryPeer: true)) {
+            _metrics?.recordPeerAdded();
+            _host.connManager.protect(peer, 'dht-routing-table');
+          }
+        }
+      } catch (e) {
+        _logger.finer('Lookup check of ${peer.toBase58().substring(0, 6)} failed: $e');
+      } finally {
+        _vetting.remove(peer);
+      }
+    }();
+  }
+
+  /// Adds [peer] to the routing table only if it is a DHT server.
+  ///
+  /// Use this for peers we have not queried ourselves: peers that send us
+  /// requests and peers that others name in their responses. A client-mode
+  /// peer can query us but cannot answer queries, so it must not go into the
+  /// table, where we would hand it out as a closer peer and query it
+  /// ourselves. go-libp2p-kad-dht applies the same rule. A peer that
+  /// answers one of our queries is a server; add it with [addPeer].
+  Future<bool> addPeerIfServer(PeerId peer, {bool queryPeer = true, bool isReplaceable = true}) async {
+    if (!await supportsDht(peer)) {
+      _logger.finer('Not adding ${peer.toBase58().substring(0, 6)} to the routing table: '
+          'not known to speak ${AminoConstants.protocolID}');
+      return false;
+    }
+    return addPeer(peer, queryPeer: queryPeer, isReplaceable: isReplaceable);
+  }
+
   /// Adds a peer to the routing table
   Future<bool> addPeer(PeerId peer, {bool queryPeer = true, bool isReplaceable = true}) async {
     _ensureStarted();

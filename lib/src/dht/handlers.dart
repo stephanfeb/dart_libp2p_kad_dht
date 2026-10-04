@@ -8,6 +8,7 @@ import 'package:dart_libp2p/core/peer/addr_info.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
 import 'package:dart_libp2p/core/multiaddr.dart';
 
+import '../amino/defaults.dart';
 import '../pb/dht_message.dart';
 import '../pb/record.dart';
 import 'dht.dart';
@@ -48,7 +49,7 @@ class DHTHandlers {
         case MessageType.addProvider:
           return handleAddProvider;
         default:
-          _log.severe('$_logPrefix Unknown message type received: $type');
+          _log.fine('$_logPrefix Unknown message type received: $type');
           throw ArgumentError('Unknown message type: $type');
       }
     }
@@ -64,14 +65,23 @@ class DHTHandlers {
           _log.fine('$_logPrefix $handlerName: No addresses provided for sender $senderShortId - checking if already in peerstore');
           final existingPeerInfo = await dht.host().peerStore.getPeer(sender);
           if (existingPeerInfo == null || existingPeerInfo.addrs.isEmpty) {
-            _log.warning('$_logPrefix $handlerName: Sender $senderShortId has no addresses in peerstore and none provided');
+            _log.fine('$_logPrefix $handlerName: Sender $senderShortId has no addresses in peerstore and none provided');
           }
         }
 
+        // A client-mode peer can query us but cannot answer queries, so it
+        // must not go into the routing table. Add the sender only if
+        // Identify reports that it speaks the DHT protocol.
+        final supported = await dht.host().peerStore.protoBook
+            .supportsProtocols(sender, [AminoConstants.protocolID]);
+        if (supported.isEmpty) {
+          _log.fine('$_logPrefix $handlerName: Sender $senderShortId is not known to speak ${AminoConstants.protocolID}; not adding it to the RT');
+          return;
+        }
         bool added = await dht.routingTable.tryAddPeer(sender, queryPeer: true, isReplaceable: true);
         _log.fine('$_logPrefix $handlerName: Attempted to add sender $senderShortId to RT. Success: $added. RT Size: ${await dht.routingTable.size()}');
       } catch (e,s) {
-        _log.warning('$_logPrefix $handlerName: Error adding sender $senderShortId to RT: $e\n$s');
+        _log.fine('$_logPrefix $handlerName: Error adding sender $senderShortId to RT: $e\n$s');
       }
     }
 
@@ -81,7 +91,7 @@ class DHTHandlers {
       _log.info('$_logPrefix handlePing: Received PING from $peerShortId.');
       // Defer RT insertion (non-blocking) — respond to ping as fast as possible
       _tryAddSenderToRT(peer, 'handlePing').catchError((e) {
-        _log.warning('$_logPrefix handlePing: Deferred RT insertion failed: $e');
+        _log.fine('$_logPrefix handlePing: Deferred RT insertion failed: $e');
       });
       return Message(type: MessageType.ping);
     }
@@ -93,7 +103,7 @@ class DHTHandlers {
       _log.info('$_logPrefix handleFindPeer: Received FIND_NODE from $peerShortId for key $keyString.');
 
       if (message.key == null) {
-        _log.warning('$_logPrefix handleFindPeer: FIND_NODE message from $peerShortId missing key.');
+        _log.fine('$_logPrefix handleFindPeer: FIND_NODE message from $peerShortId missing key.');
         throw ArgumentError('FIND_NODE message must have a key');
       }
 
@@ -126,7 +136,7 @@ class DHTHandlers {
           final addrsBytesList = peerAddrs.map((addr) => addr.toBytes()).toList();
 
           if (addrsBytesList.isEmpty) {
-            _log.warning('$_logPrefix handleFindPeer: Peer ${pId.toBase58().substring(0,6)} has no addresses after filtering');
+            _log.fine('$_logPrefix handleFindPeer: Peer ${pId.toBase58().substring(0,6)} has no addresses after filtering');
             continue;
           }
 
@@ -140,12 +150,12 @@ class DHTHandlers {
 
         // Defer sender RT insertion to after response is built (non-blocking)
         _tryAddSenderToRT(peer, 'handleFindPeer').catchError((e) {
-          _log.warning('$_logPrefix handleFindPeer: Deferred RT insertion failed: $e');
+          _log.fine('$_logPrefix handleFindPeer: Deferred RT insertion failed: $e');
         });
 
         return response;
       } catch (e, s) {
-        _log.severe('$_logPrefix handleFindPeer: Error processing FIND_NODE from $peerShortId for key $keyString: $e\n$s');
+        _log.fine('$_logPrefix handleFindPeer: Error processing FIND_NODE from $peerShortId for key $keyString: $e\n$s');
         response.closerPeers.clear();
         return response; // Return empty closerPeers on error
       }
@@ -158,7 +168,7 @@ class DHTHandlers {
       _log.info('$_logPrefix handleGetValue: Received GET_VALUE from $peerShortId for key $keyString.');
 
       if (message.key == null) {
-        _log.warning('$_logPrefix handleGetValue: GET_VALUE message from $peerShortId missing key.');
+        _log.fine('$_logPrefix handleGetValue: GET_VALUE message from $peerShortId missing key.');
         throw ArgumentError('GET_VALUE message must have a key');
       }
 
@@ -175,7 +185,7 @@ class DHTHandlers {
           _log.info('$_logPrefix handleGetValue: Found record locally for key $keyString. Responding to $peerShortId with record.');
           // Defer RT insertion (non-blocking)
           _tryAddSenderToRT(peer, 'handleGetValue').catchError((e) {
-            _log.warning('$_logPrefix handleGetValue: Deferred RT insertion failed: $e');
+            _log.fine('$_logPrefix handleGetValue: Deferred RT insertion failed: $e');
           });
           return Message(
             type: MessageType.getValue,
@@ -207,7 +217,7 @@ class DHTHandlers {
           final addrsBytesList = peerAddrs.map((addr) => addr.toBytes()).toList();
 
           if (addrsBytesList.isEmpty) {
-            _log.warning('$_logPrefix handleGetValue: Peer ${pId.toBase58().substring(0,6)} has no addresses after filtering');
+            _log.fine('$_logPrefix handleGetValue: Peer ${pId.toBase58().substring(0,6)} has no addresses after filtering');
             continue;
           }
 
@@ -221,12 +231,12 @@ class DHTHandlers {
 
         // Defer sender RT insertion to after response is built (non-blocking)
         _tryAddSenderToRT(peer, 'handleGetValue').catchError((e) {
-          _log.warning('$_logPrefix handleGetValue: Deferred RT insertion failed: $e');
+          _log.fine('$_logPrefix handleGetValue: Deferred RT insertion failed: $e');
         });
 
         return response;
       } catch (e, s) {
-        _log.severe('$_logPrefix handleGetValue: Error processing GET_VALUE from $peerShortId for key $keyString: $e\n$s');
+        _log.fine('$_logPrefix handleGetValue: Error processing GET_VALUE from $peerShortId for key $keyString: $e\n$s');
         return response;
       }
     }
@@ -240,11 +250,11 @@ class DHTHandlers {
       // await _tryAddSenderToRT(peer, 'handlePutValue');
 
       if (message.key == null) {
-        _log.warning('$_logPrefix handlePutValue: PUT_VALUE message from $peerShortId missing key.');
+        _log.fine('$_logPrefix handlePutValue: PUT_VALUE message from $peerShortId missing key.');
         throw ArgumentError('PUT_VALUE message must have a key');
       }
       if (message.record == null) {
-        _log.warning('$_logPrefix handlePutValue: PUT_VALUE message from $peerShortId missing record.');
+        _log.fine('$_logPrefix handlePutValue: PUT_VALUE message from $peerShortId missing record.');
         throw ArgumentError('PUT_VALUE message must have a record');
       }
 
@@ -258,7 +268,7 @@ class DHTHandlers {
         final record = message.record!;
         _log.fine('$_logPrefix handlePutValue: Validating record for key $keyString from $peerShortId. Record author: ${PeerId.fromBytes(record.author).toBase58().substring(0,6)}');
         if (!await dht.validateRecord(record)) {
-          _log.warning('$_logPrefix handlePutValue: Invalid record for key $keyString from $peerShortId. Validation failed.');
+          _log.fine('$_logPrefix handlePutValue: Invalid record for key $keyString from $peerShortId. Validation failed.');
           throw ArgumentError('Invalid record');
         }
         _log.fine('$_logPrefix handlePutValue: Record for key $keyString from $peerShortId validated. Storing...');
@@ -266,7 +276,7 @@ class DHTHandlers {
         _log.info('$_logPrefix handlePutValue: Successfully stored record for key $keyString from $peerShortId.');
         return response;
       } catch (e, s) {
-        _log.severe('$_logPrefix handlePutValue: Error processing PUT_VALUE from $peerShortId for key $keyString: $e\n$s');
+        _log.fine('$_logPrefix handlePutValue: Error processing PUT_VALUE from $peerShortId for key $keyString: $e\n$s');
         // Consider if an error response should be different or if this is okay (protocol might not specify error responses for PUT)
         return response;
       }
@@ -279,7 +289,7 @@ class DHTHandlers {
       _log.info('$_logPrefix handleGetProviders: Received GET_PROVIDERS from $peerShortId for key $keyString.');
 
       if (message.key == null) {
-        _log.warning('$_logPrefix handleGetProviders: GET_PROVIDERS message from $peerShortId missing key.');
+        _log.fine('$_logPrefix handleGetProviders: GET_PROVIDERS message from $peerShortId missing key.');
         throw ArgumentError('GET_PROVIDERS message must have a key');
       }
 
@@ -321,12 +331,12 @@ class DHTHandlers {
 
         // Defer sender RT insertion (non-blocking)
         _tryAddSenderToRT(peer, 'handleGetProviders').catchError((e) {
-          _log.warning('$_logPrefix handleGetProviders: Deferred RT insertion failed: $e');
+          _log.fine('$_logPrefix handleGetProviders: Deferred RT insertion failed: $e');
         });
 
         return response;
       } catch (e, s) {
-        _log.severe('$_logPrefix handleGetProviders: Error processing GET_PROVIDERS from $peerShortId for key $keyString: $e\n$s');
+        _log.fine('$_logPrefix handleGetProviders: Error processing GET_PROVIDERS from $peerShortId for key $keyString: $e\n$s');
         return response;
       }
     }
@@ -338,11 +348,11 @@ class DHTHandlers {
       _log.info('$_logPrefix handleAddProvider: Received ADD_PROVIDER from $peerShortId for key $keyString.');
 
       if (message.key == null) {
-        _log.warning('$_logPrefix handleAddProvider: ADD_PROVIDER message from $peerShortId missing key.');
+        _log.fine('$_logPrefix handleAddProvider: ADD_PROVIDER message from $peerShortId missing key.');
         throw ArgumentError('ADD_PROVIDER message must have a key');
       }
       if (message.providerPeers.isEmpty) {
-        _log.warning('$_logPrefix handleAddProvider: ADD_PROVIDER message from $peerShortId for key $keyString missing providerPeers.');
+        _log.fine('$_logPrefix handleAddProvider: ADD_PROVIDER message from $peerShortId for key $keyString missing providerPeers.');
         throw ArgumentError('ADD_PROVIDER message must have provider peers');
       }
 
@@ -372,11 +382,11 @@ class DHTHandlers {
         _log.info('$_logPrefix handleAddProvider: Successfully processed ADD_PROVIDER from $peerShortId for key $keyString.');
         // Defer sender RT insertion (non-blocking)
         _tryAddSenderToRT(peer, 'handleAddProvider').catchError((e) {
-          _log.warning('$_logPrefix handleAddProvider: Deferred RT insertion failed: $e');
+          _log.fine('$_logPrefix handleAddProvider: Deferred RT insertion failed: $e');
         });
         return response;
       } catch (e, s) {
-        _log.severe('$_logPrefix handleAddProvider: Error processing ADD_PROVIDER from $peerShortId for key $keyString: $e\n$s');
+        _log.fine('$_logPrefix handleAddProvider: Error processing ADD_PROVIDER from $peerShortId for key $keyString: $e\n$s');
         return response;
       }
     }

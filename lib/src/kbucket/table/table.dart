@@ -99,7 +99,7 @@ class RoutingTable {
       // - If cpl is small but _buckets array hasn't grown to that cpl index yet (e.g. cpl=2, buckets.length=1),
       //   it also checks the last bucket.
       if (_buckets.isEmpty) {
-        _log.warning('[nPeersForCpl] Buckets list is empty for CPL $cpl.');
+        _log.fine('[nPeersForCpl] Buckets list is empty for CPL $cpl.');
         return 0;
       }
 
@@ -116,7 +116,7 @@ class RoutingTable {
           if (actualCpl == cpl) {
             count++;
             if (cpl == 7 && count > 0) {
-              _log.warning('[nPeersForCpl DEBUG CPL 7] Peer ${pInfo.id.toBase58()} (KadId: ${peerKadId.map((b) => b.toRadixString(16).padLeft(2, '0')).join('')}) counted for CPL 7 in last bucket scan. LocalKadId: ${localKadId.map((b) => b.toRadixString(16).padLeft(2, '0')).join('')}');
+              _log.finest('[nPeersForCpl DEBUG CPL 7] Peer ${pInfo.id.toBase58()} (KadId: ${peerKadId.map((b) => b.toRadixString(16).padLeft(2, '0')).join('')}) counted for CPL 7 in last bucket scan. LocalKadId: ${localKadId.map((b) => b.toRadixString(16).padLeft(2, '0')).join('')}');
             }
           }
         }
@@ -126,7 +126,7 @@ class RoutingTable {
         // This means cpl < _buckets.length - 1, so a dedicated bucket for this CPL should exist.
         final bucketLength = _buckets[cpl].length;
         if (cpl == 7 && bucketLength > 0) {
-           _log.warning('[nPeersForCpl DEBUG CPL 7] Dedicated bucket _buckets[7] has length $bucketLength. Peers: ${_buckets[cpl].peers().map((pi) => pi.id.toBase58()).toList()}');
+           _log.finest('[nPeersForCpl DEBUG CPL 7] Dedicated bucket _buckets[7] has length $bucketLength. Peers: ${_buckets[cpl].peers().map((pi) => pi.id.toBase58()).toList()}');
         }
         _log.info('[nPeersForCpl] Returning length of dedicated bucket _buckets[$cpl].length for CPL $cpl. Length: $bucketLength');
         return bucketLength;
@@ -253,14 +253,14 @@ class RoutingTable {
 
     final latency = metrics.latencyEWMA(p);
     if (latency > maxLatency) {
-      _log.warning('$logPrefix Peer $peerShortId rejected; latency ${latency.inMilliseconds}ms > maxLatency ${maxLatency.inMilliseconds}ms.');
+      _log.fine('$logPrefix Peer $peerShortId rejected; latency ${latency.inMilliseconds}ms > maxLatency ${maxLatency.inMilliseconds}ms.');
       throw PeerRejectedHighLatencyError();
     }
 
     if (df != null) {
       _log.finer('$logPrefix Attempting to add peer $peerShortId to diversity filter.');
       if (! await df!.tryAdd(p)) {
-        _log.warning('$logPrefix Peer $peerShortId rejected by diversity filter.');
+        _log.fine('$logPrefix Peer $peerShortId rejected by diversity filter.');
         throw Exception('peer rejected by the diversity filter');
       }
       _log.finer('$logPrefix Peer $peerShortId added to diversity filter.');
@@ -338,7 +338,7 @@ class RoutingTable {
       return true;
     }
 
-    _log.warning('$logPrefix Bucket $bucketId full, no replaceable peer found for $peerShortId.');
+    _log.fine('$logPrefix Bucket $bucketId full, no replaceable peer found for $peerShortId.');
     if (df != null) {
       _log.finer('$logPrefix Removing peer $peerShortId from diversity filter as it could not be added to table.');
       df!.remove(p);
@@ -405,14 +405,14 @@ class RoutingTable {
     final peerShortId = p.toBase58().substring(0,6);
     _log.info('$logPrefix Attempting to remove peer $peerShortId.');
     await _tableLock.synchronized(() async {
-      print('[DEBUG] RoutingTable.removePeer called for $p');
+      _log.finest('[DEBUG] RoutingTable.removePeer called for $p');
       final removed = _internalRemovePeer(p, KadID.getKademliaIdBytes(p));
       if (removed) {
-        print('[DEBUG] Peer $p was successfully removed from the routing table.');
+        _log.finest('[DEBUG] Peer $p was successfully removed from the routing table.');
         _log.info('$logPrefix Peer $peerShortId successfully removed. RT Size: ${_rawSize()}');
       } else {
-        print('[DEBUG] Peer $p was not found in the routing table for removal.');
-        _log.warning('$logPrefix Peer $peerShortId not found for removal or already removed.');
+        _log.finest('[DEBUG] Peer $p was not found in the routing table for removal.');
+        _log.fine('$logPrefix Peer $peerShortId not found for removal or already removed.');
       }
     });
   }
@@ -632,7 +632,7 @@ class RoutingTable {
     // Use localKadId (the hash) for CPL calculations
     final idLengthInBits = localKadId.length * 8; // Kademlia ID length (e.g., 256 for SHA256)
 
-    _log.warning('[genRandomPeerIdWithCpl ENTRY] Target CPL=$cpl, Kademlia ID LengthBits=$idLengthInBits, Kademlia ID ByteLength=${localKadId.length}');
+    _log.finest('[genRandomPeerIdWithCpl ENTRY] Target CPL=$cpl, Kademlia ID LengthBits=$idLengthInBits, Kademlia ID ByteLength=${localKadId.length}');
 
     if (cpl < 0 || cpl > idLengthInBits) {
       _log.severe('[genRandomPeerIdWithCpl] CPL $cpl is out of bounds (0-$idLengthInBits for Kademlia ID).');
@@ -672,7 +672,7 @@ class RoutingTable {
       }
 
       if (calculatedCpl == cpl) {
-        _log.warning('[genRandomPeerIdWithCpl SUCCESS] Found peer with Target Kademlia CPL $cpl (Calculated: $calculatedCpl) in $attempts attempts. Original PeerId: ${randomOriginalPeerId.toBase58()}');
+        _log.finest('[genRandomPeerIdWithCpl SUCCESS] Found peer with Target Kademlia CPL $cpl (Calculated: $calculatedCpl) in $attempts attempts. Original PeerId: ${randomOriginalPeerId.toBase58()}');
         return randomOriginalPeerId; // Return the original PeerId
       }
     }

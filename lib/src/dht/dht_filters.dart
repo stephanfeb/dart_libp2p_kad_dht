@@ -9,6 +9,9 @@ import 'package:dart_libp2p/core/peer/addr_info.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
 
 import 'dht_options.dart';
+import 'package:logging/logging.dart';
+
+final _log = Logger('DHTFilters');
 
 /// CIDR for public IPv6 addresses
 const String publicCIDR6 = "2000::/3";
@@ -27,7 +30,7 @@ IPNet? _parseIPNet(String cidr) {
     
     return IPNet(ip, prefixLen);
   } catch (e) {
-    print('Error parsing CIDR: $cidr - $e');
+    _log.warning('Error parsing CIDR: $cidr - $e');
     return null;
   }
 }

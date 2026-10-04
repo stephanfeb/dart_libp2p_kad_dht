@@ -1,6 +1,9 @@
 import 'package:dart_libp2p/core/multiaddr.dart';
 import 'package:dart_libp2p/core/peer/addr_info.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
+import 'package:logging/logging.dart';
+
+final _log = Logger('BootstrapConfig');
 
 /// Bootstrap configuration for DHT v2
 /// 
@@ -19,7 +22,7 @@ class BootstrapConfig {
         final addr = MultiAddr(addrStr);
         peers.add(addr);
       } catch (e) {
-        print('Error parsing bootstrap address: $addrStr - $e');
+        _log.warning('Error parsing bootstrap address: $addrStr - $e');
       }
     }
     
@@ -35,7 +38,7 @@ class BootstrapConfig {
         final info = AddrInfo.fromMultiaddr(addr);
         addrInfos.add(info);
       } catch (e) {
-        print('Failed to convert bootstrapper address to peer addr info: ${addr.toString()} - $e');
+        _log.warning('Failed to convert bootstrapper address to peer addr info: ${addr.toString()} - $e');
       }
     }
     
@@ -50,7 +53,7 @@ class BootstrapConfig {
 
       return PeerId.fromString(addr.peerId!);
     } catch (e) {
-      print('Error extracting peer ID from $addr: $e');
+      _log.warning('Error extracting peer ID from $addr: $e');
     }
     return null;
   }

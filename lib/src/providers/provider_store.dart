@@ -3,6 +3,9 @@ import 'dart:typed_data';
 import 'package:dcid/dcid.dart';
 import 'package:dart_libp2p/core/peer/addr_info.dart';
 import 'package:dart_libp2p/core/routing/routing.dart';
+import 'package:logging/logging.dart';
+
+final _log = Logger('ProviderStore');
 
 /// ProviderStore represents a store that associates peers and their addresses to keys.
 abstract class ProviderStore {
@@ -82,12 +85,12 @@ class MemoryProviderStore implements ProviderStore {
     final keyStr = _keyToString(key.toBytes());
     
     // 🔍 DIAGNOSTIC LOGGING
-    print('🔍 [ProviderStore.addProvider] ═══════════════════════════════');
-    print('🔍 CID (toString): ${key.toString()}');
-    print('🔍 CID (bytes hex): ${key.toBytes().map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
-    print('🔍 Key string length: ${keyStr.length}');
-    print('🔍 Provider Peer ID: ${provider.id.toBase58()}');
-    print('🔍 Provider Addresses: ${provider.addrs.map((a) => a.toString()).join(", ")}');
+    _log.finest('🔍 [ProviderStore.addProvider] ═══════════════════════════════');
+    _log.finest('🔍 CID (toString): ${key.toString()}');
+    _log.finest('🔍 CID (bytes hex): ${key.toBytes().map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+    _log.finest('🔍 Key string length: ${keyStr.length}');
+    _log.finest('🔍 Provider Peer ID: ${provider.id.toBase58()}');
+    _log.finest('🔍 Provider Addresses: ${provider.addrs.map((a) => a.toString()).join(", ")}');
     
     final expiration = DateTime.now().add(_options.provideValidity);
     final record = ProviderRecord(
@@ -98,12 +101,12 @@ class MemoryProviderStore implements ProviderStore {
     _providers.putIfAbsent(keyStr, () => []).add(record);
     _cleanupExpired(keyStr);
     
-    print('🔍 Total providers for this CID: ${_providers[keyStr]!.length}');
-    print('🔍 All providers for this CID:');
+    _log.finest('🔍 Total providers for this CID: ${_providers[keyStr]!.length}');
+    _log.finest('🔍 All providers for this CID:');
     for (final r in _providers[keyStr]!) {
-      print('🔍   - ${r.provider.id.toBase58()}');
+      _log.finest('🔍   - ${r.provider.id.toBase58()}');
     }
-    print('🔍 ═══════════════════════════════════════════════════════════');
+    _log.finest('🔍 ═══════════════════════════════════════════════════════════');
   }
 
   @override
@@ -115,21 +118,21 @@ class MemoryProviderStore implements ProviderStore {
     final keyStr = _keyToString(key.toBytes());
     
     // 🔍 DIAGNOSTIC LOGGING
-    print('🔍 [ProviderStore.getProviders] ═══════════════════════════════');
-    print('🔍 CID (toString): ${key.toString()}');
-    print('🔍 CID (bytes hex): ${key.toBytes().map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
-    print('🔍 Key string length: ${keyStr.length}');
-    print('🔍 Looking up key in store...');
+    _log.finest('🔍 [ProviderStore.getProviders] ═══════════════════════════════');
+    _log.finest('🔍 CID (toString): ${key.toString()}');
+    _log.finest('🔍 CID (bytes hex): ${key.toBytes().map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+    _log.finest('🔍 Key string length: ${keyStr.length}');
+    _log.finest('🔍 Looking up key in store...');
     
     _cleanupExpired(keyStr);
 
     final records = _providers[keyStr] ?? [];
     
-    print('🔍 Found ${records.length} provider(s) for this CID:');
+    _log.finest('🔍 Found ${records.length} provider(s) for this CID:');
     for (final record in records) {
-      print('🔍   - ${record.provider.id.toBase58()} (expires: ${record.expiration})');
+      _log.finest('🔍   - ${record.provider.id.toBase58()} (expires: ${record.expiration})');
     }
-    print('🔍 ═══════════════════════════════════════════════════════════');
+    _log.finest('🔍 ═══════════════════════════════════════════════════════════');
     
     final result = records.map((record) => record.provider).toList();
     return result;

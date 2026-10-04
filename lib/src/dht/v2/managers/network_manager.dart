@@ -135,7 +135,7 @@ class NetworkManager {
         try {
           await stream.close();
         } catch (e) {
-          _logger.warning('Failed to close stream: $e');
+          _logger.fine('Failed to close stream: $e');
         }
       }
     } catch (e) {
@@ -179,7 +179,7 @@ class NetworkManager {
     } on IdentifyTimeoutException catch (e) {
       // Handle identify protocol timeout specifically
       // This can happen when the remote peer is unreachable or the connection is stale
-      _logger.warning('Identify timeout creating stream to ${peer.toBase58().substring(0, 6)}: ${e.message}');
+      _logger.fine('Identify timeout creating stream to ${peer.toBase58().substring(0, 6)}: ${e.message}');
       throw DHTTimeoutException(
         'Stream creation failed due to identify timeout',
         e.timeout ?? timeout,
@@ -188,7 +188,7 @@ class NetworkManager {
       );
     } on IdentifyException catch (e) {
       // Handle other identify protocol failures
-      _logger.warning('Identify failed creating stream to ${peer.toBase58().substring(0, 6)}: ${e.message}');
+      _logger.fine('Identify failed creating stream to ${peer.toBase58().substring(0, 6)}: ${e.message}');
       throw DHTNetworkException(
         'Stream creation failed due to identify error: ${e.message}',
         peerId: peer,
@@ -269,7 +269,7 @@ class NetworkManager {
       }
       _logger.fine('[$selfShortId] Fire-and-forget ${message.type} sent to $peerShortId');
     } catch (e) {
-      _logger.warning('[$selfShortId] Fire-and-forget ${message.type} to $peerShortId failed: $e');
+      _logger.fine('[$selfShortId] Fire-and-forget ${message.type} to $peerShortId failed: $e');
       rethrow;
     }
   }

@@ -147,10 +147,20 @@ class MockRoutingManager implements RoutingManager {
     _nearestPeers.addAll(peers);
   }
   
+  /// Peers the mock treats as DHT servers, as the peerstore would after
+  /// Identify.
+  final Set<PeerId> servers = {};
+
   @override
   Future<bool> addPeer(PeerId peerId, {bool queryPeer = false, bool isReplaceable = false}) async {
     _peers[peerId] = true;
     return true;
+  }
+
+  @override
+  Future<bool> addPeerIfServer(PeerId peerId, {bool queryPeer = true, bool isReplaceable = true}) async {
+    if (!servers.contains(peerId)) return false;
+    return addPeer(peerId, queryPeer: queryPeer, isReplaceable: isReplaceable);
   }
   
   @override
@@ -799,12 +809,21 @@ void main() {
       });
       
       test('should add peers to routing manager during message handling', () async {
+        mockRoutingManager.servers.add(remotePeerId);
         final message = Message(type: MessageType.ping);
         
         await protocolManager.handlePing(remotePeerId, message);
         
         // Verify peer was added to routing manager
         expect(mockRoutingManager._peers.containsKey(remotePeerId), isTrue);
+      });
+
+      test('should not add a peer that is not a DHT server', () async {
+        final message = Message(type: MessageType.ping);
+
+        await protocolManager.handlePing(remotePeerId, message);
+
+        expect(mockRoutingManager._peers.containsKey(remotePeerId), isFalse);
       });
       
       test('should record metrics during datastore operations', () async {

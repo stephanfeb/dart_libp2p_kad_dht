@@ -153,6 +153,12 @@ class MockHost implements Host {
        _hostLogger.severe('No protocols specified for newStream to ${remotePeerId.toBase58()}. Client stream ${clientStream._debugID} will likely hang.');
        return clientStream;
     }
+    // Each side learns the protocols the other serves, as Identify does on
+    // a real connection. The DHT adds a peer to its routing table only if
+    // it is known to speak the DHT protocol.
+    await _peerstore.protoBook.addProtocols(remotePeerId, remoteHost._handlers.keys.toList());
+    await remoteHost._peerstore.protoBook.addProtocols(id, _handlers.keys.toList());
+
     final protocol = protocols.first; // Assuming first protocol is the one to use.
     _hostLogger.finer('Looking for handler for protocol "$protocol" on remote host ${remoteHost.id.toBase58()}. Available handlers: ${remoteHost._handlers.keys.join(', ')}');
 
@@ -360,9 +366,10 @@ class MockPeerstoreImpl implements Peerstore {
     throw UnimplementedError();
   }
 
+  final ProtoBook _protoBook = MemoryProtoBook();
+
   @override
-  // TODO: implement protoBook
-  ProtoBook get protoBook => MemoryProtoBook();
+  ProtoBook get protoBook => _protoBook;
 
   @override
   Future<void> removePeer(PeerId id) {

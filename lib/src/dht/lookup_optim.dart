@@ -174,7 +174,7 @@ extension OptimisticProvideExtension on IpfsDHT {
     try {
       networkSize = await nsEstimator.networkSize();
     } catch (e) {
-      _logger.warning('Failed to get network size estimate: $e');
+      _logger.fine('Failed to get network size estimate: $e');
       return null;
     }
 
@@ -259,7 +259,7 @@ extension OptimisticProvideExtension on IpfsDHT {
         // For now, just log a message
         _logger.fine('Network size estimator: tracking lookup results for key $key');
       } catch (e) {
-        _logger.warning('Network size estimator track peers: $e');
+        _logger.fine('Network size estimator track peers: $e');
       }
 
       // Refresh the cpl for this key as the query was successful
@@ -302,7 +302,7 @@ extension OptimisticProvideExtension on IpfsDHT {
       return peers;
     } catch (e) {
       // Log the error
-      _logger.warning('Error getting closer peers: $e');
+      _logger.fine('Error getting closer peers: $e');
 
       // For DHT query event
       RoutingNotifier.publishQueryEvent(RoutingQueryEvent(

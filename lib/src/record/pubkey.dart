@@ -201,7 +201,7 @@ extension PublicKeyExtension on IpfsDHT {
       _logger.fine('Got public key for $p from DHT');
       return pubKey;
     } catch (e) {
-      _logger.severe('Could not unmarshal public key retrieved from DHT for $p');
+      _logger.fine('Could not unmarshal public key retrieved from DHT for $p');
       throw Exception('Could not unmarshal public key: $e');
     }
   }
@@ -236,7 +236,7 @@ extension PublicKeyExtension on IpfsDHT {
       _logger.fine('Got public key from node $p itself');
       return pubKey;
     } catch (e) {
-      _logger.severe('Could not unmarshal public key for $p');
+      _logger.fine('Could not unmarshal public key for $p');
       throw Exception('Could not unmarshal public key: $e');
     }
   }

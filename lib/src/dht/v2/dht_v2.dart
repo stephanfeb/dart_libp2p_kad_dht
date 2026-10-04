@@ -250,7 +250,7 @@ class IpfsDHTv2 implements IpfsDHT {
       await _cleanup();
       _logger.info('IpfsDHTv2 closed successfully');
     } catch (e, stackTrace) {
-      _logger.warning('Error during cleanup', e, stackTrace);
+      _logger.fine('Error during cleanup', e, stackTrace);
     }
   }
   
@@ -598,7 +598,9 @@ class IpfsDHTv2 implements IpfsDHT {
       var addedCount = 0;
       for (final addrInfo in result) {
         if (addrInfo.id != _host.id) { // Don't add self
-          final added = await _routing.routingTable.tryAddPeer(addrInfo.id, queryPeer: true);
+          // Lookup results include peers that others named in responses,
+          // which may be client-mode peers; add only DHT servers.
+          final added = await _routing.addPeerIfServer(addrInfo.id, queryPeer: true);
           if (added) {
             addedCount++;
             // Store addresses in peerstore
@@ -609,7 +611,7 @@ class IpfsDHTv2 implements IpfsDHT {
       
       _logger.fine('RefreshQuery: Added $addedCount new peers for CPL $cplToQuery');
     } catch (e, s) {
-      _logger.warning('RefreshQuery: Error during query for CPL $cplToQuery: $e', e, s);
+      _logger.fine('RefreshQuery: Error during query for CPL $cplToQuery: $e', e, s);
     }
   }
 

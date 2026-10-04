@@ -273,10 +273,10 @@ class QueryManager {
                 foundRecords.add(response.record!);
                 _logger.fine('Found and validated record from ${peer.toBase58().substring(0, 6)}');
               } else {
-                _logger.warning('Invalid record signature from ${peer.toBase58().substring(0, 6)}');
+                _logger.fine('Invalid record signature from ${peer.toBase58().substring(0, 6)}');
               }
             } catch (e) {
-              _logger.warning('Error validating record from ${peer.toBase58().substring(0, 6)}: $e');
+              _logger.fine('Error validating record from ${peer.toBase58().substring(0, 6)}: $e');
             }
           }
           
@@ -388,7 +388,7 @@ class QueryManager {
           successCount++;
           _logger.fine('Successfully sent signed record to ${peer.toBase58().substring(0, 6)}');
         } catch (e) {
-          _logger.warning('Failed to send signed record to ${peer.toBase58().substring(0, 6)}: $e');
+          _logger.fine('Failed to send signed record to ${peer.toBase58().substring(0, 6)}: $e');
         }
       }
       
@@ -604,7 +604,7 @@ class QueryManager {
             successCount++;
             _logger.fine('Successfully announced provider to ${peer.toBase58().substring(0, 6)}');
           } catch (e) {
-            _logger.warning('Failed to announce provider to ${peer.toBase58().substring(0, 6)}: $e');
+            _logger.fine('Failed to announce provider to ${peer.toBase58().substring(0, 6)}: $e');
           }
         }
         
@@ -760,7 +760,7 @@ class QueryManager {
             await _routing?.removePeer(peer);
             _logger.finer('$logPrefix Evicted peer ${peer.toBase58().substring(0,6)} from routing table after failed query');
           } catch (e) {
-            _logger.warning('$logPrefix Failed to evict peer ${peer.toBase58().substring(0,6)} from routing table: $e');
+            _logger.fine('$logPrefix Failed to evict peer ${peer.toBase58().substring(0,6)} from routing table: $e');
           }
         }
       }
@@ -776,7 +776,7 @@ class QueryManager {
         errors: result.errors.cast<dynamic>(),
       );
     } catch (e, s) {
-      _logger.severe('$logPrefix Query failed with exception: $e', e, s);
+      _logger.warning('$logPrefix Query failed with exception: $e', e, s);
       return LookupWithFollowupResult(
         peers: [],
         terminationReason: LookupTerminationReason.cancelled,
@@ -854,7 +854,7 @@ class QueryManager {
           await _routing?.addPeer(peer, queryPeer: false, isReplaceable: true);
           _logger.finer('$queryFnLogPrefix Added peer ${peer.toBase58().substring(0,6)} to routing table');
         } catch (e) {
-          _logger.warning('$queryFnLogPrefix Failed to add peer to routing table: $e');
+          _logger.fine('$queryFnLogPrefix Failed to add peer to routing table: $e');
         }
         
         // Check if we found the target peer in the response
@@ -872,7 +872,7 @@ class QueryManager {
                 await _network?.host.peerStore.addOrUpdatePeer(targetPeerId, addrs: addresses);
                 _logger.info('$queryFnLogPrefix Stored ${addresses.length} addresses for target peer $targetShortId in peerstore');
               } catch (e) {
-                _logger.warning('$queryFnLogPrefix Failed to store addresses for target peer $targetShortId: $e');
+                _logger.fine('$queryFnLogPrefix Failed to store addresses for target peer $targetShortId: $e');
               }
             }
             
@@ -894,7 +894,7 @@ class QueryManager {
               await _network?.host.peerStore.addOrUpdatePeer(peerId, addrs: addresses);
               _logger.finest('$queryFnLogPrefix Stored ${addresses.length} addresses for peer ${peerId.toBase58().substring(0,6)}');
             } catch (e) {
-              _logger.warning('$queryFnLogPrefix Failed to store addresses for peer ${peerId.toBase58().substring(0,6)}: $e');
+              _logger.fine('$queryFnLogPrefix Failed to store addresses for peer ${peerId.toBase58().substring(0,6)}: $e');
             }
           }
           

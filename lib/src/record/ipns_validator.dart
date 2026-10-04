@@ -11,6 +11,9 @@ import 'package:dart_libp2p/core/peerstore.dart'; // For Peerstore
 // import 'package:dart_libp2p/p2p/crypto/key_generator.dart'; 
 import 'package:dart_libp2p/core/crypto/keys.dart' as p2pkeys; // For libp2p PublicKey for verification
 import 'validator.dart'; // Imports Validator interface
+import 'package:logging/logging.dart';
+
+final _log = Logger('IpnsValidator');
 
 // Custom error types for IPNS validation
 class InvalidIpnsRecordError implements Exception {
@@ -70,10 +73,10 @@ class IpnsValidator implements Validator {
         if (embeddedProtoKey.hasData() && embeddedProtoKey.hasType()) {
           verificationPubKey = p2pkeys.publicKeyFromProto(embeddedProtoKey);
         } else {
-          print('IpnsValidator: Embedded PublicKey in IPNS entry is missing type or data.');
+          _log.fine('IpnsValidator: Embedded PublicKey in IPNS entry is missing type or data.');
         }
       } catch (e) {
-        print('IpnsValidator: Failed to deserialize or process embedded PublicKey: $e');
+        _log.fine('IpnsValidator: Failed to deserialize or process embedded PublicKey: $e');
       }
     }
     
@@ -85,11 +88,11 @@ class IpnsValidator implements Validator {
           verificationPubKey = keyFromBook;
         } else {
           // Key not found in keyBook, this is an expected null return.
-          print('IpnsValidator: PublicKey for $peerId not found in peerstore.keyBook. Will try extracting from PeerId.');
+          _log.fine('IpnsValidator: PublicKey for $peerId not found in peerstore.keyBook. Will try extracting from PeerId.');
         }
       } catch (e) {
         // Catch any other unexpected errors during the async operation itself.
-        print('IpnsValidator: Error during peerstore.keyBook.pubKey call for $peerId: $e. Will try extracting from PeerId.');
+        _log.fine('IpnsValidator: Error during peerstore.keyBook.pubKey call for $peerId: $e. Will try extracting from PeerId.');
       }
     }
 
@@ -99,13 +102,13 @@ class IpnsValidator implements Validator {
         // Assuming peerId.extractPublicKey() also returns Future<PublicKey?>
         verificationPubKey = await peerId.extractPublicKey(); 
       } catch (idError) {
-        print('IpnsValidator: Error extracting public key from PeerId $peerId: $idError');
+        _log.fine('IpnsValidator: Error extracting public key from PeerId $peerId: $idError');
       }
     }
 
     // Final check before signature verification. This replaces the previous, simpler null check.
     if (verificationPubKey == null) {
-      print('IpnsValidator: Could not get PublicKey for $peerId from embedded data, peerstore, or PeerId extraction.');
+      _log.fine('IpnsValidator: Could not get PublicKey for $peerId from embedded data, peerstore, or PeerId extraction.');
       throw IpnsSignatureError('Cannot verify IPNS signature; public key not found or derived for $peerId.');
     }
 
@@ -184,7 +187,7 @@ class IpnsValidator implements Validator {
     }
 
     // All checks passed if no exception was thrown
-    print('IpnsValidator: Record for key "$key" passed validation. PeerId: ${peerId.toBase58()}, Seq: ${entry.sequence}');
+    _log.fine('IpnsValidator: Record for key "$key" passed validation. PeerId: ${peerId.toBase58()}, Seq: ${entry.sequence}');
   }
 
   @override
@@ -335,7 +338,7 @@ class IpnsValidator implements Validator {
       // (which could be empty if not set, though `Create` sets it),
       // we append it if present. If not, we sign just the prefix.
       // A signature mismatch will occur if the signer used non-empty data.
-      print('IpnsValidator: Warning: entry.data is missing or empty for V2 signature payload construction. Signing prefix only.');
+      _log.fine('IpnsValidator: Warning: entry.data is missing or empty for V2 signature payload construction. Signing prefix only.');
     }
     
     return builder.toBytes();

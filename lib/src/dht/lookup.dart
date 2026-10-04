@@ -7,6 +7,9 @@ import 'package:dart_libp2p/core/routing/routing.dart';
 import 'package:dart_libp2p_kad_dht/dart_libp2p_kad_dht.dart';
 import 'package:dart_libp2p_kad_dht/src/kbucket/keyspace/kad_id.dart';
 import 'package:dart_libp2p_kad_dht/src/kbucket/table/table_refresh.dart';
+import 'package:logging/logging.dart';
+
+final _log = Logger('DHTLookup');
 
 
 /// Extension methods for DHT to handle lookups
@@ -32,13 +35,13 @@ extension LookupExtension on IpfsDHT {
     try {
       // In a real implementation, we would track the lookup results for network size estimation
       // For now, just log a message
-      print('Network size estimator: tracking lookup results for key $key');
+      _log.fine('Network size estimator: tracking lookup results for key $key');
 
       // If we had a network size estimator, we would record the network size metric
       // metrics.RecordNetworkSize(int64(ns))
     } catch (e) {
       // Log warning if there was an error tracking the lookup results
-      print('Warning: network size estimator track peers: $e');
+      _log.fine('Warning: network size estimator track peers: $e');
     }
 
     // Reset the refresh timer for this key's bucket since we've just
@@ -83,7 +86,7 @@ extension LookupExtension on IpfsDHT {
       return peers;
     } catch (e) {
       // Log the error
-      print('Error getting closer peers: $e');
+      _log.fine('Error getting closer peers: $e');
 
       // For DHT query event
       RoutingNotifier.publishQueryEvent(RoutingQueryEvent(
@@ -104,7 +107,7 @@ class RoutingNotifier {
   static void publishQueryEvent(RoutingQueryEvent event) {
     // In a real implementation, this would publish the event to a stream
     // For now, just log the event
-    print('Publishing query event: ${event.type} for peer ${event.id}');
+    _log.fine('Publishing query event: ${event.type} for peer ${event.id}');
   }
 }
 

@@ -169,7 +169,7 @@ class RtRefreshManager {
       await _pingAndEvictPeers();
       await _doRefresh(false);
     } catch (e) {
-      _logger.warning('Failed when refreshing routing table: $e');
+      _logger.fine('Failed when refreshing routing table: $e');
     }
   }
   
@@ -215,7 +215,7 @@ class RtRefreshManager {
       await refreshPingFnc(peerId);
       _logger.info('_pingAndEvictPeer: Ping successful for ${peerId.toBase58()}');
     } catch (e) {
-      _logger.warning('Evicting peer ${peerId.toBase58()} after failed dial/ping: $e');
+      _logger.fine('Evicting peer ${peerId.toBase58()} after failed dial/ping: $e');
       rt.removePeer(peerId);
     }
     _logger.info('_pingAndEvictPeer for ${peerId.toBase58()} completed.');
@@ -286,7 +286,7 @@ class RtRefreshManager {
         _refreshDoneController.add(null);
       }
     } catch (e) {
-      _logger.warning('Failed when refreshing routing table: $e');
+      _logger.fine('Failed when refreshing routing table: $e');
       rethrow;
     }
   }

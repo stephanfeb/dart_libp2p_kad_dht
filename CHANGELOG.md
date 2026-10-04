@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1] - 2026-10-04
+
+### Fixed
+- **Client-mode peers entered routing tables.** A DHT server added every peer that sent it a request to its routing table, including client-mode peers, which do not serve `/ipfs/kad/1.0.0`. The server then named those clients as closer peers, and lookups and `ADD_PROVIDER` were sent to them and failed, so provider records could be lost. Now, as in go-libp2p-kad-dht, only DHT servers go into the routing table:
+  - a peer that sends a request is added only if Identify reports that it serves the DHT protocol;
+  - a peer whose Identify completes, or whose protocols change, is added when it serves the DHT protocol and removed when it stops;
+  - a peer that another peer names in a response is added after it answers a lookup check (a `FIND_NODE`), which runs in the background;
+  - a peer that answers one of our queries is added, as before.
+  The legacy `IpfsDHT` request handler applies the same check.
+- **Logging.** The library no longer writes to stdout: its `print` calls now go through `package:logging` loggers. Messages about one peer or one query (a failed query to one peer, a removed peer, a refused routing-table entry, invalid data from a remote peer) and debug traces moved from `WARNING` or `SEVERE` to `FINE` or `FINEST`. `WARNING` and `SEVERE` are now kept for problems an operator can act on, such as an invalid bootstrap address or a failed bootstrap.
+- README: `DHTOptions.bootstrapPeers` takes `MultiAddr` values that end in `/p2p/<peer ID>`, not `AddrInfo` values.
+
 ## [1.4.0] - 2026-10-04
 
 ### Changed

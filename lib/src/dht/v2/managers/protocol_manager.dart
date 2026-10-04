@@ -147,12 +147,12 @@ class ProtocolManager {
       // Defer peerstore address storage to AFTER response is sent (non-blocking)
       if (remoteAddr != null) {
         _host.peerStore.addOrUpdatePeer(remotePeer, addrs: [remoteAddr]).catchError((e) {
-          _logger.warning('[$selfShortId] Failed to store address for peer $remotePeerShortId: $e');
+          _logger.fine('[$selfShortId] Failed to store address for peer $remotePeerShortId: $e');
         });
       }
 
     } catch (e, stackTrace) {
-      _logger.severe('[$selfShortId] Error handling stream from $remotePeerShortId: $e', e, stackTrace);
+      _logger.fine('[$selfShortId] Error handling stream from $remotePeerShortId: $e', e, stackTrace);
 
       // Send error response if possible
       try {
@@ -160,7 +160,7 @@ class ProtocolManager {
         final errorResponseBytes = encodeMessage(errorResponse);
         await stream.write(errorResponseBytes);
       } catch (responseError) {
-        _logger.warning('[$selfShortId] Failed to send error response: $responseError');
+        _logger.fine('[$selfShortId] Failed to send error response: $responseError');
       }
     } finally {
       // NOTE: Don't close the stream here!
@@ -184,7 +184,7 @@ class ProtocolManager {
       case MessageType.addProvider:
         return await handleAddProvider(sender, message);
       default:
-        _logger.warning('Unknown message type: ${message.type}');
+        _logger.fine('Unknown message type: ${message.type}');
         throw DHTProtocolException('Unknown message type: ${message.type}', peerId: sender);
     }
   }
@@ -195,7 +195,7 @@ class ProtocolManager {
     // Parallel peerstore lookups instead of sequential
     final peerInfoFutures = peerIds.map((peerId) =>
       _host.peerStore.getPeer(peerId).catchError((e) {
-        _logger.warning('Failed to get addresses for peer ${peerId.toBase58().substring(0, 6)}: $e');
+        _logger.fine('Failed to get addresses for peer ${peerId.toBase58().substring(0, 6)}: $e');
         return null;
       })
     ).toList();
@@ -241,14 +241,14 @@ class ProtocolManager {
       _logger.fine('Responding to FIND_NODE with ${response.closerPeers.length} peers');
 
       // Defer sender RT insertion (non-blocking)
-      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
-        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+      _routing?.addPeerIfServer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+        _logger.fine('Deferred RT insertion failed for $senderShortId: $e');
         return false;
       });
 
       return response;
     } catch (e) {
-      _logger.warning('Error handling FIND_NODE: $e');
+      _logger.fine('Error handling FIND_NODE: $e');
       throw DHTProtocolException('Failed to handle FIND_NODE: $e', peerId: sender, cause: e);
     }
   }
@@ -287,14 +287,14 @@ class ProtocolManager {
       }
 
       // Defer sender RT insertion (non-blocking)
-      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
-        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+      _routing?.addPeerIfServer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+        _logger.fine('Deferred RT insertion failed for $senderShortId: $e');
         return false;
       });
 
       return response;
     } catch (e) {
-      _logger.warning('Error handling GET_VALUE: $e');
+      _logger.fine('Error handling GET_VALUE: $e');
       throw DHTProtocolException('Failed to handle GET_VALUE: $e', peerId: sender, cause: e);
     }
   }
@@ -319,7 +319,7 @@ class ProtocolManager {
       
       final isValid = await RecordSigner.validateRecordSignature(record);
       if (!isValid) {
-        _logger.warning('Invalid record signature from $senderShortId for key: ${keyString.substring(0, 10)}...');
+        _logger.fine('Invalid record signature from $senderShortId for key: ${keyString.substring(0, 10)}...');
         throw DHTProtocolException('Invalid record signature', peerId: sender);
       }
       
@@ -345,14 +345,14 @@ class ProtocolManager {
       );
 
       // Defer sender RT insertion (non-blocking)
-      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
-        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+      _routing?.addPeerIfServer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+        _logger.fine('Deferred RT insertion failed for $senderShortId: $e');
         return false;
       });
 
       return response;
     } catch (e) {
-      _logger.warning('Error handling PUT_VALUE: $e');
+      _logger.fine('Error handling PUT_VALUE: $e');
       throw DHTProtocolException('Failed to handle PUT_VALUE: $e', peerId: sender, cause: e);
     }
   }
@@ -394,14 +394,14 @@ class ProtocolManager {
       _logger.fine('Responding to GET_PROVIDERS with ${providerPeers.length} providers and ${closerPeers.length} closer peers');
 
       // Defer sender RT insertion (non-blocking)
-      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
-        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+      _routing?.addPeerIfServer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+        _logger.fine('Deferred RT insertion failed for $senderShortId: $e');
         return false;
       });
 
       return response;
     } catch (e) {
-      _logger.warning('Error handling GET_PROVIDERS: $e');
+      _logger.fine('Error handling GET_PROVIDERS: $e');
       throw DHTProtocolException('Failed to handle GET_PROVIDERS: $e', peerId: sender, cause: e);
     }
   }
@@ -446,14 +446,14 @@ class ProtocolManager {
       );
 
       // Defer sender RT insertion (non-blocking)
-      _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
-        _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+      _routing?.addPeerIfServer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+        _logger.fine('Deferred RT insertion failed for $senderShortId: $e');
         return false;
       });
 
       return response;
     } catch (e) {
-      _logger.warning('Error handling ADD_PROVIDER: $e');
+      _logger.fine('Error handling ADD_PROVIDER: $e');
       throw DHTProtocolException('Failed to handle ADD_PROVIDER: $e', peerId: sender, cause: e);
     }
   }
@@ -466,8 +466,8 @@ class ProtocolManager {
     _logger.fine('Handling PING from $senderShortId');
 
     // Defer RT insertion (non-blocking) — respond to ping as fast as possible
-    _routing?.addPeer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
-      _logger.warning('Deferred RT insertion failed for $senderShortId: $e');
+    _routing?.addPeerIfServer(sender, queryPeer: true, isReplaceable: true).catchError((e) {
+      _logger.fine('Deferred RT insertion failed for $senderShortId: $e');
       return false;
     });
 
