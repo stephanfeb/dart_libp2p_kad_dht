@@ -26,6 +26,7 @@ import '../../record/generic_validator.dart';
 import '../../record/public_key_validator.dart';
 import '../../record/ipns_validator.dart';
 import '../../netsize/netsize.dart';
+import '../../internal/util.dart' show truncateForLog;
 import '../../internal/protocol_messenger.dart';
 import '../handlers.dart';
 import '../../pb/record.dart';
@@ -396,7 +397,7 @@ class IpfsDHTv2 implements IpfsDHT {
   Future<dynamic> getRecordFromDatastore(String key) async {
     _ensureStarted();
     // Get record from local datastore
-    _logger.fine('Getting record from local datastore for key: ${key.substring(0, 10)}...');
+    _logger.fine('Getting record from local datastore for key: ${truncateForLog(key)}...');
     return await _protocol.getRecordFromDatastore(key);
   }
   
@@ -404,7 +405,7 @@ class IpfsDHTv2 implements IpfsDHT {
   Future<void> removeRecordFromDatastore(String key) async {
     _ensureStarted();
     // Remove record from local datastore
-    _logger.fine('Removing record from local datastore for key: ${key.substring(0, 10)}...');
+    _logger.fine('Removing record from local datastore for key: ${truncateForLog(key)}...');
     await _protocol.removeRecordFromDatastore(key);
   }
   
@@ -412,7 +413,7 @@ class IpfsDHTv2 implements IpfsDHT {
   Future<bool> hasRecordInDatastore(String key) async {
     _ensureStarted();
     // Check if record exists in local datastore
-    _logger.fine('Checking if record exists in local datastore for key: ${key.substring(0, 10)}...');
+    _logger.fine('Checking if record exists in local datastore for key: ${truncateForLog(key)}...');
     return await _protocol.hasRecordInDatastore(key);
   }
   

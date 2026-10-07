@@ -31,3 +31,11 @@ DateTime parseRFC3339(String s) {
 String formatRFC3339(DateTime t) {
   return t.toUtc().toIso8601String();
 }
+/// Returns at most the first [max] characters of [s], for log messages.
+///
+/// Keys, CIDs and IDs can be shorter than the prefix a log line shows, and
+/// `substring` throws a [RangeError] on them. This helper never throws.
+String truncateForLog(String s, [int max = 10]) {
+  if (max <= 0) return '';
+  return s.length <= max ? s : s.substring(0, max);
+}

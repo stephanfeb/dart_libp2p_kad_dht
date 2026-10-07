@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Fixed
+- **Short keys crashed value operations.** Log lines in `putValue`, `getValue`, `searchValue` and the datastore helpers printed `key.substring(0, 10)`, which throws a `RangeError` for a key shorter than 10 characters. `putValue('my-key', ...)` threw, and `getValue('my-key')` caught the error and returned `null`. A helper now shortens keys, CIDs and lookup targets for logs without throwing. The IPv6 diversity-group label had the same fault for short addresses such as `::1`.
+
 ## [1.4.1] - 2026-10-04
 
 ### Fixed

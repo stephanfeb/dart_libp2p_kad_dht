@@ -9,6 +9,7 @@ import 'dart:typed_data';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
 import 'package:dart_libp2p/core/multiaddr.dart';
 import 'package:logging/logging.dart';
+import '../../internal/util.dart' show truncateForLog;
 
 // Logger for the diversity filter
 final _dfLog = Logger('diversityFilter');
@@ -325,6 +326,6 @@ PeerIPGroupKey ipGroupKey(InternetAddress ip) {
     // return asn.toString();
     
     // Placeholder implementation:
-    return 'ipv6:${ip.address.substring(0, 8)}';
+    return 'ipv6:${truncateForLog(ip.address, 8)}';
   }
 }

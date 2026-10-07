@@ -9,6 +9,7 @@ import 'package:dart_libp2p_kad_dht/src/pb/dht_codec.dart';
 import 'package:dart_libp2p_kad_dht/src/dht/routing.dart';
 import 'package:dart_libp2p_kad_dht/src/dht/v2/managers/query_manager.dart';
 import 'package:dart_libp2p_kad_dht/src/internal/protocol_messenger.dart';
+import 'package:dart_libp2p_kad_dht/src/internal/util.dart' show truncateForLog;
 import 'package:dart_libp2p_kad_dht/src/kbucket/table/table.dart';
 import 'package:dart_libp2p_kad_dht/src/netsize/netsize.dart';
 import 'package:dart_libp2p_kad_dht/src/query/query_runner.dart';
@@ -894,7 +895,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       final randomKey = Uint8List.fromList(
         List.generate(32, (_) => math.Random().nextInt(256)),
       );
-      _log.info('$logPrefix Performing random key lookup for key: ${base64Encode(randomKey).substring(0,10)}... to populate routing table.');
+      _log.info('$logPrefix Performing random key lookup for key: ${truncateForLog(base64Encode(randomKey))}... to populate routing table.');
 
       try {
         await runLookupWithFollowup(
@@ -1718,7 +1719,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
   }) async {
     final id =_host.id.toBase58();
     final logPrefix = '[${id.substring(id.length -6)}.runLookupWithFollowup]';
-    _log.info('$logPrefix Starting lookup for target: ${base64Encode(target).substring(0, 10)}...');
+    _log.info('$logPrefix Starting lookup for target: ${truncateForLog(base64Encode(target))}...');
 
     // Get bootstrap peers for the query
     final bootstrapPeers = await getBootstrapPeers();

@@ -8,6 +8,7 @@ import 'package:dart_libp2p/core/peer/addr_info.dart';
 import 'package:dart_libp2p/core/routing/options.dart';
 import 'package:dart_libp2p/core/multiaddr.dart';
 import 'package:logging/logging.dart';
+import '../../../internal/util.dart' show truncateForLog;
 
 import '../../../query/qpeerset.dart';
 import '../../../query/query_runner.dart';
@@ -197,7 +198,7 @@ class QueryManager {
   Stream<AddrInfo> findProvidersAsync(CID cid, int count) async* {
     _ensureStarted();
     
-    _logger.info('Finding providers for CID ${cid.toString().substring(0, 10)}...');
+    _logger.info('Finding providers for CID ${truncateForLog(cid.toString())}...');
     
     final stopwatch = Stopwatch()..start();
     _metrics?.recordQueryStart();
@@ -215,11 +216,11 @@ class QueryManager {
       stopwatch.stop();
       _metrics?.recordQuerySuccess(stopwatch.elapsed);
       
-      _logger.info('Provider search completed for CID ${cid.toString().substring(0, 10)}. Found ${foundProviders.length} providers');
+      _logger.info('Provider search completed for CID ${truncateForLog(cid.toString())}. Found ${foundProviders.length} providers');
     } catch (e) {
       stopwatch.stop();
       _metrics?.recordQueryFailure('find_providers');
-      _logger.warning('Failed to find providers for CID ${cid.toString().substring(0, 10)}: $e');
+      _logger.warning('Failed to find providers for CID ${truncateForLog(cid.toString())}: $e');
       rethrow;
     }
   }
@@ -232,7 +233,7 @@ class QueryManager {
     _metrics?.recordQueryStart();
     
     try {
-      _logger.info('Getting value for key: ${key.substring(0, 10)}...');
+      _logger.info('Getting value for key: ${truncateForLog(key)}...');
       
       final keyBytes = Uint8List.fromList(key.codeUnits);
       final foundRecords = <Record>[];
@@ -243,7 +244,7 @@ class QueryManager {
       if (localRecord != null) {
         stopwatch.stop();
         _metrics?.recordQuerySuccess(stopwatch.elapsed);
-        _logger.info('Found value in local datastore for key: ${key.substring(0, 10)}');
+        _logger.info('Found value in local datastore for key: ${truncateForLog(key)}');
         return localRecord.value;
       }
       
@@ -301,10 +302,10 @@ class QueryManager {
         foundRecords.sort((a, b) => b.timeReceived.compareTo(a.timeReceived));
         final bestRecord = foundRecords.first;
         
-        _logger.info('Get value completed for key: ${key.substring(0, 10)} - found ${foundRecords.length} valid records');
+        _logger.info('Get value completed for key: ${truncateForLog(key)} - found ${foundRecords.length} valid records');
         return bestRecord.value;
       } else {
-        _logger.info('Get value completed for key: ${key.substring(0, 10)} - no valid records found');
+        _logger.info('Get value completed for key: ${truncateForLog(key)} - no valid records found');
         return null;
       }
     } catch (e) {
@@ -323,7 +324,7 @@ class QueryManager {
     _metrics?.recordQueryStart();
     
     try {
-      _logger.info('Putting value for key: ${key.substring(0, 10)}...');
+      _logger.info('Putting value for key: ${truncateForLog(key)}...');
       
       final keyBytes = Uint8List.fromList(key.codeUnits);
       
@@ -340,11 +341,11 @@ class QueryManager {
         peerId: _network!.host.id,
       );
       
-      _logger.fine('Created signed record for key: ${key.substring(0, 10)}... (${signedRecord.signature.length} bytes signature)');
+      _logger.fine('Created signed record for key: ${truncateForLog(key)}... (${signedRecord.signature.length} bytes signature)');
       
       // Store locally first
       await _protocol?.putRecordToDatastore(key, signedRecord);
-      _logger.fine('Stored record locally for key: ${key.substring(0, 10)}...');
+      _logger.fine('Stored record locally for key: ${truncateForLog(key)}...');
       
       // Find closest peers to store the value
       final result = await runLookupWithFollowup(
@@ -395,7 +396,7 @@ class QueryManager {
       stopwatch.stop();
       _metrics?.recordQuerySuccess(stopwatch.elapsed);
       
-      _logger.info('Put value completed for key: ${key.substring(0, 10)} - successfully stored to $successCount/${closestPeers.length} peers');
+      _logger.info('Put value completed for key: ${truncateForLog(key)} - successfully stored to $successCount/${closestPeers.length} peers');
     } catch (e) {
       stopwatch.stop();
       _metrics?.recordQueryFailure('put_value');
@@ -408,7 +409,7 @@ class QueryManager {
   Stream<Uint8List> searchValue(String key, RoutingOptions? options) async* {
     _ensureStarted();
     
-    _logger.info('Searching for values for key: ${key.substring(0, 10)}...');
+    _logger.info('Searching for values for key: ${truncateForLog(key)}...');
     
     final keyBytes = Uint8List.fromList(key.codeUnits);
     final controller = StreamController<Uint8List>();
@@ -456,9 +457,9 @@ class QueryManager {
         },
       );
       
-      _logger.info('Search value completed for key: ${key.substring(0, 10)}');
+      _logger.info('Search value completed for key: ${truncateForLog(key)}');
     } catch (e) {
-      _logger.warning('Search value failed for key: ${key.substring(0, 10)}: $e');
+      _logger.warning('Search value failed for key: ${truncateForLog(key)}: $e');
     } finally {
       controller.close();
     }
@@ -543,7 +544,7 @@ class QueryManager {
     _metrics?.recordQueryStart();
     
     try {
-      _logger.info('Providing CID ${cid.toString().substring(0, 10)}...');
+      _logger.info('Providing CID ${truncateForLog(cid.toString())}...');
       
       final cidBytes = cid.toBytes();
       

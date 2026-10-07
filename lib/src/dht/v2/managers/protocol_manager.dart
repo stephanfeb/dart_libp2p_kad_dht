@@ -12,6 +12,7 @@ import 'package:dart_libp2p/core/network/stream.dart';
 import 'package:dart_libp2p/core/network/context.dart';
 import 'package:dart_libp2p/core/multiaddr.dart';
 import 'package:logging/logging.dart';
+import '../../../internal/util.dart' show truncateForLog;
 
 import '../../../record/record_signer.dart';
 
@@ -315,11 +316,11 @@ class ProtocolManager {
       final record = message.record!;
       final keyString = String.fromCharCodes(message.key!);
       
-      _logger.fine('Validating record signature for key: ${keyString.substring(0, 10)}...');
+      _logger.fine('Validating record signature for key: ${truncateForLog(keyString)}...');
       
       final isValid = await RecordSigner.validateRecordSignature(record);
       if (!isValid) {
-        _logger.fine('Invalid record signature from $senderShortId for key: ${keyString.substring(0, 10)}...');
+        _logger.fine('Invalid record signature from $senderShortId for key: ${truncateForLog(keyString)}...');
         throw DHTProtocolException('Invalid record signature', peerId: sender);
       }
       
@@ -327,14 +328,14 @@ class ProtocolManager {
       final existingRecord = _datastore[keyString];
       if (existingRecord != null) {
         if (record.timeReceived <= existingRecord.timeReceived) {
-          _logger.fine('Rejecting older record from $senderShortId for key: ${keyString.substring(0, 10)}...');
+          _logger.fine('Rejecting older record from $senderShortId for key: ${truncateForLog(keyString)}...');
           // Still return success - we just don't store the older record
         } else {
-          _logger.fine('Accepting newer record from $senderShortId for key: ${keyString.substring(0, 10)}...');
+          _logger.fine('Accepting newer record from $senderShortId for key: ${truncateForLog(keyString)}...');
           _datastore[keyString] = record;
         }
       } else {
-        _logger.fine('Storing new record from $senderShortId for key: ${keyString.substring(0, 10)}...');
+        _logger.fine('Storing new record from $senderShortId for key: ${truncateForLog(keyString)}...');
         _datastore[keyString] = record;
       }
       
