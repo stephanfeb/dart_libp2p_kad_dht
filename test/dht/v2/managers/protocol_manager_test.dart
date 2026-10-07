@@ -21,6 +21,7 @@ import 'package:dart_libp2p_kad_dht/src/dht/v2/managers/routing_manager.dart';
 import 'package:dart_libp2p_kad_dht/src/dht/v2/managers/metrics_manager.dart';
 import 'package:dart_libp2p_kad_dht/src/dht/v2/config/dht_config.dart';
 import 'package:dart_libp2p_kad_dht/src/dht/v2/errors/dht_errors.dart';
+import 'package:dart_libp2p_kad_dht/src/pb/dht_codec.dart';
 import 'package:dart_libp2p_kad_dht/src/pb/dht_message.dart';
 import 'package:dart_libp2p_kad_dht/src/pb/record.dart';
 import 'package:dart_libp2p_kad_dht/src/providers/provider_store.dart';
@@ -31,6 +32,7 @@ class MockP2PStream implements P2PStream {
   final List<Uint8List> _receivedData = [];
   final List<Uint8List> _dataToReturn = [];
   bool _closed = false;
+  bool _reset = false;
   final PeerId _remotePeer;
   
   MockP2PStream(this._remotePeer);
@@ -49,7 +51,8 @@ class MockP2PStream implements P2PStream {
   @override
   Future<Uint8List> read([int? maxBytes]) async {
     if (_closed) throw StateError('Stream is closed');
-    if (_dataToReturn.isEmpty) throw StateError('No data to return');
+    // No more data: the peer has closed its side (EOF).
+    if (_dataToReturn.isEmpty) return Uint8List(0);
     return _dataToReturn.removeAt(0);
   }
   
@@ -58,9 +61,23 @@ class MockP2PStream implements P2PStream {
     if (_closed) throw StateError('Stream is closed');
     _receivedData.add(data);
   }
+
+  @override
+  Future<void> reset() async {
+    _reset = true;
+    _closed = true;
+  }
   
   @override
   dynamic noSuchMethod(Invocation invocation) => null;
+}
+
+/// A stream whose peer never sends anything.
+class _NeverReadyStream extends MockP2PStream {
+  _NeverReadyStream(super.remotePeer);
+
+  @override
+  Future<Uint8List> read([int? maxBytes]) => Completer<Uint8List>().future;
 }
 
 /// Mock implementation of PeerStore for testing
@@ -329,11 +346,7 @@ void main() {
       
       test('should handle incoming stream with valid message', () async {
         final stream = MockP2PStream(remotePeerId);
-        final message = Message(type: MessageType.ping);
-        final messageJson = jsonEncode(message.toJson());
-        final messageBytes = utf8.encode(messageJson);
-        
-        stream.addDataToReturn(messageBytes);
+        stream.addDataToReturn(encodeMessage(Message(type: MessageType.ping)));
         
         // Simulate incoming stream
         mockHost.simulateIncomingStream(stream);
@@ -342,17 +355,38 @@ void main() {
         await Future.delayed(Duration(milliseconds: 10));
         
         // Verify response was sent
-        expect(stream.receivedData, isNotEmpty);
+        expect(stream.receivedData, hasLength(1));
+        expect(decodeMessage(stream.receivedData.single).type, MessageType.ping);
         
-        // Verify stream was closed
+        // The peer ended the stream (EOF): it is closed, not reset
         expect(stream._closed, isTrue);
+        expect(stream._reset, isFalse);
+      });
+
+      test('should answer several requests on one stream', () async {
+        final stream = MockP2PStream(remotePeerId);
+        final framed = BytesBuilder()
+          ..add(encodeMessage(Message(type: MessageType.ping)))
+          ..add(encodeMessage(Message(type: MessageType.findNode, key: Uint8List.fromList([1, 2, 3]))));
+        final bytes = framed.toBytes();
+        // Split the two frames across reads at an odd place.
+        stream.addDataToReturn(Uint8List.sublistView(bytes, 0, 3));
+        stream.addDataToReturn(Uint8List.sublistView(bytes, 3));
+        stream.addDataToReturn(encodeMessage(Message(type: MessageType.ping)));
+
+        mockHost.simulateIncomingStream(stream);
+        await Future.delayed(Duration(milliseconds: 50));
+
+        expect(stream.receivedData.map((b) => decodeMessage(b).type).toList(),
+            [MessageType.ping, MessageType.findNode, MessageType.ping]);
+        expect(stream._closed, isTrue);
+        expect(stream._reset, isFalse);
       });
       
-      test('should handle stream with invalid JSON', () async {
+      test('should reset the stream on a message that is not valid', () async {
         final stream = MockP2PStream(remotePeerId);
-        final invalidJson = utf8.encode('invalid json');
-        
-        stream.addDataToReturn(invalidJson);
+        // A length prefix of 5 followed by bytes that are not a protobuf.
+        stream.addDataToReturn(Uint8List.fromList([5, 0xff, 0xff, 0xff, 0xff, 0xff]));
         
         // Simulate incoming stream
         mockHost.simulateIncomingStream(stream);
@@ -360,8 +394,19 @@ void main() {
         // Allow async processing
         await Future.delayed(Duration(milliseconds: 10));
         
-        // Verify stream was closed even with error
+        expect(stream.receivedData, isEmpty);
+        expect(stream._reset, isTrue);
+      });
+
+      test('should close an idle stream', () async {
+        protocolManager.inboundStreamIdleTimeout = Duration(milliseconds: 20);
+        final stream = _NeverReadyStream(remotePeerId);
+
+        mockHost.simulateIncomingStream(stream);
+        await Future.delayed(Duration(milliseconds: 100));
+
         expect(stream._closed, isTrue);
+        expect(stream._reset, isFalse);
       });
     });
     

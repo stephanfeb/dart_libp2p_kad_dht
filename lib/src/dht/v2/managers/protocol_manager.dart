@@ -18,6 +18,7 @@ import '../../../record/record_signer.dart';
 
 import '../../../providers/provider_store.dart';
 import '../../../pb/dht_message.dart';
+import '../../../pb/dht_message_reader.dart';
 import '../../../pb/record.dart';
 import '../../../amino/defaults.dart';
 import '../config/dht_config.dart';
@@ -154,13 +155,25 @@ class ProtocolManager {
     _serving = false;
   }
   
-  /// Handles incoming protocol streams
+  /// How long an inbound stream can wait for the next request before it is
+  /// closed. The default is [AminoConstants.inboundStreamIdleTimeout]
+  /// (1 minute, as go-libp2p-kad-dht).
+  Duration inboundStreamIdleTimeout = AminoConstants.inboundStreamIdleTimeout;
+
+  /// Handles an incoming protocol stream.
+  ///
+  /// As in go-libp2p-kad-dht, a peer can send several requests on one
+  /// stream: the handler reads a message, writes the response (ADD_PROVIDER
+  /// has none) and reads the next message. It closes the stream when the
+  /// peer ends it or sends nothing for [inboundStreamIdleTimeout]. It resets
+  /// the stream when a message is not valid, a request fails, or a read or
+  /// write fails.
   Future<void> _handleIncomingStream(P2PStream stream, PeerId remotePeer) async {
-    final remotePeerShortId = remotePeer.toBase58().substring(0, 6);
-    final selfShortId = _host.id.toBase58().substring(0, 6);
-    
+    final remotePeerShortId = truncateForLog(remotePeer.toBase58(), 6);
+    final selfShortId = truncateForLog(_host.id.toBase58(), 6);
+
     _logger.info('[$selfShortId] Handling incoming stream from $remotePeerShortId');
-    
+
     // Capture address (cheap, no I/O)
     MultiAddr? remoteAddr;
     try {
@@ -169,48 +182,58 @@ class ProtocolManager {
       _logger.fine('[$selfShortId] Could not extract remote address for $remotePeerShortId: $e');
     }
 
+    final reader = DhtMessageReader(stream);
+    var handled = 0;
+    var clean = true;
     try {
-      // Read the message from the stream
-      final messageBytes = await stream.read();
+      while (true) {
+        final Message? message;
+        try {
+          message = await reader.next(timeout: inboundStreamIdleTimeout);
+        } on TimeoutException {
+          _logger.fine('[$selfShortId] Stream from $remotePeerShortId idle after $handled request(s); closing');
+          break;
+        }
+        if (message == null) {
+          _logger.fine('[$selfShortId] Stream from $remotePeerShortId ended after $handled request(s)');
+          break;
+        }
 
-      // Parse the protobuf message
-      final message = decodeMessage(Uint8List.fromList(messageBytes));
+        _logger.fine('[$selfShortId] Received ${message.type} message from $remotePeerShortId');
 
-      _logger.fine('[$selfShortId] Received ${message.type} message from $remotePeerShortId');
+        // Route the message to the appropriate handler
+        final response = await _routeMessage(remotePeer, message);
+        handled++;
 
-      // Route the message to the appropriate handler
-      final response = await _routeMessage(remotePeer, message);
+        // ADD_PROVIDER is fire-and-forget per the libp2p spec — no response sent
+        if (message.type != MessageType.addProvider) {
+          await stream.write(encodeMessage(response));
+          _logger.fine('[$selfShortId] Sent response to $remotePeerShortId');
+        } else {
+          _logger.fine('[$selfShortId] ADD_PROVIDER handled (fire-and-forget, no response)');
+        }
 
-      // ADD_PROVIDER is fire-and-forget per the libp2p spec — no response sent
-      if (message.type != MessageType.addProvider) {
-        final responseBytes = encodeMessage(response);
-        await stream.write(responseBytes);
-        _logger.fine('[$selfShortId] Sent response to $remotePeerShortId');
-      } else {
-        _logger.fine('[$selfShortId] ADD_PROVIDER handled (fire-and-forget, no response)');
+        // Store the address once, after the first response (non-blocking)
+        if (handled == 1 && remoteAddr != null) {
+          _host.peerStore.addOrUpdatePeer(remotePeer, addrs: [remoteAddr]).catchError((e) {
+            _logger.fine('[$selfShortId] Failed to store address for peer $remotePeerShortId: $e');
+          });
+        }
       }
-
-      // Defer peerstore address storage to AFTER response is sent (non-blocking)
-      if (remoteAddr != null) {
-        _host.peerStore.addOrUpdatePeer(remotePeer, addrs: [remoteAddr]).catchError((e) {
-          _logger.fine('[$selfShortId] Failed to store address for peer $remotePeerShortId: $e');
-        });
-      }
-
     } catch (e, stackTrace) {
+      clean = false;
       _logger.fine('[$selfShortId] Error handling stream from $remotePeerShortId: $e', e, stackTrace);
+    }
 
-      // Send error response if possible
-      try {
-        final errorResponse = Message(type: MessageType.ping);
-        final errorResponseBytes = encodeMessage(errorResponse);
-        await stream.write(errorResponseBytes);
-      } catch (responseError) {
-        _logger.fine('[$selfShortId] Failed to send error response: $responseError');
+    // The peer may have closed or reset the stream already; that is fine.
+    try {
+      if (clean) {
+        await stream.close();
+      } else {
+        await stream.reset();
       }
-    } finally {
-      // NOTE: Don't close the stream here!
-      // The client (NetworkManager) will close it to avoid race conditions.
+    } catch (e) {
+      _logger.fine('[$selfShortId] Failed to end stream from $remotePeerShortId: $e');
     }
   }
   
@@ -383,10 +406,12 @@ class ProtocolManager {
         _store(keyString, record);
       }
       
-      // Create response
+      // The response echoes the request with its record, as
+      // go-libp2p-kad-dht does; its client checks that the value came back.
       final response = Message(
         type: MessageType.putValue,
         key: message.key,
+        record: record,
       );
 
       // Defer sender RT insertion (non-blocking)

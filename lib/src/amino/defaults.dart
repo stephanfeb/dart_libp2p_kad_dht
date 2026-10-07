@@ -86,6 +86,11 @@ class AminoConstants {
   /// publisher must put the record again before this time.
   static const Duration defaultMaxRecordAge = Duration(hours: 36);
 
+  /// How long an inbound DHT stream can stay open with no request before the
+  /// server closes it (dhtStreamIdleTimeout in go-libp2p-kad-dht). Peers can
+  /// send several requests on one stream until then.
+  static const Duration inboundStreamIdleTimeout = Duration(minutes: 1);
+
   /// DefaultLookupCheckConcurrency is the maximal number of routines that can be used
   /// to perform a lookup check operation, before adding a new node to the routing table.
   static const int defaultLookupCheckConcurrency = 256;

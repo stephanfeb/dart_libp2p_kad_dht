@@ -328,7 +328,8 @@ void main() {
       final target = await startDartServer();
 
       // go-libp2p records carry no author or signature; the /pk/
-      // validator accepts them.
+      // validator accepts them. The Go client sends FIND_NODE and then
+      // PUT_VALUE on the same stream, so the server must answer both.
       final goClient = GoProcessManager(binaryPath: goBinaryPath);
       final putResult = await goClient.runDHTPutPkSelf(target);
       print('Go put stdout: ${putResult.stdout}');
@@ -338,13 +339,7 @@ void main() {
       final goClientPeerId = _parsePeerId(putResult.stdout.toString());
       final stored = await dartDHT!.getRecordFromDatastore(pkKeyForPeer(goClientPeerId));
       expect(stored, isNotNull, reason: 'Dart v2 should store the validated /pk/ record');
-    },
-        timeout: Timeout(Duration(seconds: 60)),
-        // The Go client reuses a DHT stream for its next request. The v2
-        // ProtocolManager answers one message and then neither reads the
-        // stream again nor closes it (the legacy IpfsDHT closes it), so the
-        // Go PUT_VALUE is never answered. Unskip when that is fixed.
-        skip: 'v2 ProtocolManager does not handle reused inbound streams');
+    }, timeout: Timeout(Duration(seconds: 60)));
 
     test('Go reads a /pk/ record that a Dart v2 server stored', () async {
       final target = await startDartServer();
