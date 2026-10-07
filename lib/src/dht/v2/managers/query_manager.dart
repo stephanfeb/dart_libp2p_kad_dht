@@ -225,7 +225,34 @@ class QueryManager {
     }
   }
   
+  /// Validates the record in a GET_VALUE answer. Returns it, or null when
+  /// the answer has no record or the record is not valid for [key].
+  Future<Record?> _validRecordFrom(PeerId peer, String key, Message response) async {
+    final record = response.record;
+    if (record == null) return null;
+    try {
+      await _protocol!.validateRecord(key, record);
+      return record;
+    } catch (e) {
+      _logger.fine('Ignoring record from ${peer.toBase58().substring(0, 6)} for key ${truncateForLog(key)}...: $e');
+      return null;
+    }
+  }
+
+  List<AddrInfo> _closerPeersOf(Message response) {
+    return response.closerPeers.map((p) => AddrInfo(
+      PeerId.fromBytes(p.id),
+      p.addrs.map((addr) => MultiAddr.fromBytes(addr)).toList(),
+    )).toList();
+  }
+
   /// Gets a value from the DHT
+  ///
+  /// The local record (if any) and the records from the closest peers are
+  /// validated, and the namespace validator's select() picks the best. The
+  /// lookup stops when [DHTConfigV2.resiliency] peers returned a valid
+  /// record, or when [DHTConfigV2.resiliency] peers were queried. With
+  /// `options.offline`, only the local datastore is read.
   Future<Uint8List?> getValue(String key, RoutingOptions? options) async {
     _ensureStarted();
     
@@ -236,78 +263,53 @@ class QueryManager {
       _logger.info('Getting value for key: ${truncateForLog(key)}...');
       
       final keyBytes = Uint8List.fromList(key.codeUnits);
-      final foundRecords = <Record>[];
+      final candidates = <Record>[];
       
-      // Check local datastore first
-      _logger.fine('Checking local datastore for key');
+      // The local record goes first: it was checked when it was stored.
       final localRecord = await _protocol?.getRecordFromDatastore(key);
       if (localRecord != null) {
-        stopwatch.stop();
-        _metrics?.recordQuerySuccess(stopwatch.elapsed);
-        _logger.info('Found value in local datastore for key: ${truncateForLog(key)}');
-        return localRecord.value;
+        candidates.add(localRecord);
       }
-      
-      // Perform distributed lookup for the value
-      // ignore: unused_local_variable - result not used; records collected via queryFn
-      final result = await runLookupWithFollowup(
-        target: keyBytes,
-        queryFn: (peer) async {
-          _logger.fine('Sending GET_VALUE to ${peer.toBase58().substring(0, 6)}');
-          
-          final message = Message(
-            type: MessageType.getValue,
-            key: keyBytes,
-          );
-          
-          final response = await _network?.sendMessage(peer, message);
-          if (response == null) {
-            throw DHTNetworkException('No response from peer', peerId: peer);
-          }
-          
-          // If we found a record, validate and collect it
-          if (response.record != null) {
-            try {
-              // Validate the record signature
-              final isValid = await RecordSigner.validateRecordSignature(response.record!);
-              if (isValid) {
-                foundRecords.add(response.record!);
-                _logger.fine('Found and validated record from ${peer.toBase58().substring(0, 6)}');
-              } else {
-                _logger.fine('Invalid record signature from ${peer.toBase58().substring(0, 6)}');
-              }
-            } catch (e) {
-              _logger.fine('Error validating record from ${peer.toBase58().substring(0, 6)}: $e');
+
+      if (options?.offline != true) {
+        final quorum = _config?.resiliency ?? 3;
+        var remoteCount = 0;
+        await runLookupWithFollowup(
+          target: keyBytes,
+          queryFn: (peer) async {
+            _logger.fine('Sending GET_VALUE to ${peer.toBase58().substring(0, 6)}');
+            final response = await _network?.sendMessage(peer, Message(
+              type: MessageType.getValue,
+              key: keyBytes,
+            ));
+            if (response == null) {
+              throw DHTNetworkException('No response from peer', peerId: peer);
             }
-          }
-          
-          // Return closer peers for continued lookup
-          return response.closerPeers.map((p) => AddrInfo(
-            PeerId.fromBytes(p.id),
-            p.addrs.map((addr) => MultiAddr.fromBytes(addr)).toList(),
-          )).toList();
-        },
-        stopFn: (peerset) {
-          // Stop when we've queried enough peers or found valid records
-          return foundRecords.isNotEmpty || 
-                 peerset.getClosestInStates([PeerState.queried]).length >= (_config?.resiliency ?? 3);
-        },
-      );
+            final record = await _validRecordFrom(peer, key, response);
+            if (record != null) {
+              candidates.add(record);
+              remoteCount++;
+            }
+            return _closerPeersOf(response);
+          },
+          stopFn: (peerset) {
+            return remoteCount >= quorum ||
+                   peerset.getClosestInStates([PeerState.queried]).length >= (_config?.resiliency ?? 3);
+          },
+        );
+      }
       
       stopwatch.stop();
       _metrics?.recordQuerySuccess(stopwatch.elapsed);
       
-      if (foundRecords.isNotEmpty) {
-        // Select the most recent valid record
-        foundRecords.sort((a, b) => b.timeReceived.compareTo(a.timeReceived));
-        final bestRecord = foundRecords.first;
-        
-        _logger.info('Get value completed for key: ${truncateForLog(key)} - found ${foundRecords.length} valid records');
-        return bestRecord.value;
-      } else {
+      if (candidates.isEmpty) {
         _logger.info('Get value completed for key: ${truncateForLog(key)} - no valid records found');
         return null;
       }
+      final best = await _protocol!.selectRecord(key, candidates);
+      _logger.info('Get value completed for key: ${truncateForLog(key)} - '
+          'selected 1 of ${candidates.length} valid records');
+      return candidates[best].value;
     } catch (e) {
       stopwatch.stop();
       _metrics?.recordQueryFailure('get_value');
@@ -317,6 +319,11 @@ class QueryManager {
   }
   
   /// Puts a value in the DHT
+  ///
+  /// The record is checked as a receiving peer will check it (see
+  /// [ProtocolManager.validateRecord]); an invalid record, or a key whose
+  /// namespace has no validator, throws a [DHTProtocolException] before
+  /// anything is sent.
   Future<void> putValue(String key, Uint8List value, RoutingOptions? options) async {
     _ensureStarted();
     
@@ -342,10 +349,19 @@ class QueryManager {
       );
       
       _logger.fine('Created signed record for key: ${truncateForLog(key)}... (${signedRecord.signature.length} bytes signature)');
+
+      // Refuse a record the network would refuse.
+      await _protocol!.validateRecord(key, signedRecord);
       
       // Store locally first
       await _protocol?.putRecordToDatastore(key, signedRecord);
       _logger.fine('Stored record locally for key: ${truncateForLog(key)}...');
+
+      if (options?.offline == true) {
+        stopwatch.stop();
+        _metrics?.recordQuerySuccess(stopwatch.elapsed);
+        return;
+      }
       
       // Find closest peers to store the value
       final result = await runLookupWithFollowup(
@@ -363,10 +379,7 @@ class QueryManager {
             throw DHTNetworkException('No response from peer', peerId: peer);
           }
           
-          return response.closerPeers.map((p) => AddrInfo(
-            PeerId.fromBytes(p.id),
-            p.addrs.map((addr) => MultiAddr.fromBytes(addr)).toList(),
-          )).toList();
+          return _closerPeersOf(response);
         },
         stopFn: (peerset) {
           return peerset.getClosestInStates([PeerState.queried]).length >= (_config?.resiliency ?? 3);
@@ -406,6 +419,9 @@ class QueryManager {
   }
   
   /// Searches for values in the DHT
+  ///
+  /// Emits the local value first (if any), then each valid value from the
+  /// network that is better than the best value emitted so far.
   Stream<Uint8List> searchValue(String key, RoutingOptions? options) async* {
     _ensureStarted();
     
@@ -423,8 +439,21 @@ class QueryManager {
   /// Asynchronously searches for values
   Future<void> _searchValueAsync(String key, Uint8List keyBytes, RoutingOptions? options, StreamController<Uint8List> controller) async {
     try {
-      // Check local datastore first
-      _logger.fine('Checking local datastore for key');
+      Record? best;
+      Future<void> offer(Record record) async {
+        if (best != null) {
+          final i = await _protocol!.selectRecord(key, [best!, record]);
+          if (i != 1) return;
+        }
+        best = record;
+        controller.add(record.value);
+      }
+
+      final localRecord = await _protocol?.getRecordFromDatastore(key);
+      if (localRecord != null) {
+        await offer(localRecord);
+      }
+      if (options?.offline == true) return;
       
       // Perform distributed search
       await runLookupWithFollowup(
@@ -442,15 +471,12 @@ class QueryManager {
             throw DHTNetworkException('No response from peer', peerId: peer);
           }
           
-          // If we found a record, add it to the stream
-          if (response.record != null) {
-            controller.add(response.record!.value);
+          final record = await _validRecordFrom(peer, key, response);
+          if (record != null) {
+            await offer(record);
           }
           
-          return response.closerPeers.map((p) => AddrInfo(
-            PeerId.fromBytes(p.id),
-            p.addrs.map((addr) => MultiAddr.fromBytes(addr)).toList(),
-          )).toList();
+          return _closerPeersOf(response);
         },
         stopFn: (peerset) {
           return peerset.getClosestInStates([PeerState.queried]).length >= (_config?.resiliency ?? 3);

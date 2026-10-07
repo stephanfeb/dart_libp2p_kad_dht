@@ -28,6 +28,13 @@ class DHTConfigV2 {
   final double retryBackoffFactor;
   final bool filterLocalhostInResponses;
   final Duration networkTimeout;
+
+  // Record settings
+  /// See [DHTOptions.maxRecordAge].
+  final Duration maxRecordAge;
+
+  /// See [DHTOptions.allowUnvalidatedRecords].
+  final bool allowUnvalidatedRecords;
   
   // Routing settings
   final Duration refreshInterval;
@@ -62,6 +69,10 @@ class DHTConfigV2 {
     this.retryBackoffFactor = 2.0,
     this.filterLocalhostInResponses = true,
     this.networkTimeout = const Duration(seconds: 30),
+
+    // Record settings
+    this.maxRecordAge = AminoConstants.defaultMaxRecordAge,
+    this.allowUnvalidatedRecords = false,
     
     // Routing settings
     this.refreshInterval = const Duration(minutes: 15),
@@ -97,6 +108,8 @@ class DHTConfigV2 {
       retryMaxBackoff: options.retryMaxBackoff,
       retryBackoffFactor: options.retryBackoffFactor,
       filterLocalhostInResponses: options.filterLocalhostInResponses,
+      maxRecordAge: options.maxRecordAge,
+      allowUnvalidatedRecords: options.allowUnvalidatedRecords,
     );
   }
   
@@ -116,6 +129,8 @@ class DHTConfigV2 {
       retryMaxBackoff: retryMaxBackoff,
       retryBackoffFactor: retryBackoffFactor,
       filterLocalhostInResponses: filterLocalhostInResponses,
+      maxRecordAge: maxRecordAge,
+      allowUnvalidatedRecords: allowUnvalidatedRecords,
     );
   }
   
@@ -144,6 +159,8 @@ class DHTConfigV2 {
     bool? optimisticProvide,
     bool? enableMetrics,
     Duration? metricsInterval,
+    Duration? maxRecordAge,
+    bool? allowUnvalidatedRecords,
   }) {
     return DHTConfigV2(
       mode: mode ?? this.mode,
@@ -169,6 +186,8 @@ class DHTConfigV2 {
       optimisticProvide: optimisticProvide ?? this.optimisticProvide,
       enableMetrics: enableMetrics ?? this.enableMetrics,
       metricsInterval: metricsInterval ?? this.metricsInterval,
+      maxRecordAge: maxRecordAge ?? this.maxRecordAge,
+      allowUnvalidatedRecords: allowUnvalidatedRecords ?? this.allowUnvalidatedRecords,
     );
   }
   
@@ -210,6 +229,8 @@ class DHTConfigBuilder {
   bool _optimisticProvide = false;
   bool _enableMetrics = true;
   Duration _metricsInterval = const Duration(minutes: 1);
+  Duration _maxRecordAge = AminoConstants.defaultMaxRecordAge;
+  bool _allowUnvalidatedRecords = false;
   
   DHTConfigBuilder mode(DHTMode mode) {
     _mode = mode;
@@ -261,6 +282,18 @@ class DHTConfigBuilder {
     return this;
   }
   
+  /// See [DHTOptions.maxRecordAge].
+  DHTConfigBuilder maxRecordAge(Duration age) {
+    _maxRecordAge = age;
+    return this;
+  }
+
+  /// See [DHTOptions.allowUnvalidatedRecords].
+  DHTConfigBuilder allowUnvalidatedRecords(bool allow) {
+    _allowUnvalidatedRecords = allow;
+    return this;
+  }
+
   DHTConfigV2 build() {
     return DHTConfigV2(
       mode: _mode,
@@ -286,6 +319,8 @@ class DHTConfigBuilder {
       optimisticProvide: _optimisticProvide,
       enableMetrics: _enableMetrics,
       metricsInterval: _metricsInterval,
+      maxRecordAge: _maxRecordAge,
+      allowUnvalidatedRecords: _allowUnvalidatedRecords,
     );
   }
 } 

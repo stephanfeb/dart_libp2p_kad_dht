@@ -81,6 +81,11 @@ class AminoConstants {
   /// from the time it's received. This is the same as DefaultProvideValidity.
   static const Duration defaultRecordTTL = Duration(hours: 48);
 
+  /// DefaultMaxRecordAge is how long a node keeps a value record (PUT_VALUE)
+  /// after it stored it. As in go-libp2p-kad-dht (MaxRecordAge), the
+  /// publisher must put the record again before this time.
+  static const Duration defaultMaxRecordAge = Duration(hours: 36);
+
   /// DefaultLookupCheckConcurrency is the maximal number of routines that can be used
   /// to perform a lookup check operation, before adding a new node to the routing table.
   static const int defaultLookupCheckConcurrency = 256;

@@ -55,6 +55,8 @@ void main() {
           mode: DHTMode.server,
           autoRefresh: false,
           bootstrapPeers: [],
+          // 'my-key' has no namespace, so no validator.
+          allowUnvalidatedRecords: true,
         ),
       );
       await dht!.start();

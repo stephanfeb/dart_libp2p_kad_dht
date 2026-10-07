@@ -125,6 +125,9 @@ await dht.bootstrap();
 
 // Use DHT operations
 final peer = await dht.findPeer(targetPeerId);
+// Value records: the key's namespace needs a validator (default: /pk/ and
+// /ipns/), unless DHTOptions.allowUnvalidatedRecords is set. Records expire
+// after DHTOptions.maxRecordAge (36 h). See the package README.
 await dht.putValue(key, value);
 final value = await dht.getValue(key);
 

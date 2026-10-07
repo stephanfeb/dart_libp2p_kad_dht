@@ -90,11 +90,14 @@ Future<void> main() async {
   // Find a peer
   final peerInfo = await dht.findPeer(targetPeerId);
   
-  // Store a value (cryptographically signed)
-  await dht.putValue('my-key', utf8.encode('my-value'));
+  // Store a value (signed). The key's namespace needs a validator:
+  // '/pk/<peer ID bytes>' is a public-key record. See "Value Records" for
+  // your own namespaces.
+  final pkKey = '/pk/${String.fromCharCodes(host.id.toBytes())}';
+  await dht.putValue(pkKey, (await host.peerStore.keyBook.pubKey(host.id))!.marshal());
   
-  // Retrieve a value (with validation)
-  final value = await dht.getValue('my-key');
+  // Retrieve a value (validated; asks the network)
+  final value = await dht.getValue(pkKey);
   
   // Announce content availability
   await dht.provide(CID.fromString('QmExample...'), true);
@@ -134,6 +137,71 @@ await dht.start();       // Too late — Go already marked us "peer stopped dht"
 ```
 
 This applies to any protocol handler that must be advertised via Identify — always register handlers before `host.start()`.
+
+### Value Records
+
+`putValue` and `getValue` store and read signed records under a key. As in
+go-libp2p-kad-dht, the key's namespace (`/<namespace>/...`) decides how a
+record is checked:
+
+- A record is accepted (by `putValue`, by a server receiving `PUT_VALUE`, and
+  in `GET_VALUE` answers) only if the validator registered for its namespace
+  accepts it. The default validator has the `pk` and `ipns` namespaces.
+- A key whose namespace has no validator, such as `my-key`, is refused by
+  default: `putValue` throws a `DHTProtocolException` and `getValue` returns
+  only a record that this node stored itself.
+- When a node holds a record and receives another one for the same key, the
+  validator's `select()` decides which one it keeps. The record's timestamp
+  is chosen by its writer and does not decide.
+- A node keeps a record for `DHTOptions.maxRecordAge` (default 36 hours)
+  after it stored it. Put a record again before then to keep it in the
+  network; the DHT does not republish records itself.
+- `getValue` reads the local record and asks the closest peers. It selects
+  the best valid record with `select()`. With `RoutingOptions()..offline =
+  true` it reads only the local datastore.
+
+Register a validator for your own namespace:
+
+```dart
+import 'package:dart_libp2p_kad_dht/src/record/namespace_validator.dart';
+import 'package:dart_libp2p_kad_dht/src/record/public_key_validator.dart';
+import 'package:dart_libp2p_kad_dht/src/record/ipns_validator.dart';
+import 'package:dart_libp2p_kad_dht/src/record/validator.dart';
+
+class GreetingValidator implements Validator {
+  @override
+  Future<void> validate(String key, Uint8List value) async {
+    // Throw if the value is not valid for this key. To stop other peers
+    // from replacing a value, tie the key to its owner here, e.g. require
+    // a signature in the value by the peer ID that the key contains.
+    if (value.length > 1024) throw Exception('value too large');
+  }
+
+  @override
+  Future<int> select(String key, List<Uint8List> values) async {
+    return 0; // index of the best value
+  }
+}
+
+final dht = IpfsDHTv2(
+  host: host,
+  providerStore: providerStore,
+  validator: NamespacedValidator()
+    ..['pk'] = PublicKeyValidator()
+    ..['ipns'] = IpnsValidator(host.peerStore)
+    ..['greeting'] = GreetingValidator(),
+);
+await dht.putValue('/greeting/alice', utf8.encode('hello'));
+```
+
+Passing `validator:` replaces the default validator, so add `pk` and `ipns`
+again if you need them.
+
+For keys without a namespace validator, `DHTOptions(allowUnvalidatedRecords:
+true)` accepts records that carry a valid signature of their author. A node
+then replaces a stored record only with a newer record of the same author, so
+the first author to store a key on a node keeps it there until it expires.
+This is weaker than a validator; use it for trusted or test networks.
 
 ### Advanced Configuration with Builder Pattern
 
@@ -209,6 +277,8 @@ final dhtOptions = DHTOptions(
     MultiAddr('/ip4/203.0.113.7/udp/4001/udx/p2p/12D3KooW...'),
     MultiAddr('/ip4/203.0.113.8/tcp/4001/p2p/12D3KooW...'),
   ],
+  maxRecordAge: Duration(hours: 36), // How long a value record is kept
+  allowUnvalidatedRecords: false,    // Accept keys without a namespace validator
 );
 ```
 

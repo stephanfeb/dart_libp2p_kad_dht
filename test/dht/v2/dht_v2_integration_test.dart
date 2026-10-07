@@ -1487,6 +1487,8 @@ Future<IpfsDHTv2> _createDHTForHost(Host host, {List<AddrInfo>? bootstrapNodes})
     autoRefresh: false, // Disable for integration tests
     bootstrapPeers: [], // No external bootstrap peers for integration tests
     mode: DHTMode.server, // Make all nodes servers for testing
+    // The record tests use keys without a namespace validator.
+    allowUnvalidatedRecords: true,
   );
   
   final dht = IpfsDHTv2(

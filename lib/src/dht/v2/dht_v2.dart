@@ -21,7 +21,6 @@ import '../routing_options.dart';
 import '../../providers/provider_store.dart';
 import '../../providers/provider_manager.dart';
 import '../../record/namespace_validator.dart';
-import '../../record/record_signer.dart';
 import '../../record/generic_validator.dart';
 import '../../record/public_key_validator.dart';
 import '../../record/ipns_validator.dart';
@@ -113,6 +112,8 @@ class IpfsDHTv2 implements IpfsDHT {
        _protocol = ProtocolManager(host),
        _metrics = MetricsManager() {
 
+    _recordValidator = validator ?? _createDefaultValidator();
+
     // Initialize component dependencies
     _queries.initialize(
       network: _network,
@@ -128,6 +129,7 @@ class IpfsDHTv2 implements IpfsDHT {
       providerStore: _providerStore,
       config: _config,
       metrics: _metrics,
+      validator: _recordValidator,
     );
     
     _network.initialize(
@@ -148,7 +150,6 @@ class IpfsDHTv2 implements IpfsDHT {
       store: _providerStore,
     );
     _handlers = DHTHandlers(this);
-    _recordValidator = validator ?? _createDefaultValidator();
     _nsEstimator = Estimator(
       localId: _host.id,
       rt: _routing.routingTable,
@@ -501,12 +502,20 @@ class IpfsDHTv2 implements IpfsDHT {
     return await sendMessage(peer, message);
   }
   
+  /// Checks [record] as a received `PUT_VALUE` record is checked: its
+  /// signature if it has one, and the validator of its key's namespace.
+  /// A key without a validator is refused unless
+  /// [DHTOptions.allowUnvalidatedRecords] is set.
   @override
   Future<bool> validateRecord(Record record) async {
     _ensureStarted();
-    // Simplified validation - would normally use record validators
-    _logger.fine('Validating record...');
-    return true;
+    try {
+      await _protocol.validateRecord(String.fromCharCodes(record.key), record);
+      return true;
+    } catch (e) {
+      _logger.fine('Record validation failed: $e');
+      return false;
+    }
   }
   
   @override
@@ -559,15 +568,14 @@ class IpfsDHTv2 implements IpfsDHT {
     if (!_started) throw DHTNotStartedException();
   }
   
-  /// Creates the default validator with proper record validation
+  /// Creates the default validator: the `pk` and `ipns` namespaces, as in
+  /// go-libp2p-kad-dht. Records in other namespaces are refused unless the
+  /// application registers a validator for them (pass `validator:` to the
+  /// constructor) or sets [DHTOptions.allowUnvalidatedRecords].
   NamespacedValidator _createDefaultValidator() {
     final validator = NamespacedValidator();
-    
-    // Add validators for different namespaces
     validator['pk'] = PublicKeyValidator(); // Public key records
     validator['ipns'] = IpnsValidator(_host.peerStore); // IPNS records
-    validator['v'] = DHTRecordValidator(); // Generic DHT records with signature validation
-    
     return validator;
   }
 

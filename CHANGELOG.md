@@ -4,7 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed (behaviour)
+- **IpfsDHTv2 value records are checked by their namespace validator; keys without one are refused by default.** This follows go-libp2p-kad-dht. `putValue('my-key', ...)` now throws a `DHTProtocolException`, because `my-key` has no namespace. Register a validator for your namespace (`IpfsDHTv2(validator: ...)`), or set the new `DHTOptions.allowUnvalidatedRecords: true` (see Security below). The default validator now has `pk` and `ipns` only: the `v` entry (`DHTRecordValidator`, which expected a JSON-encoded record as the value, and was never called) was removed. The legacy `IpfsDHT` is not changed.
+- **`getValue` asks the network.** It no longer returns the local copy alone: it reads the local record, sends `GET_VALUE` to the closest peers, and selects the best valid record with the validator's `select()`. The lookup stops when `resiliency` peers returned a valid record or `resiliency` peers were queried. `RoutingOptions.offline` reads only the local datastore. `searchValue` validates each record and emits only records that are better than the ones it emitted before.
+
+### Security
+- **Value records could be overwritten by anyone.** The `PUT_VALUE` handler of `IpfsDHTv2` checked only that a record was signed by the author it names, and replaced the stored record when the new record's `timeReceived` was greater. That timestamp is chosen by the writer, and nothing tied the key to the author; the namespace validators (`pk`, `ipns`) were never called. Now:
+  - the record's key must be the message key, a record that has an author or a signature must have a valid signature, and the validator of the key's namespace must accept the value;
+  - the validator's `select()` between the received and the stored record decides which one is kept (the received record first, as in go);
+  - with `allowUnvalidatedRecords`, a record in a namespace without a validator must be signed, and it replaces a stored record only if it has the same author and is newer;
+  - records in the local datastore expire `DHTOptions.maxRecordAge` (new, default 36 hours, as go's `MaxRecordAge`) after they were stored. Expired records are not served and are removed periodically. The DHT does not republish records; put them again to keep them.
+  - `IpfsDHTv2.validateRecord` now validates (it returned `true` for every record).
+- New API (all additive): `DHTOptions.maxRecordAge`, `DHTOptions.allowUnvalidatedRecords` (and the same fields, `copyWith` parameters and builder methods on `DHTConfigV2`), `AminoConstants.defaultMaxRecordAge`, and on the internal `ProtocolManager`: an optional `validator` argument to `initialize`, `validateRecord`, `selectRecord` and `pruneExpiredRecords`.
+
 ### Fixed
+- `ProtocolManager.getRecordFromDatastoreBytes` (used by `checkLocalDatastore`) decoded the key as UTF-8, but keys are stored with one character per byte. Binary keys such as `/pk/<multihash>` were not found.
 - **Any peer could register any peer as a provider, without limit.** The `ADD_PROVIDER` handler (v2 `ProtocolManager` and the legacy `DHTHandlers`) stored every entry in the message, whatever peer sent it, and `MemoryProviderStore` appended each one to a list with no limit and no duplicate check. Now:
   - only the entry for the sending peer is stored, with its addresses; entries for other peers are ignored and logged at `FINE` (go-libp2p-kad-dht does the same);
   - `MemoryProviderStore` keeps one record per (key, provider). A repeated announcement refreshes the expiry and replaces the addresses;

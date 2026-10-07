@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dart_libp2p_kad_dht/src/pb/dht_codec.dart';
@@ -14,6 +13,7 @@ import 'package:dart_libp2p/core/multiaddr.dart';
 import 'package:logging/logging.dart';
 import '../../../internal/util.dart' show truncateForLog;
 
+import '../../../record/namespace_validator.dart';
 import '../../../record/record_signer.dart';
 
 import '../../../providers/provider_store.dart';
@@ -42,27 +42,35 @@ class ProtocolManager {
   MetricsManager? _metrics;
   RoutingManager? _routing;
   ProviderStore? _providerStore;
+  NamespacedValidator? _validator;
   
   // State
   bool _started = false;
   bool _closed = false;
   
-  // Local datastore for records
-  final Map<String, Record> _datastore = {};
+  // Local datastore for records, with the time each record was stored.
+  final Map<String, _StoredRecord> _datastore = {};
+  Timer? _pruneTimer;
   
   ProtocolManager(this._host);
   
   /// Initializes the protocol manager
+  ///
+  /// [validator] checks value records by key namespace (`/pk/`, `/ipns/`,
+  /// ...). Without it, no namespace has a validator, and records are
+  /// accepted only when [DHTConfigV2.allowUnvalidatedRecords] is set.
   void initialize({
     required RoutingManager routing,
     required ProviderStore providerStore,
     required DHTConfigV2 config,
     required MetricsManager metrics,
+    NamespacedValidator? validator,
   }) {
     _routing = routing;
     _providerStore = providerStore;
     _config = config;
     _metrics = metrics;
+    _validator = validator;
   }
   
   /// Starts the protocol manager.
@@ -79,6 +87,14 @@ class ProtocolManager {
       _setupProtocolHandlers();
     }
 
+    // Remove expired records periodically; reads also skip them.
+    final pruneEvery = _maxRecordAge < const Duration(hours: 1)
+        ? _maxRecordAge
+        : const Duration(hours: 1);
+    if (pruneEvery > Duration.zero) {
+      _pruneTimer = Timer.periodic(pruneEvery, (_) => pruneExpiredRecords());
+    }
+
     _started = true;
     _logger.info('ProtocolManager started');
   }
@@ -89,6 +105,9 @@ class ProtocolManager {
     _closed = true;
     
     _logger.info('Closing ProtocolManager...');
+
+    _pruneTimer?.cancel();
+    _pruneTimer = null;
     
     // Remove protocol handlers
     _removeProtocolHandlers();
@@ -268,7 +287,7 @@ class ProtocolManager {
 
       // Check local datastore for the record
       final keyString = String.fromCharCodes(message.key!);
-      final localRecord = _datastore[keyString];
+      final localRecord = _liveRecord(keyString);
 
       // Get closer peers from routing table (parallel peerstore lookups inside)
       final closestPeers = await _routing?.getNearestPeers(message.key!, _config?.bucketSize ?? 20) ?? [];
@@ -312,31 +331,30 @@ class ProtocolManager {
         throw DHTProtocolException('PUT_VALUE message missing key or record', peerId: sender);
       }
       
-      // Validate the record signature
       final record = message.record!;
       final keyString = String.fromCharCodes(message.key!);
-      
-      _logger.fine('Validating record signature for key: ${truncateForLog(keyString)}...');
-      
-      final isValid = await RecordSigner.validateRecordSignature(record);
-      if (!isValid) {
-        _logger.fine('Invalid record signature from $senderShortId for key: ${truncateForLog(keyString)}...');
-        throw DHTProtocolException('Invalid record signature', peerId: sender);
+
+      // The record must be for the key of the message (go-libp2p-kad-dht
+      // checks this too), and it must pass the validator of its namespace.
+      if (!_bytesEqual(record.key, message.key!)) {
+        throw DHTProtocolException('PUT_VALUE record key does not match message key', peerId: sender);
       }
-      
-      // Check if this is a newer record than what we have
-      final existingRecord = _datastore[keyString];
-      if (existingRecord != null) {
-        if (record.timeReceived <= existingRecord.timeReceived) {
-          _logger.fine('Rejecting older record from $senderShortId for key: ${truncateForLog(keyString)}...');
-          // Still return success - we just don't store the older record
-        } else {
-          _logger.fine('Accepting newer record from $senderShortId for key: ${truncateForLog(keyString)}...');
-          _datastore[keyString] = record;
-        }
+      try {
+        await validateRecord(keyString, record);
+      } catch (e) {
+        _logger.fine('Refusing record from $senderShortId for key ${truncateForLog(keyString)}...: $e');
+        rethrow;
+      }
+
+      // Keep the better of the stored and the received record, as the
+      // validator's select() decides (not a writer-chosen timestamp).
+      final existingRecord = _liveRecord(keyString);
+      if (existingRecord != null && !await _isBetterThanStored(keyString, existingRecord, record)) {
+        _logger.fine('Keeping stored record for key ${truncateForLog(keyString)}...: '
+            'the record from $senderShortId is not better');
       } else {
-        _logger.fine('Storing new record from $senderShortId for key: ${truncateForLog(keyString)}...');
-        _datastore[keyString] = record;
+        _logger.fine('Storing record from $senderShortId for key ${truncateForLog(keyString)}...');
+        _store(keyString, record);
       }
       
       // Create response
@@ -479,14 +497,168 @@ class ProtocolManager {
     return Message(type: MessageType.ping);
   }
   
+  // Record validation and selection
+
+  Duration get _maxRecordAge =>
+      _config?.maxRecordAge ?? AminoConstants.defaultMaxRecordAge;
+
+  bool get _allowUnvalidatedRecords => _config?.allowUnvalidatedRecords ?? false;
+
+  /// Checks a value record for [key].
+  ///
+  /// - The record's key must be [key].
+  /// - If the record carries an author or a signature, the signature must be
+  ///   valid.
+  /// - If the key's namespace has a validator, the validator must accept the
+  ///   value.
+  /// - If it has none, the record is refused, unless
+  ///   [DHTConfigV2.allowUnvalidatedRecords] is set (or [requireValidator]
+  ///   is false); then the record must be signed by its author.
+  ///
+  /// Throws a [DHTProtocolException] when the record is not valid.
+  Future<void> validateRecord(String key, Record record, {bool requireValidator = true}) async {
+    if (!_bytesEqual(record.key, key.codeUnits)) {
+      throw DHTProtocolException('Record key does not match key ${truncateForLog(key)}...');
+    }
+
+    final signed = record.signature.isNotEmpty || record.author.isNotEmpty;
+    if (signed && !await RecordSigner.validateRecordSignature(record)) {
+      throw DHTProtocolException('Invalid record signature');
+    }
+
+    final validator = _validator?.validatorByKey(key);
+    if (validator != null) {
+      try {
+        await validator.validate(key, record.value);
+      } catch (e) {
+        throw DHTProtocolException('Record refused by the namespace validator: $e', cause: e);
+      }
+      return;
+    }
+
+    if (requireValidator && !_allowUnvalidatedRecords) {
+      throw DHTProtocolException(
+          'No validator for the namespace of key ${truncateForLog(key)}... '
+          '(register one, or set allowUnvalidatedRecords)');
+    }
+    if (!signed) {
+      throw DHTProtocolException('A record without a namespace validator must be signed by its author');
+    }
+  }
+
+  /// Returns the index of the best record in [records] for [key].
+  ///
+  /// With a namespace validator, its `select()` decides. Without one (see
+  /// [DHTConfigV2.allowUnvalidatedRecords]), the author with the most
+  /// records wins, ties going to the author of the earliest record in the
+  /// list (callers put the local record first), and then the newest record
+  /// of that author wins.
+  Future<int> selectRecord(String key, List<Record> records) async {
+    if (records.isEmpty) {
+      throw ArgumentError('selectRecord needs at least one record');
+    }
+    if (records.length == 1) return 0;
+
+    final validator = _validator?.validatorByKey(key);
+    if (validator != null) {
+      return await validator.select(key, records.map((r) => r.value).toList());
+    }
+
+    final counts = <String, int>{};
+    final firstIndex = <String, int>{};
+    for (var i = 0; i < records.length; i++) {
+      final author = String.fromCharCodes(records[i].author);
+      counts[author] = (counts[author] ?? 0) + 1;
+      firstIndex.putIfAbsent(author, () => i);
+    }
+    String? bestAuthor;
+    for (final author in counts.keys) {
+      if (bestAuthor == null ||
+          counts[author]! > counts[bestAuthor]! ||
+          (counts[author] == counts[bestAuthor] && firstIndex[author]! < firstIndex[bestAuthor]!)) {
+        bestAuthor = author;
+      }
+    }
+    var best = -1;
+    for (var i = 0; i < records.length; i++) {
+      if (String.fromCharCodes(records[i].author) != bestAuthor) continue;
+      if (best < 0 || records[i].timeReceived > records[best].timeReceived) best = i;
+    }
+    return best;
+  }
+
+  /// Whether [incoming] should replace [stored] for [key].
+  Future<bool> _isBetterThanStored(String key, Record stored, Record incoming) async {
+    final validator = _validator?.validatorByKey(key);
+    if (validator != null) {
+      // As go-libp2p-kad-dht: the received record goes first, and it is
+      // kept unless select() prefers the stored one.
+      try {
+        final i = await validator.select(key, [incoming.value, stored.value]);
+        return i == 0;
+      } catch (e) {
+        _logger.fine('select() failed for key ${truncateForLog(key)}...: $e');
+        return false;
+      }
+    }
+    // No validator: only the author of the stored record can replace it,
+    // and only with a newer record.
+    if (!_bytesEqual(stored.author, incoming.author)) return false;
+    return incoming.timeReceived > stored.timeReceived;
+  }
+
+  /// Returns the stored record for [key], or null when there is none or it
+  /// is older than the maximum record age (it is then removed).
+  Record? _liveRecord(String key) {
+    final entry = _datastore[key];
+    if (entry == null) return null;
+    if (_isExpired(entry)) {
+      _datastore.remove(key);
+      return null;
+    }
+    return entry.record;
+  }
+
+  bool _isExpired(_StoredRecord entry) =>
+      DateTime.now().difference(entry.storedAt) > _maxRecordAge;
+
+  void _store(String key, Record record) {
+    _datastore[key] = _StoredRecord(record, DateTime.now());
+  }
+
+  /// Removes the records that are older than the maximum record age
+  /// ([DHTConfigV2.maxRecordAge], default 36 hours). Returns how many were
+  /// removed. This runs periodically; reads also skip expired records.
+  int pruneExpiredRecords() {
+    final expired = _datastore.entries
+        .where((e) => _isExpired(e.value))
+        .map((e) => e.key)
+        .toList();
+    for (final key in expired) {
+      _datastore.remove(key);
+    }
+    if (expired.isNotEmpty) {
+      _logger.fine('Removed ${expired.length} expired record(s) from the datastore');
+    }
+    return expired.length;
+  }
+
+  static bool _bytesEqual(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
   // Public datastore interface methods
   
   /// Gets a record from the local datastore
   Future<Record?> getRecordFromDatastore(String key) async {
     _ensureStarted();
-    final record = _datastore[key];
+    final record = _liveRecord(key);
     if (record != null) {
-      _logger.fine('Retrieved record from datastore for key: ${key}...');
+      _logger.fine('Retrieved record from datastore for key: ${truncateForLog(key)}...');
       // Use existing metrics method
       _metrics?.recordQuerySuccess(Duration.zero);
     }
@@ -495,11 +667,18 @@ class ProtocolManager {
   
   /// Gets a record from the local datastore using byte key
   Future<Record?> getRecordFromDatastoreBytes(Uint8List keyBytes) async {
-    final keyString = utf8.decode(keyBytes);
-    return await getRecordFromDatastore(keyString);
+    // Keys are stored with one character per byte (as PUT_VALUE and
+    // putValue build them), not UTF-8 decoded.
+    return await getRecordFromDatastore(String.fromCharCodes(keyBytes));
   }
   
   /// Puts a record into the local datastore
+  ///
+  /// This is a local write: the record's signature (if any) and the
+  /// validator of the key's namespace (if any) are checked, but a key
+  /// without a validator is not refused. A stored record is replaced only if
+  /// the new record is better (see [selectRecord]); without a validator,
+  /// only a newer record of the same author replaces it.
   Future<void> putRecordToDatastore(String key, Record record) async {
     _ensureStarted();
     
@@ -508,20 +687,25 @@ class ProtocolManager {
     if (!isValid) {
       throw DHTProtocolException('Cannot store record with invalid signature');
     }
-    
-    // Check if this is a newer record than what we have
-    final existingRecord = _datastore[key];
-    if (existingRecord != null) {
-      if (record.timeReceived <= existingRecord.timeReceived) {
-        _logger.fine('Rejecting older record for key: ${key}...');
-        return; // Don't store older records
+    final validator = _validator?.validatorByKey(key);
+    if (validator != null) {
+      try {
+        await validator.validate(key, record.value);
+      } catch (e) {
+        throw DHTProtocolException('Record refused by the namespace validator: $e', cause: e);
       }
     }
     
-    _datastore[key] = record;
+    final existingRecord = _liveRecord(key);
+    if (existingRecord != null && !await _isBetterThanStored(key, existingRecord, record)) {
+      _logger.fine('Keeping stored record for key: ${truncateForLog(key)}...');
+      return;
+    }
+    
+    _store(key, record);
     // Use existing metrics method
     _metrics?.recordQuerySuccess(Duration.zero);
-    _logger.fine('Stored record in datastore for key: ${key}...');
+    _logger.fine('Stored record in datastore for key: ${truncateForLog(key)}...');
   }
   
   /// Puts a record into the local datastore using dynamic record
@@ -530,21 +714,19 @@ class ProtocolManager {
       throw DHTProtocolException('Invalid record type: expected Record, got ${record.runtimeType}');
     }
     
-    // Extract key from record - this assumes the record has a key field
-    // In a real implementation, you'd need to determine the key from the record
-    final keyString = String.fromCharCodes(record.key ?? Uint8List(0));
+    final keyString = String.fromCharCodes(record.key);
     if (keyString.isEmpty) {
       throw DHTProtocolException('Record missing key field');
     }
     
-    await putRecordToDatastore(keyString, record as Record);
+    await putRecordToDatastore(keyString, record);
   }
   
   /// Checks if a record exists in the local datastore
   Future<bool> hasRecordInDatastore(String key) async {
     _ensureStarted();
-    final hasRecord = _datastore.containsKey(key);
-    _logger.fine('Datastore contains key ${key}...: $hasRecord');
+    final hasRecord = _liveRecord(key) != null;
+    _logger.fine('Datastore contains key ${truncateForLog(key)}...: $hasRecord');
     return hasRecord;
   }
   
@@ -555,16 +737,17 @@ class ProtocolManager {
     if (removed != null) {
       // Use existing metrics method
       _metrics?.recordQuerySuccess(Duration.zero);
-      _logger.fine('Removed record from datastore for key: ${key}...');
+      _logger.fine('Removed record from datastore for key: ${truncateForLog(key)}...');
     }
   }
   
   /// Gets all keys from the local datastore
   Stream<String> getKeysFromDatastore() async* {
     _ensureStarted();
+    pruneExpiredRecords();
     _logger.fine('Getting all keys from datastore (${_datastore.length} keys)');
     
-    for (final key in _datastore.keys) {
+    for (final key in _datastore.keys.toList()) {
       yield key;
     }
   }
@@ -572,6 +755,7 @@ class ProtocolManager {
   /// Gets the current size of the local datastore
   Future<int> getDatastoreSize() async {
     _ensureStarted();
+    pruneExpiredRecords();
     return _datastore.length;
   }
   
@@ -586,12 +770,14 @@ class ProtocolManager {
   /// Gets datastore statistics
   Future<Map<String, dynamic>> getDatastoreStatistics() async {
     _ensureStarted();
+    pruneExpiredRecords();
+    final records = _datastore.values.map((e) => e.record).toList();
     
     final stats = <String, dynamic>{
-      'total_records': _datastore.length,
-      'total_size_bytes': _datastore.values.fold<int>(0, (sum, record) => sum + record.value.length),
-      'oldest_record_timestamp': _datastore.values.isEmpty ? null : _datastore.values.map((r) => r.timeReceived).reduce((a, b) => a < b ? a : b),
-      'newest_record_timestamp': _datastore.values.isEmpty ? null : _datastore.values.map((r) => r.timeReceived).reduce((a, b) => a > b ? a : b),
+      'total_records': records.length,
+      'total_size_bytes': records.fold<int>(0, (sum, record) => sum + record.value.length),
+      'oldest_record_timestamp': records.isEmpty ? null : records.map((r) => r.timeReceived).reduce((a, b) => a < b ? a : b),
+      'newest_record_timestamp': records.isEmpty ? null : records.map((r) => r.timeReceived).reduce((a, b) => a > b ? a : b),
     };
     
     return stats;
@@ -605,4 +791,12 @@ class ProtocolManager {
   
   @override
   String toString() => 'ProtocolManager(${_host.id.toBase58().substring(0, 6)})';
-} 
+}
+
+/// A record in the local datastore and the time it was stored there.
+class _StoredRecord {
+  final Record record;
+  final DateTime storedAt;
+
+  _StoredRecord(this.record, this.storedAt);
+}

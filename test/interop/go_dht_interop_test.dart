@@ -297,6 +297,68 @@ void main() {
       print('PUT_VALUE/GET_VALUE /pk/ (Dart→Go) interop verified');
     }, timeout: Timeout(Duration(seconds: 60)));
   });
+
+  group('Kademlia DHT Go-libp2p Interop (IpfsDHTv2 server)', () {
+    BasicHost? dartHost;
+    IpfsDHTv2? dartDHT;
+
+    tearDown(() async {
+      await dartDHT?.close();
+      dartDHT = null;
+      await dartHost?.close();
+      dartHost = null;
+    });
+
+    Future<String> startDartServer() async {
+      final keyPair = await crypto_ed25519.generateEd25519KeyPair();
+      dartHost = await createHost(keyPair,
+          listenAddrs: [MultiAddr('/ip4/127.0.0.1/tcp/0')]);
+      dartDHT = IpfsDHTv2(
+        host: dartHost!,
+        providerStore: MemoryProviderStore(),
+        options: DHTOptions(mode: DHTMode.server, autoRefresh: false),
+      );
+      await dartDHT!.start();
+      final tcp = dartHost!.addrs.firstWhere(
+          (a) => a.toString().contains('127.0.0.1') && a.hasProtocol('tcp'));
+      return '$tcp/p2p/${dartHost!.id.toBase58()}';
+    }
+
+    test('Go stores an unsigned /pk/ record on a Dart v2 server', () async {
+      final target = await startDartServer();
+
+      // go-libp2p records carry no author or signature; the /pk/
+      // validator accepts them.
+      final goClient = GoProcessManager(binaryPath: goBinaryPath);
+      final putResult = await goClient.runDHTPutPkSelf(target);
+      print('Go put stdout: ${putResult.stdout}');
+      print('Go put stderr: ${putResult.stderr}');
+      expect(putResult.exitCode, 0, reason: 'Go PutValue /pk/ to Dart v2 should succeed');
+
+      final goClientPeerId = _parsePeerId(putResult.stdout.toString());
+      final stored = await dartDHT!.getRecordFromDatastore(pkKeyForPeer(goClientPeerId));
+      expect(stored, isNotNull, reason: 'Dart v2 should store the validated /pk/ record');
+    },
+        timeout: Timeout(Duration(seconds: 60)),
+        // The Go client reuses a DHT stream for its next request. The v2
+        // ProtocolManager answers one message and then neither reads the
+        // stream again nor closes it (the legacy IpfsDHT closes it), so the
+        // Go PUT_VALUE is never answered. Unskip when that is fixed.
+        skip: 'v2 ProtocolManager does not handle reused inbound streams');
+
+    test('Go reads a /pk/ record that a Dart v2 server stored', () async {
+      final target = await startDartServer();
+      final pubKey = await dartHost!.peerStore.keyBook.pubKey(dartHost!.id);
+      await dartDHT!.putValue(pkKeyForPeer(dartHost!.id), pubKey!.marshal());
+
+      final goClient = GoProcessManager(binaryPath: goBinaryPath);
+      final getResult = await goClient.runDHTGetPkPeer(target, dartHost!.id.toBase58());
+      print('Go get-value stdout: ${getResult.stdout}');
+      print('Go get-value stderr: ${getResult.stderr}');
+      expect(getResult.exitCode, 0);
+      expect(getResult.stdout.toString(), contains('Get successful'));
+    }, timeout: Timeout(Duration(seconds: 60)));
+  });
 }
 
 /// Parses a PeerId from Go process output containing "PeerID: <base58>"

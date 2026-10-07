@@ -196,6 +196,8 @@ Future<void> _networkDatastoreExample() async {
         mode: DHTMode.server,
         bucketSize: 20,
         resiliency: 3,
+        // 'network-test-key' has no namespace validator.
+        allowUnvalidatedRecords: true,
       ),
     );
     

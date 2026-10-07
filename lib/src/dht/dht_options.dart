@@ -81,6 +81,25 @@ class DHTOptions {
   /// Whether to filter localhost addresses from FIND_NODE responses
   final bool filterLocalhostInResponses;
 
+  /// How long a value record stays in the local datastore after it was
+  /// stored (IpfsDHTv2). Expired records are removed. Default 36 hours, as
+  /// go-libp2p-kad-dht's MaxRecordAge.
+  final Duration maxRecordAge;
+
+  /// Whether IpfsDHTv2 accepts value records whose key has no namespace
+  /// validator (for example `my-key` or `/myapp/x` when no `myapp`
+  /// validator is registered).
+  ///
+  /// The default, `false`, follows go-libp2p-kad-dht: such records are
+  /// refused by `putValue`, by the `PUT_VALUE` handler and in `GET_VALUE`
+  /// answers. When `true`, such a record is accepted if it carries a valid
+  /// signature of its author. A stored record is then replaced only by a
+  /// newer record of the same author, so one author cannot overwrite
+  /// another author's record on a node. This is weaker than a validator:
+  /// the first author to store a key on a node keeps it there until the
+  /// record expires. Prefer registering a validator for your namespace.
+  final bool allowUnvalidatedRecords;
+
   /// Creates new DHT options
   const DHTOptions({
     this.mode = DHTMode.auto,
@@ -96,6 +115,8 @@ class DHTOptions {
     this.retryMaxBackoff = const Duration(seconds: 30),
     this.retryBackoffFactor = 2.0,
     this.filterLocalhostInResponses = true,
+    this.maxRecordAge = AminoConstants.defaultMaxRecordAge,
+    this.allowUnvalidatedRecords = false,
   });
 }
 
