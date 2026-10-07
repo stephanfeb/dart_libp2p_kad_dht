@@ -24,7 +24,13 @@ abstract class MessageSenderWithDisconnect implements net.MessageSender {
 /// Mode options for the DHT
 enum DHTMode {
   /// ModeAuto utilizes network events to dynamically switch the DHT
-  /// between Client and Server modes based on network conditions
+  /// between Client and Server modes based on network conditions.
+  ///
+  /// IpfsDHTv2 follows `EvtLocalReachabilityChanged` on the host event bus
+  /// (emitted by AutoNAT, or by the host's `forceReachability` option): it
+  /// serves DHT queries while reachability is public, and is a client while
+  /// it is private or unknown, as in go-libp2p-kad-dht. It starts as a
+  /// client.
   auto,
 
   /// ModeClient operates the DHT as a client only — it can initiate queries
@@ -35,7 +41,9 @@ enum DHTMode {
   /// ModeServer operates the DHT as a server, it can both send and respond to queries
   server,
 
-  /// ModeAutoServer operates in the same way as ModeAuto, but acts as a server when reachability is unknown
+  /// ModeAutoServer operates in the same way as ModeAuto, but acts as a server when reachability is unknown.
+  /// IpfsDHTv2 starts as a server and is a client only while reachability
+  /// is private.
   autoServer,
 }
 

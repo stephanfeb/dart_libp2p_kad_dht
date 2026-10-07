@@ -102,7 +102,12 @@ The DHT operates in three modes:
 
 - **Client Mode**: Can query but doesn't respond to requests (mobile-friendly)
 - **Server Mode**: Full participant, handles incoming requests
-- **Auto Mode**: Automatically switches based on network conditions
+- **Auto Mode**: Follows the host's reachability (`EvtLocalReachabilityChanged`,
+  from AutoNAT or the `forceReachability` host option). `DHTMode.auto`
+  serves while reachability is public and is a client while it is private or
+  unknown; it starts as a client. `DHTMode.autoServer` starts as a server and
+  is a client only while reachability is private. `IpfsDHTv2.isServer` tells
+  the current state. Identify tells connected peers about each change.
 
 ### Routing Table
 

@@ -109,23 +109,49 @@ class ProtocolManager {
     _pruneTimer?.cancel();
     _pruneTimer = null;
     
-    // Remove protocol handlers
-    _removeProtocolHandlers();
+    // The stream handler stays registered on close, as before: removing it
+    // makes Identify push a protocol update to peers while the host may be
+    // shutting down. Inbound requests after close fail with
+    // DHTClosedException.
     
     _logger.info('ProtocolManager closed');
   }
   
+  /// Whether the `/ipfs/kad/1.0.0` stream handler is registered, that is,
+  /// whether this node answers DHT queries (server mode).
+  bool get isServing => _serving;
+  bool _serving = false;
+
+  /// Registers the DHT stream handler (server mode). The host then
+  /// advertises the protocol, and Identify pushes the change to connected
+  /// peers. Does nothing if the handler is registered already.
+  void enableServerMode() {
+    if (_closed || _serving) return;
+    _setupProtocolHandlers();
+  }
+
+  /// Removes the DHT stream handler (client mode), as go-libp2p-kad-dht does
+  /// when it moves to client mode. Identify pushes the change to connected
+  /// peers, which then remove this node from their routing tables. Does
+  /// nothing if the handler is not registered.
+  void disableServerMode() {
+    if (!_serving) return;
+    _removeProtocolHandlers();
+  }
+
   /// Sets up protocol handlers for incoming messages
   void _setupProtocolHandlers() {
     _logger.info('Setting up protocol handlers for ${AminoConstants.protocolID}');
     _host.setStreamHandler(AminoConstants.protocolID, _handleIncomingStream);
+    _serving = true;
   }
   
   /// Removes protocol handlers
   void _removeProtocolHandlers() {
+    if (!_serving) return;
     _logger.info('Removing protocol handlers');
-    // Note: Host interface might not have removeStreamHandler method
-    // This is typically handled by the host's cleanup during shutdown
+    _host.removeStreamHandler(AminoConstants.protocolID);
+    _serving = false;
   }
   
   /// Handles incoming protocol streams

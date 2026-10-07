@@ -31,7 +31,7 @@ A comprehensive Dart implementation of the libp2p Kademlia Distributed Hash Tabl
 ### Network Modes
 - **Client Mode**: Lightweight mode for mobile and resource-constrained devices
 - **Server Mode**: Full participant mode for infrastructure and bootstrap nodes
-- **Auto Mode**: Automatically switches between client/server based on network conditions
+- **Auto Mode**: Switches between client and server with the host's reachability: a server while AutoNAT (or `forceReachability`) reports public reachability, a client while it is private or unknown
 
 ### Advanced Features
 - **Bootstrap Integration**: Easy connection to existing libp2p networks with configurable bootstrap peers
@@ -137,6 +137,16 @@ await dht.start();       // Too late — Go already marked us "peer stopped dht"
 ```
 
 This applies to any protocol handler that must be advertised via Identify — always register handlers before `host.start()`.
+
+In `DHTMode.auto` (the default), `IpfsDHTv2` starts as a client and registers
+the `/ipfs/kad/1.0.0` handler only when the host reports public reachability
+(`EvtLocalReachabilityChanged`, from AutoNAT or the `forceReachability` host
+option). It removes the handler again when reachability becomes private or
+unknown. Identify pushes each change to connected peers, which add the node
+to or remove it from their routing tables. `DHTMode.autoServer` starts as a
+server and is a client only while reachability is private. `dht.isServer`
+tells whether the node serves now. Start the DHT before the host, as above,
+so that the DHT sees the first reachability event.
 
 ### Value Records
 

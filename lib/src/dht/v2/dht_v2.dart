@@ -3,6 +3,9 @@ import 'dart:typed_data';
 
 import 'package:dcid/dcid.dart';
 import 'package:dart_libp2p/core/discovery.dart';
+import 'package:dart_libp2p/core/event/bus.dart';
+import 'package:dart_libp2p/core/event/reachability.dart';
+import 'package:dart_libp2p/core/network/network.dart' show Reachability;
 import 'package:dart_libp2p/core/host/host.dart';
 import 'package:dart_libp2p/core/peer/addr_info.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
@@ -86,6 +89,10 @@ class IpfsDHTv2 implements IpfsDHT {
   bool _started = false;
   bool _closed = false;
   final Completer<void> _startCompleter = Completer<void>();
+
+  // Reachability subscription (auto and autoServer modes)
+  Subscription? _reachabilitySubscription;
+  StreamSubscription? _reachabilityListener;
   
   /// Sets the metrics observer for DHT operations
   set metricsObserver(DHTMetricsObserver? observer) {
@@ -199,9 +206,16 @@ class IpfsDHTv2 implements IpfsDHT {
       await _metrics.start();
       await _network.start();
       await _routing.start();
+      // server: always serve. client: never. auto: start as a client
+      // (reachability unknown) and serve while reachability is public.
+      // autoServer: start as a server and stop serving while reachability
+      // is private.
       await _protocol.start(
         serverMode: _config.mode == DHTMode.server || _config.mode == DHTMode.autoServer,
       );
+      if (_config.mode == DHTMode.auto || _config.mode == DHTMode.autoServer) {
+        _subscribeToReachability();
+      }
       await _queries.start();
       
       if (_refreshManager != null) {
@@ -257,6 +271,15 @@ class IpfsDHTv2 implements IpfsDHT {
   }
   
   Future<void> _cleanup() async {
+    await _reachabilityListener?.cancel();
+    _reachabilityListener = null;
+    try {
+      await _reachabilitySubscription?.close();
+    } catch (e) {
+      _logger.fine('Error closing reachability subscription: $e');
+    }
+    _reachabilitySubscription = null;
+
     // Close components in reverse dependency order
     await _queries.close();
     await _protocol.close();
@@ -269,6 +292,41 @@ class IpfsDHTv2 implements IpfsDHT {
     }
   }
   
+  /// Whether this node answers DHT queries now (its `/ipfs/kad/1.0.0`
+  /// handler is registered). In [DHTMode.auto] this follows the host's
+  /// reachability; see [DHTOptions.mode].
+  bool get isServer => _protocol.isServing;
+
+  void _subscribeToReachability() {
+    final subscription = _host.eventBus.subscribe(EvtLocalReachabilityChanged);
+    _reachabilitySubscription = subscription;
+    _reachabilityListener = subscription.stream.listen((event) {
+      if (event is EvtLocalReachabilityChanged) {
+        _onReachabilityChanged(event.reachability);
+      }
+    }, onError: (Object e) {
+      _logger.fine('Reachability subscription error: $e');
+    });
+  }
+
+  /// Switches between client and server mode, as go-libp2p-kad-dht does in
+  /// ModeAuto (server only when public) and ModeAutoServer (client only
+  /// when private).
+  void _onReachabilityChanged(Reachability reachability) {
+    if (_closed) return;
+    final serve = _config.mode == DHTMode.autoServer
+        ? reachability != Reachability.private
+        : reachability == Reachability.public;
+    if (serve == _protocol.isServing) return;
+    _logger.info('Reachability is ${reachability.name}: switching to '
+        '${serve ? 'server' : 'client'} mode');
+    if (serve) {
+      _protocol.enableServerMode();
+    } else {
+      _protocol.disableServerMode();
+    }
+  }
+
   // Query operations - delegated to QueryManager
   
   @override
