@@ -46,6 +46,13 @@ class ProviderManager implements ProviderStore {
         _store = store,
         _options = options ?? const ProviderManagerOptions(),
         _cache = LruCache<String, ProviderSet>(cacheSize ?? 256) {
+    // The local peer's own provider records are not subject to the caps of
+    // a MemoryProviderStore.
+    final s = store;
+    if (s is MemoryProviderStore) {
+      s.localPeerId ??= localPeerId;
+    }
+
     // Start periodic cleanup
     _cleanupTimer = Timer.periodic(
       _options.cleanupInterval,
@@ -62,15 +69,11 @@ class ProviderManager implements ProviderStore {
     // Store the provider's addresses in the peer store
     _peerStore.addOrUpdatePeer(provider.id, addrs: provider.addrs );
 
-    // Update the cache if the key is cached
-    final keyStr = _keyToString(key);
-    final cachedSet = _cache[keyStr];
-    if (cachedSet != null) {
-      cachedSet.addProvider(provider.id);
-    }
-
-    // Store in the underlying provider store
+    // Store in the underlying provider store. The store can refuse the
+    // record (see the caps in ProviderManagerOptions), so drop the cached set
+    // for this key and let the next read load it from the store.
     await _store.addProvider(key, provider);
+    _cache.remove(_keyToString(key));
   }
 
   @override

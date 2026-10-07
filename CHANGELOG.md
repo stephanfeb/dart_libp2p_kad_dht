@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Fixed
+- **Any peer could register any peer as a provider, without limit.** The `ADD_PROVIDER` handler (v2 `ProtocolManager` and the legacy `DHTHandlers`) stored every entry in the message, whatever peer sent it, and `MemoryProviderStore` appended each one to a list with no limit and no duplicate check. Now:
+  - only the entry for the sending peer is stored, with its addresses; entries for other peers are ignored and logged at `FINE` (go-libp2p-kad-dht does the same);
+  - `MemoryProviderStore` keeps one record per (key, provider). A repeated announcement refreshes the expiry and replaces the addresses;
+  - `MemoryProviderStore` has limits, set through new `ProviderManagerOptions` fields: `maxProvidersPerKey` (default 100), `maxKeysPerProvider` (default 1000) and `maxProviderRecords` (default 100000). When a limit is reached, expired records are removed first; if it is still reached, the new record is refused and the stored records stay. Refusing, and not evicting the oldest record, stops a peer with many peer IDs from pushing honest providers out of a key. The local peer's own records are not limited: `MemoryProviderStore.localPeerId` (new, optional constructor argument) marks them, and the DHT sets it when it is not set.
+  - `ProviderManager.addProvider` now clears its cached set for the key instead of adding to it, because the store can refuse a record.
 - **Short keys crashed value operations.** Log lines in `putValue`, `getValue`, `searchValue` and the datastore helpers printed `key.substring(0, 10)`, which throws a `RangeError` for a key shorter than 10 characters. `putValue('my-key', ...)` threw, and `getValue('my-key')` caught the error and returned `null`. A helper now shortens keys, CIDs and lookup targets for logs without throwing. The IPv6 diversity-group label had the same fault for short addresses such as `::1`.
 
 ## [1.4.1] - 2026-10-04

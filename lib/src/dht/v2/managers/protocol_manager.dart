@@ -419,26 +419,30 @@ class ProtocolManager {
         throw DHTProtocolException('ADD_PROVIDER message missing key or providers', peerId: sender);
       }
       
-      // Store providers in local provider store
+      // Store the sender's own provider record only. As in go-libp2p-kad-dht,
+      // a peer can announce itself as a provider, but not other peers:
+      // entries whose ID is not the sender's are ignored.
       final cid = CID.fromBytes(message.key!);
       var storedCount = 0;
-      
+
       for (final providerPeer in message.providerPeers) {
         try {
           final providerId = PeerId.fromBytes(providerPeer.id);
+          if (providerId != sender) {
+            _logger.fine('Ignoring provider entry for ${providerId.toBase58().substring(0, 6)} '
+                'from $senderShortId: a peer can only add itself as a provider');
+            continue;
+          }
           final providerAddrs = providerPeer.addrs.map((addr) => MultiAddr.fromBytes(addr)).toList();
-          final providerInfo = AddrInfo(providerId, providerAddrs);
-          
-          await _providerStore?.addProvider(cid, providerInfo);
+          await _providerStore?.addProvider(cid, AddrInfo(providerId, providerAddrs));
           storedCount++;
-          
-          _logger.fine('Stored provider ${providerId.toBase58().substring(0, 6)} for key');
+          _logger.fine('Stored provider record of $senderShortId for key');
         } catch (e) {
-          _logger.warning('Failed to store provider: $e');
+          _logger.fine('Failed to store provider record of $senderShortId: $e');
         }
       }
-      
-      _logger.fine('Stored $storedCount/${message.providerPeers.length} providers');
+
+      _logger.fine('Stored $storedCount/${message.providerPeers.length} provider entries');
 
       // Create response
       final response = Message(

@@ -366,18 +366,17 @@ class DHTHandlers {
         for (final p in message.providerPeers) {
           final providerPeerId = PeerId.fromBytes(p.id);
           final providerShortId = providerPeerId.toBase58().substring(0,6);
+          // A peer can add itself as a provider, not other peers
+          // (go-libp2p-kad-dht ignores such entries too).
+          if (providerPeerId != peer) {
+            _log.fine('$_logPrefix handleAddProvider: Ignoring provider entry for $providerShortId from $peerShortId: a peer can only add itself.');
+            continue;
+          }
           final providerAddrs = p.addrs.map((addr) => MultiAddr.fromBytes(addr)).toList();
-          _log.finer('$_logPrefix handleAddProvider: Adding provider $providerShortId (addrs: $providerAddrs) for key $keyString, as instructed by $peerShortId.');
+          _log.finer('$_logPrefix handleAddProvider: Adding provider $providerShortId (addrs: $providerAddrs) for key $keyString.');
 
           final providerPeerAddrInfo = AddrInfo(providerPeerId, providerAddrs);
           await dht.addProvider(message.key!, providerPeerAddrInfo);
-
-          // Also try to add the actual provider peer to our routing table, not just the sender of ADD_PROVIDER
-          // This is important if the provider peer itself didn't send the ADD_PROVIDER message.
-          if (providerPeerId != peer) { // Avoid double-adding if sender is the provider
-            _log.finer('$_logPrefix handleAddProvider: Also attempting to add actual provider $providerShortId to RT.');
-            await _tryAddSenderToRT(providerPeerId, 'handleAddProvider (actual provider)');
-          }
         }
         _log.info('$_logPrefix handleAddProvider: Successfully processed ADD_PROVIDER from $peerShortId for key $keyString.');
         // Defer sender RT insertion (non-blocking)

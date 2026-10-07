@@ -525,9 +525,59 @@ void main() {
         );
         
         final response = await protocolManager.handleAddProvider(remotePeerId, message);
-        
+
         expect(response.type, equals(MessageType.addProvider));
         expect(response.key, equals(keyBytes));
+      });
+
+      test('ADD_PROVIDER stores only the entry of the sending peer', () async {
+        final otherPeerId = await PeerId.random();
+        final cid = CID.create(CID.V1, 'sha2-256', otherPeerId.toBytes());
+        final senderAddr = MultiAddr('/ip4/127.0.0.1/tcp/4001');
+
+        final message = Message(
+          type: MessageType.addProvider,
+          key: cid.toBytes(),
+          providerPeers: [
+            // Another peer: must be ignored.
+            Peer(
+              id: otherPeerId.toBytes(),
+              addrs: [MultiAddr('/ip4/10.0.0.1/tcp/4001').toBytes()],
+              connection: ConnectionType.connected,
+            ),
+            // The sender itself: must be stored with its addresses.
+            Peer(
+              id: remotePeerId.toBytes(),
+              addrs: [senderAddr.toBytes()],
+              connection: ConnectionType.connected,
+            ),
+          ],
+        );
+
+        await protocolManager.handleAddProvider(remotePeerId, message);
+
+        final stored = await mockProviderStore.getProviders(cid);
+        expect(stored.map((p) => p.id).toList(), equals([remotePeerId]));
+        expect(stored.single.addrs.map((a) => a.toString()), equals([senderAddr.toString()]));
+      });
+
+      test('ADD_PROVIDER that names only other peers stores nothing', () async {
+        final otherPeerId = await PeerId.random();
+        final cid = CID.create(CID.V1, 'sha2-256', otherPeerId.toBytes());
+        final message = Message(
+          type: MessageType.addProvider,
+          key: cid.toBytes(),
+          providerPeers: [
+            Peer(
+              id: otherPeerId.toBytes(),
+              addrs: [MultiAddr('/ip4/10.0.0.1/tcp/4001').toBytes()],
+              connection: ConnectionType.connected,
+            ),
+          ],
+        );
+
+        await protocolManager.handleAddProvider(remotePeerId, message);
+        expect(await mockProviderStore.getProviders(cid), isEmpty);
       });
       
       test('should handle ADD_PROVIDER message without key', () async {

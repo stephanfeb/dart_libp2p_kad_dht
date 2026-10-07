@@ -125,6 +125,23 @@ await dht.provide(CID.fromString('QmExample...'), true);
 final providers = dht.findProvidersAsync(CID.fromString('QmExample...'), 5);
 ```
 
+A DHT server stores the provider records that other peers send it. It
+accepts a record only for the peer that sends the `ADD_PROVIDER` message;
+entries that name other peers are ignored, as in go-libp2p-kad-dht.
+`MemoryProviderStore` keeps one record for each (key, provider) pair (a
+second announcement refreshes the expiry and the addresses) and limits its
+size. When a limit is reached, expired records are removed first; if the
+limit is still reached, the new record is refused and the stored records
+stay. The local peer's own records are not limited.
+
+```dart
+final providerStore = MemoryProviderStore(const ProviderManagerOptions(
+  maxProvidersPerKey: 100,    // providers kept for one key (default 100)
+  maxKeysPerProvider: 1000,   // keys one remote peer can provide (default 1000)
+  maxProviderRecords: 100000, // records for all keys together (default 100000)
+));
+```
+
 ## API Reference
 
 ### IpfsDHT Class
@@ -1131,11 +1148,9 @@ class DHTMemoryManager {
   }
   
   Future<void> _performCleanup() async {
-    // Clean up expired provider records
-    if (providerStore is MemoryProviderStore) {
-      await (providerStore as MemoryProviderStore).cleanup();
-    }
-    
+    // MemoryProviderStore removes expired provider records itself, when it
+    // reads a key and when one of its limits is reached.
+
     // Check routing table size and trim if necessary
     final tableSize = await dht.routingTable.size();
     if (tableSize > 1000) { // Adjust threshold as needed
