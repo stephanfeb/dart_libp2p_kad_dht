@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [1.5.0] - 2026-10-08
 
 ### Changed (behaviour)
 - **IpfsDHTv2 value records are checked by their namespace validator; keys without one are refused by default.** This follows go-libp2p-kad-dht. `putValue('my-key', ...)` now throws a `DHTProtocolException`, because `my-key` has no namespace. Register a validator for your namespace (`IpfsDHTv2(validator: ...)`), or set the new `DHTOptions.allowUnvalidatedRecords: true` (see Security below). The default validator now has `pk` and `ipns` only: the `v` entry (`DHTRecordValidator`, which expected a JSON-encoded record as the value, and was never called) was removed. The legacy `IpfsDHT` now follows the same rules (see the next entry).
