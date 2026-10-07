@@ -90,13 +90,13 @@ class DHTOptions {
   final bool filterLocalhostInResponses;
 
   /// How long a value record stays in the local datastore after it was
-  /// stored (IpfsDHTv2). Expired records are removed. Default 36 hours, as
-  /// go-libp2p-kad-dht's MaxRecordAge.
+  /// stored (IpfsDHTv2 and IpfsDHT). Expired records are removed. Default
+  /// 36 hours, as go-libp2p-kad-dht's MaxRecordAge.
   final Duration maxRecordAge;
 
-  /// Whether IpfsDHTv2 accepts value records whose key has no namespace
-  /// validator (for example `my-key` or `/myapp/x` when no `myapp`
-  /// validator is registered).
+  /// Whether the DHT (IpfsDHTv2 and IpfsDHT) accepts value records whose
+  /// key has no namespace validator (for example `my-key` or `/myapp/x`
+  /// when no `myapp` validator is registered).
   ///
   /// The default, `false`, follows go-libp2p-kad-dht: such records are
   /// refused by `putValue`, by the `PUT_VALUE` handler and in `GET_VALUE`

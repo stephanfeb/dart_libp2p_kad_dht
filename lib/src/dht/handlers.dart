@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert'; // Added for base64Encode, and for logging keys
-import 'dart:typed_data';
 import 'package:dcid/dcid.dart';
 import 'package:logging/logging.dart'; // Added for logging
 
@@ -10,7 +9,6 @@ import 'package:dart_libp2p/core/multiaddr.dart';
 
 import '../amino/defaults.dart';
 import '../pb/dht_message.dart';
-import '../pb/record.dart';
 import 'dht.dart';
 import 'dht_filters.dart';
 
@@ -258,28 +256,38 @@ class DHTHandlers {
         throw ArgumentError('PUT_VALUE message must have a record');
       }
 
-      final response = Message(
+      final record = message.record!;
+      // The record must be for the key of the message, and it must pass the
+      // validator of its namespace (go-libp2p-kad-dht checks both). A failure
+      // throws, and the stream is reset, as in go.
+      if (!_bytesEqual(record.key, message.key!)) {
+        _log.fine('$_logPrefix handlePutValue: Record key does not match message key from $peerShortId.');
+        throw ArgumentError('PUT_VALUE record key does not match message key');
+      }
+      if (!await dht.validateRecord(record)) {
+        _log.fine('$_logPrefix handlePutValue: Invalid record for key $keyString from $peerShortId.');
+        throw ArgumentError('Invalid record');
+      }
+      // Keeps the better of the stored and the received record, as the
+      // namespace validator's select() decides.
+      await dht.putRecordToDatastore(record);
+      _log.info('$_logPrefix handlePutValue: Processed record for key $keyString from $peerShortId.');
+
+      // The response echoes the request with its record, as go-libp2p-kad-dht
+      // does; its client checks that the value came back.
+      return Message(
         type: MessageType.putValue,
         key: message.key,
-        // Record is not part of response for PUT_VALUE typically
+        record: record,
       );
+    }
 
-      try {
-        final record = message.record!;
-        _log.fine('$_logPrefix handlePutValue: Validating record for key $keyString from $peerShortId. Record author: ${PeerId.fromBytes(record.author).toBase58().substring(0,6)}');
-        if (!await dht.validateRecord(record)) {
-          _log.fine('$_logPrefix handlePutValue: Invalid record for key $keyString from $peerShortId. Validation failed.');
-          throw ArgumentError('Invalid record');
-        }
-        _log.fine('$_logPrefix handlePutValue: Record for key $keyString from $peerShortId validated. Storing...');
-        await dht.putRecordToDatastore(record);
-        _log.info('$_logPrefix handlePutValue: Successfully stored record for key $keyString from $peerShortId.');
-        return response;
-      } catch (e, s) {
-        _log.fine('$_logPrefix handlePutValue: Error processing PUT_VALUE from $peerShortId for key $keyString: $e\n$s');
-        // Consider if an error response should be different or if this is okay (protocol might not specify error responses for PUT)
-        return response;
+    static bool _bytesEqual(List<int> a, List<int> b) {
+      if (a.length != b.length) return false;
+      for (var i = 0; i < a.length; i++) {
+        if (a[i] != b[i]) return false;
       }
+      return true;
     }
 
     /// Handles a GET_PROVIDERS message

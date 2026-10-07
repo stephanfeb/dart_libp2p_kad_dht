@@ -213,6 +213,13 @@ then replaces a stored record only with a newer record of the same author, so
 the first author to store a key on a node keeps it there until it expires.
 This is weaker than a validator; use it for trusted or test networks.
 
+The legacy `IpfsDHT` applies the same rules: the `PUT_VALUE` handler, records
+in `GET_VALUE` answers, `putValue` and `getValue` (which now also asks the
+network when it has a local record) all use the same validation, selection
+and expiry code as `IpfsDHTv2`. Its default validator also has only `pk` and
+`ipns`; the `v` namespace, which accepted any value, is gone. A `validator:`
+passed to `IpfsDHT` gets `pk` and `ipns` added when it has no entry for them.
+
 ### Advanced Configuration with Builder Pattern
 
 ```dart

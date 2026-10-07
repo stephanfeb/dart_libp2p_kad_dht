@@ -35,10 +35,11 @@ import 'package:dart_libp2p/p2p/multiaddr/protocol.dart'; // Added for Protocols
 
 // Direct imports for Validators
 // Validator might be needed if _recordValidator type is just Validator
-import 'package:dart_libp2p_kad_dht/src/record/generic_validator.dart';
 import 'package:dart_libp2p_kad_dht/src/record/ipns_validator.dart';
 import 'package:dart_libp2p_kad_dht/src/record/namespace_validator.dart';
 import 'package:dart_libp2p_kad_dht/src/record/pubkey.dart';
+import 'package:dart_libp2p_kad_dht/src/record/record_signer.dart';
+import 'package:dart_libp2p_kad_dht/src/record/value_record_store.dart';
 
 
 
@@ -146,8 +147,12 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
   Completer<void>? _backgroundRefreshCompleter;
 
 
-  /// Local datastore for key-value pairs
-  final Map<String, Record> _datastore = {};
+  /// Local datastore for value records: validation, selection and expiry,
+  /// with the same rules as IpfsDHTv2.
+  late final ValueRecordStore _records;
+
+  /// Removes expired value records periodically.
+  Timer? _pruneTimer;
 
   /// Creates a new DHT with the given options
   IpfsDHT({
@@ -175,11 +180,17 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
         _mode = options?.mode ?? DHTMode.auto,
         _options = options ?? const DHTOptions() {
     _handlers = DHTHandlers(this);
+    // The pk and ipns namespaces, as in go-libp2p-kad-dht. A validator the
+    // caller passes keeps its own pk and ipns entries. Keys in namespaces
+    // without a validator are refused unless allowUnvalidatedRecords is set.
     _recordValidator = validator ?? NamespacedValidator();
-    // Configure _recordValidator with specific validators
-    _recordValidator['pk'] = PublicKeyValidator(); // Namespace without slashes
-    _recordValidator['ipns'] = IpnsValidator(host.peerStore); // Namespace without slashes
-    _recordValidator['v'] = GenericValidator(); // Namespace without slashes
+    if (_recordValidator['pk'] == null) _recordValidator['pk'] = PublicKeyValidator();
+    if (_recordValidator['ipns'] == null) _recordValidator['ipns'] = IpnsValidator(host.peerStore);
+    _records = ValueRecordStore(
+      validator: _recordValidator,
+      maxRecordAge: _options.maxRecordAge,
+      allowUnvalidatedRecords: _options.allowUnvalidatedRecords,
+    );
     _nsEstimator = Estimator(
       localId: host.id,
       rt: _routingTable,
@@ -228,6 +239,12 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     if (_mode == DHTMode.server) {
       _log.info('$logPrefix Setting up protocol handlers for mode: $_mode');
       _setupProtocolHandlers();
+    }
+
+    // Remove expired value records periodically; reads also skip them.
+    final pruneEvery = _records.pruneInterval;
+    if (pruneEvery > Duration.zero) {
+      _pruneTimer = Timer.periodic(pruneEvery, (_) => _records.pruneExpired());
     }
 
     // If in auto mode, set up periodic checking to switch to server mode
@@ -387,6 +404,9 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
 
     _closed = true;
     _started = false;
+
+    _pruneTimer?.cancel();
+    _pruneTimer = null;
 
     // Cancel all async operations
     _backgroundRefreshCompleter?.complete();
@@ -589,32 +609,45 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     }
   }
 
-  /// Checks the local datastore for a value
+  /// Returns the local record for [key], or null when there is none or it
+  /// has expired ([DHTOptions.maxRecordAge]).
   Future<Record?> checkLocalDatastore(Uint8List key) async {
-    final Logger log = Logger('IpfsDHT.checkLocalDatastore');
-    final keyString = base64Encode(key);
-    final record = _datastore[keyString];
-    if (record != null) {
-      log.fine('[${_host.id.toBase58().substring(0,6)}] Found record for key "$keyString". Value: "${utf8.decode(record.value, allowMalformed: true)}" (Length: ${record.value.length})');
-    } else {
-      log.fine('[${_host.id.toBase58().substring(0,6)}] No record found for key "$keyString".');
-    }
+    // Keys are stored with one character per byte, as putValue builds them.
+    final record = _records.get(String.fromCharCodes(key));
+    _log.finer('[${truncateForLog(_host.id.toBase58(), 6)}] Local record for key '
+        '${truncateForLog(base64Encode(key))}...: ${record != null ? 'found' : 'none'}');
     return record;
   }
 
-  /// Validates a record
+  /// Checks [record] as a received `PUT_VALUE` record is checked: its
+  /// signature if it has one, and the validator of its key's namespace.
+  /// A key without a validator is refused unless
+  /// [DHTOptions.allowUnvalidatedRecords] is set.
   Future<bool> validateRecord(Record record) async {
-    // In a real implementation, this would validate the signature
-    // For now, just return true
-    return true;
+    try {
+      await _records.validateRecord(String.fromCharCodes(record.key), record);
+      return true;
+    } catch (e) {
+      _log.fine('Record validation failed: $e');
+      return false;
+    }
   }
 
-  /// Puts a record to the datastore
+  /// Puts a record into the local datastore.
+  ///
+  /// The record's signature (if it has one) and the validator of the key's
+  /// namespace (if there is one) are checked. A key without a validator is
+  /// not refused here, but its record must be signed (the `PUT_VALUE`
+  /// handler calls [validateRecord] first, which refuses such keys unless
+  /// [DHTOptions.allowUnvalidatedRecords] is set). A stored record is replaced only if the new record is better:
+  /// the namespace validator's `select()` decides, or, without a validator,
+  /// only a newer record of the same author replaces it. Throws when the
+  /// record is not valid.
   Future<void> putRecordToDatastore(Record record) async {
-    final Logger log = Logger('IpfsDHT.putRecordToDatastore');
-    final keyString = base64Encode(record.key);
-    log.fine('[${_host.id.toBase58().substring(0,6)}] Storing record for key "$keyString". Value: "${utf8.decode(record.value, allowMalformed: true)}" (Length: ${record.value.length}), Author: ${PeerId.fromBytes(record.author).toBase58()}');
-    _datastore[keyString] = record;
+    final key = String.fromCharCodes(record.key);
+    final stored = await _records.put(key, record, requireValidator: false);
+    _log.fine('[${truncateForLog(_host.id.toBase58(), 6)}] ${stored ? 'Stored' : 'Kept the stored'} record for key '
+        '${truncateForLog(base64Encode(record.key))}...');
   }
 
   /// Gets local providers for a key
@@ -1081,7 +1114,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       final stopCh = StreamController<void>();
 
       // Check if the value is stored locally
-      final localRecord = await checkLocalDatastore(keyBytes);
+      final localRecord = _records.get(key);
       if (localRecord != null) {
         valCh.add(ReceivedValue(
           val: localRecord.value,
@@ -1102,8 +1135,10 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
           // Send the message to the peer
           final response = await _sendMessage(peer, message);
 
-          // Check if the response contains the value
-          if (response.record != null) {
+          // Check if the response contains a record for this key; the
+          // namespace validator checks its value below.
+          if (response.record != null &&
+              ValueRecordStore.bytesEqual(response.record!.key, keyBytes)) {
             valCh.add(ReceivedValue(
               val: response.record!.value,
               from: peer,
@@ -1341,18 +1376,33 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     // Use codeUnits (not utf8.encode) to preserve raw binary bytes in keys
     // like /pk/<multihash-bytes> where the suffix is raw binary, not UTF-8 text.
     final keyBytes = Uint8List.fromList(key.codeUnits);
-    final record = Record(
-      key: keyBytes,
-      value: Uint8List.fromList(value),
-      timeReceived: DateTime.now().millisecondsSinceEpoch,
-      author: _host.id.toBytes(),
-      signature: Uint8List(0), // In a real implementation, this would be a signature
-    );
+    // Sign the record when the host's private key is known, as IpfsDHTv2
+    // does. A record in a namespace without a validator must be signed.
+    final privateKey = await _host.peerStore.keyBook.privKey(_host.id);
+    final record = privateKey != null
+        ? await RecordSigner.createSignedRecord(
+            key: key,
+            value: Uint8List.fromList(value),
+            privateKey: privateKey,
+            peerId: _host.id,
+          )
+        : Record(
+            key: keyBytes,
+            value: Uint8List.fromList(value),
+            timeReceived: DateTime.now().millisecondsSinceEpoch,
+            author: Uint8List(0),
+            signature: Uint8List(0),
+          );
+
+    // Refuse a record the network would refuse (DHTProtocolException).
+    await _records.validateRecord(key, record);
 
     // Store the record locally
-    putLogger.fine('[${_host.id.toBase58().substring(0,6)}] Storing record locally for key: $key...');
-    await putRecordToDatastore(record);
-    putLogger.info('[${_host.id.toBase58().substring(0,6)}] Record stored locally for key: $key. Datastore size: ${_datastore.length}');
+    final stored = await _records.put(key, record);
+    putLogger.info('[${truncateForLog(_host.id.toBase58(), 6)}] Record for key ${truncateForLog(key)}... '
+        '${stored ? 'stored locally' : 'not stored locally: the stored record is better'}');
+
+    if (options?.offline == true) return;
 
     // Find the closest peers to the key
     putLogger.fine('[${_host.id.toBase58().substring(0,6)}] Finding closest peers for key: $key...');
@@ -1408,18 +1458,21 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     // Convert the key to bytes
     final keyBytes = Uint8List.fromList(key.codeUnits);
 
-    // Check if the value is stored locally
-    final localRecord = await checkLocalDatastore(keyBytes);
+    // The local record goes first: it was checked when it was stored.
+    final candidates = <Record>[];
+    final localRecord = _records.get(key);
     if (localRecord != null) {
-      getValueLogger.info('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Found in local datastore. Returning value.');
-      return localRecord.value;
+      candidates.add(localRecord);
     }
-    getValueLogger.info('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Not found in local datastore. Proceeding with network lookup.');
+    if (options?.offline == true) {
+      return candidates.isEmpty ? null : localRecord!.value;
+    }
 
-    final controller = StreamController<Record>();
+    // Ask the closest peers too, as IpfsDHTv2 and go-libp2p-kad-dht do. Each
+    // record is checked as a PUT_VALUE record is (namespace validator, key,
+    // signature); invalid records are ignored.
+    var remoteCount = 0;
     LookupWithFollowupResult lookupResult;
-
-    getValueLogger.info('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": About to call runLookupWithFollowup.');
     try {
       lookupResult = await runLookupWithFollowup(
         target: keyBytes,
@@ -1429,9 +1482,16 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
             key: keyBytes,
           );
           final response = await _sendMessage(peer, message);
-          getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue.queryFn for key "$key" from peer ${peer.toBase58().substring(0,6)}: response.record is ${response.record != null ? "NOT null (value: ${utf8.decode(response.record!.value, allowMalformed: true)})" : "null"}. CloserPeers: ${response.closerPeers.length}');
-          if (response.record != null) {
-            if (!controller.isClosed) controller.add(response.record!);
+          final record = response.record;
+          if (record != null) {
+            try {
+              await _records.validateRecord(key, record);
+              candidates.add(record);
+              remoteCount++;
+            } catch (e) {
+              getValueLogger.fine('Ignoring record from ${truncateForLog(peer.toBase58(), 6)} '
+                  'for key ${truncateForLog(key)}...: $e');
+            }
           }
           return response.closerPeers.map((p) => AddrInfo(
             PeerId.fromBytes(p.id),
@@ -1439,76 +1499,32 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
           )).toList();
         },
         stopFn: (peerset) {
-          return peerset.getClosestInStates([PeerState.queried]).length >= _options.resiliency;
+          return remoteCount >= _options.resiliency ||
+              peerset.getClosestInStates([PeerState.queried]).length >= _options.resiliency;
         },
       );
     } catch (e, s) {
-      getValueLogger.severe('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": runLookupWithFollowup call FAILED directly: $e\n$s', e, s);
-      if (e is MaxRetriesExceededException) { // If runLookupWithFollowup itself somehow throws this
-        throw e;
+      getValueLogger.fine('getValue for key ${truncateForLog(key)}...: lookup failed: $e', e, s);
+      if (e is MaxRetriesExceededException) rethrow;
+      if (candidates.isNotEmpty) {
+        return candidates[await _records.selectRecord(key, candidates)].value;
       }
-      // For other catastrophic errors from runLookupWithFollowup, wrap and rethrow or handle as appropriate.
-      // For now, let's assume it means no value can be retrieved.
-      throw Exception('Lookup process for key "$key" failed catastrophically: $e');
-    } finally {
-        if (!controller.isClosed) {
-            getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Closing record controller in finally block after runLookupWithFollowup.');
-            controller.close();
-        }
-    }
-    
-    getValueLogger.info('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": runLookupWithFollowup completed. TerminationReason: ${lookupResult.terminationReason}, ErrorsInResult: ${lookupResult.errors.length}');
-    for (final err in lookupResult.errors) {
-        getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Error reported in lookupResult: $err');
+      throw Exception('Lookup process for key "${truncateForLog(key)}" failed catastrophically: $e');
     }
 
-    List<Record> receivedRecords = [];
-    await for (final record in controller.stream) {
-        receivedRecords.add(record);
-    }
-    getValueLogger.info('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Collected ${receivedRecords.length} records from controller stream.');
-
-    final maxRetriesError = lookupResult.errors.firstWhereOrNull((err) => err is MaxRetriesExceededException);
-
-    if (receivedRecords.isEmpty) {
+    if (candidates.isEmpty) {
+      final maxRetriesError = lookupResult.errors.firstWhereOrNull((err) => err is MaxRetriesExceededException);
       if (maxRetriesError != null) {
-        getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": No records received AND MaxRetriesExceededException found in lookup result. Rethrowing.');
         throw maxRetriesError;
       }
-      getValueLogger.info('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": No records received from network (after processing controller). Returning null.');
-      return null; 
-    }
-    
-    getValueLogger.info('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Received ${receivedRecords.length} records from network. Proceeding with validation.');
-
-    List<Uint8List> validRecordValues = [];
-    for (final record in receivedRecords) {
-        try {
-            getValueLogger.finer('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Validating record (${record.value.length} bytes)');
-            _recordValidator.validate(key, record.value); 
-            getValueLogger.finer('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Record PASSED validation.');
-            validRecordValues.add(record.value);
-        } catch (e) {
-            getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": Record failed validation: $e.');
-        }
+      getValueLogger.info('getValue for key ${truncateForLog(key)}...: no valid record found');
+      return null;
     }
 
-    if (validRecordValues.isEmpty) {
-        if (maxRetriesError != null) {
-            getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": No VALID records AND MaxRetriesExceededException found in lookup result. Rethrowing.');
-            throw maxRetriesError;
-        }
-        getValueLogger.fine('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": No records passed validation. Returning null.');
-        return null;
-    }
-    
-    getValueLogger.info('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": ${validRecordValues.length} records passed validation. Selecting best.');
-
-    final bestValueIndex = await _recordValidator.select(key, validRecordValues);
-    final bestValue = validRecordValues[bestValueIndex];
-    
-    getValueLogger.info('[${_host.id.toBase58().substring(0,6)}] getValue for key "$key": final bestValue selected (len: ${bestValue.length}). Returning value.');
-    return bestValue;
+    // The validator's select() picks the best record.
+    final best = await _records.selectRecord(key, candidates);
+    getValueLogger.info('getValue for key ${truncateForLog(key)}...: selected 1 of ${candidates.length} valid records');
+    return candidates[best].value;
   }
 
   /// Sends a message to a peer and returns the response

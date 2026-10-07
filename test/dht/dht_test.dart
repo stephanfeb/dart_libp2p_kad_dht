@@ -245,29 +245,32 @@ void main() {
       
       // Put a value on the first DHT
       _log.fine('[ValueGetSet] Attempting dhts[0].putValue for /v/hello...');
-      final String putKey = '/v/hello';
-      final Uint8List putValueBytes = Uint8List.fromList(utf8.encode('world'));
+      // Values need a namespace validator: use dhts[0]'s public key record
+      // under /pk/ (the 'v' namespace has no validator).
+      final String putKey = '/pk/${String.fromCharCodes(dhts[0].host().id.toBytes())}';
+      final Uint8List putValueBytes =
+          (await dhts[0].host().peerStore.keyBook.pubKey(dhts[0].host().id))!.marshal();
       _log.fine('[ValueGetSet] Key and value for putValue prepared. Key: $putKey, Value bytes length: ${putValueBytes.length}');
       await dhts[0].putValue(putKey, putValueBytes);
       _log.fine('[ValueGetSet] dhts[0].putValue for /v/hello completed.');
       
       // Get the value from the second DHT
       _log.fine('[ValueGetSet] Attempting dhts[1].getValue for /v/hello...');
-      final val = await dhts[1].getValue('/v/hello', RoutingOptions());
+      final val = await dhts[1].getValue(putKey, RoutingOptions());
       _log.fine('[ValueGetSet] dhts[1].getValue returned: $val (type: ${val.runtimeType})');
       if (val != null) {
-        _log.fine('[ValueGetSet] dhts[1].getValue returned (decoded): "${utf8.decode(val)}" (length: ${val.length})');
+        _log.fine('[ValueGetSet] dhts[1].getValue returned ${val.length} bytes');
       } else {
         _log.fine('[ValueGetSet] dhts[1].getValue returned null');
       }
-      expect(utf8.decode(val ?? []), equals('world'));
+      expect(val, equals(putValueBytes));
       
       // Connect a third DHT to the first two
       await connect(dhts[2], dhts[0]);
       await connect(dhts[2], dhts[1]);
       
       _log.fine('[ValueGetSet] dhts[1].getValue for /v/hello completed.');
-      expect(utf8.decode(val ?? []), equals('world'));
+      expect(val, equals(putValueBytes));
       
       // Connect a third DHT to the first two
       await connect(dhts[2], dhts[0]);
@@ -276,17 +279,17 @@ void main() {
       
       // Get the value from the third DHT (offline mode)
       _log.fine('[ValueGetSet] Attempting dhts[2].getValue (A) for /v/hello...');
-      final vala = await dhts[2].getValue('/v/hello',  RoutingOptions());
+      final vala = await dhts[2].getValue(putKey,  RoutingOptions());
       _log.fine('[ValueGetSet] dhts[2].getValue (A) for /v/hello completed.');
-      expect(utf8.decode(vala ?? []), equals('world'));
+      expect(vala, equals(putValueBytes));
       
       // Get the value from the third DHT (online mode)
       // Note: The original test had 'valb' here, but it seems like it should be a separate getValue call.
       // Assuming it's intended to be another getValue.
       _log.fine('[ValueGetSet] Attempting dhts[2].getValue (B) for /v/hello...');
-      final valb = await dhts[2].getValue('/v/hello', RoutingOptions());
+      final valb = await dhts[2].getValue(putKey, RoutingOptions());
       _log.fine('[ValueGetSet] dhts[2].getValue (B) for /v/hello completed.');
-      expect(utf8.decode(valb ?? []), equals('world'));
+      expect(valb, equals(putValueBytes));
       
       // Connect the fourth DHT to the first three
       _log.fine('[ValueGetSet] Connecting dht[3] to first three DHTs...');
@@ -305,7 +308,7 @@ void main() {
 
       // Get the value from the fifth DHT (requires peer routing)
       _log.fine('[ValueGetSet] Attempting dhts[4].getValue for /v/hello...');
-      final valc = await dhts[4].getValue('/v/hello', RoutingOptions());
+      final valc = await dhts[4].getValue(putKey, RoutingOptions());
 
       //for some reason valc is null. dhts[4] does not auto-sync it's DHT with /v/hello ???
       // _log.fine('[ValueGetSet] dhts[4].getValue for /v/hello completed.');
@@ -407,18 +410,19 @@ void main() {
     test('LocalStore_PutAndGet - Set and retrieve value on a single node', () async {
       final dht = dhts[0]; // Use the first DHT instance
 
-      final String testKeyString = '/v/localtest';
-      final String testValueString = 'this is a local test value';
-      
-      final Uint8List keyBytes = Uint8List.fromList(utf8.encode(testKeyString));
-      final Uint8List valueBytes = Uint8List.fromList(utf8.encode(testValueString));
+      // Values need a namespace validator: store the node's public key
+      // record under /pk/ (the 'v' namespace has no validator).
+      final String testKeyString = '/pk/${String.fromCharCodes(dht.host().id.toBytes())}';
+      final Uint8List keyBytes = Uint8List.fromList(testKeyString.codeUnits);
+      final Uint8List valueBytes =
+          (await dht.host().peerStore.keyBook.pubKey(dht.host().id))!.marshal();
 
       final recordToStore = Record(
         key: keyBytes,
         value: valueBytes,
         timeReceived: DateTime.now().millisecondsSinceEpoch,
-        author: dht.host().id.toBytes(),
-        signature: Uint8List(0), // Dummy signature
+        author: Uint8List(0), // Unsigned, as go-libp2p records are
+        signature: Uint8List(0),
       );
 
       print('[LocalStore_PutAndGet] Attempting dht.putRecordToDatastore for $testKeyString...');
@@ -432,11 +436,7 @@ void main() {
       expect(retrievedRecord, isNotNull, reason: 'Retrieved record should not be null');
       expect(retrievedRecord?.value, isNotNull, reason: 'Retrieved record value should not be null');
 
-      if (retrievedRecord?.value != null) {
-        final retrievedValueString = utf8.decode(retrievedRecord!.value);
-        print('[LocalStore_PutAndGet] Decoded retrieved value: "$retrievedValueString"');
-        expect(retrievedValueString, equals(testValueString));
-      }
+      expect(retrievedRecord?.value, equals(valueBytes));
       print('[LocalStore_PutAndGet] Test finished.');
     });
 
