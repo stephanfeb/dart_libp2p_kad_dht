@@ -9,6 +9,7 @@ import 'package:lru/lru.dart';
 
 import 'provider_set.dart';
 import 'provider_store.dart';
+import 'provider_key.dart';
 
 /// ProviderManager adds and retrieves providers from a datastore,
 /// caching them in between for efficiency.
@@ -150,7 +151,6 @@ class ProviderManager implements ProviderStore {
 
   /// Converts a key to a string for use as a cache key
   String _keyToString(CID key) {
-
-    return base64Encode(key.toBytes());
+    return base64Encode(providerKeyOf(key));
   }
 }

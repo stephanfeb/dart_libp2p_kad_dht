@@ -7,6 +7,7 @@ import 'package:dart_libp2p/core/routing/routing.dart';
 import 'package:logging/logging.dart';
 
 import '../internal/util.dart' show truncateForLog;
+import 'provider_key.dart';
 
 final _log = Logger('ProviderStore');
 
@@ -141,7 +142,7 @@ class MemoryProviderStore implements ProviderStore {
       throw StateError('Provider store is closed');
     }
 
-    final keyStr = _keyToString(key.toBytes());
+    final keyStr = _keyToString(providerKeyOf(key));
     final providerStr = provider.id.toBase58();
     final isLocal = localPeerId != null && provider.id == localPeerId;
     final expiration = DateTime.now().add(_options.provideValidity);
@@ -195,7 +196,7 @@ class MemoryProviderStore implements ProviderStore {
       throw StateError('Provider store is closed');
     }
 
-    final keyStr = _keyToString(key.toBytes());
+    final keyStr = _keyToString(providerKeyOf(key));
     _cleanupExpired(keyStr);
 
     final records = _providers[keyStr];

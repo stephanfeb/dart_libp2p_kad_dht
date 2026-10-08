@@ -26,6 +26,7 @@ import 'package:dart_libp2p_kad_dht/src/pb/dht_message.dart';
 import 'package:dart_libp2p_kad_dht/src/pb/record.dart';
 import 'package:dart_libp2p_kad_dht/src/providers/provider_store.dart';
 import 'package:dart_libp2p_kad_dht/src/amino/defaults.dart';
+import 'package:dart_libp2p_kad_dht/src/providers/provider_key.dart';
 
 /// Mock implementation of P2PStream for testing
 class MockP2PStream implements P2PStream {
@@ -210,21 +211,25 @@ class MockMetricsManager implements MetricsManager {
 }
 
 /// Mock implementation of ProviderStore for testing
+/// Keys records by the CID's multihash, as a ProviderStore must: the wire
+/// carries only the multihash, so the handlers cannot rebuild the CID.
 class MockProviderStore implements ProviderStore {
-  final Map<CID, List<AddrInfo>> _providers = {};
+  final Map<String, List<AddrInfo>> _providers = {};
+
+  String _key(CID cid) => base64Encode(providerKeyOf(cid));
   
   void addMockProvider(CID cid, AddrInfo provider) {
-    _providers.putIfAbsent(cid, () => []).add(provider);
+    _providers.putIfAbsent(_key(cid), () => []).add(provider);
   }
   
   @override
   Future<List<AddrInfo>> getProviders(CID cid) async {
-    return _providers[cid] ?? [];
+    return _providers[_key(cid)] ?? [];
   }
   
   @override
   Future<void> addProvider(CID cid, AddrInfo provider) async {
-    _providers.putIfAbsent(cid, () => []).add(provider);
+    _providers.putIfAbsent(_key(cid), () => []).add(provider);
   }
   
   @override
@@ -542,6 +547,11 @@ void main() {
         expect(response.key, equals(keyBytes));
         expect(response.providerPeers, hasLength(1));
         expect(response.providerPeers.first.id, equals(remotePeerId.toBytes()));
+
+        // go-libp2p-kad-dht (and the spec) send the bare multihash.
+        final byMultihash = await protocolManager.handleGetProviders(
+            remotePeerId, Message(type: MessageType.getProviders, key: mh.toBytes()));
+        expect(byMultihash.providerPeers.map((p) => p.id), [remotePeerId.toBytes()]);
       });
       
       test('should handle GET_PROVIDERS message without key', () async {

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:dcid/dcid.dart';
 import 'package:dart_libp2p/core/multiaddr.dart';
 import 'package:dart_libp2p/core/peer/addr_info.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
@@ -18,6 +17,7 @@ import '../query/qpeerset.dart';
 import 'dht.dart';
 import 'events.dart';
 import 'lookup.dart';
+import '../providers/provider_key.dart';
 
 /// Logger for the lookup optimization component
 final _logger = Logger('dht/lookup_optim');
@@ -207,7 +207,7 @@ extension OptimisticProvideExtension on IpfsDHT {
     // Regardless of whether optimistic state is created or not, the node calling provide
     // should itself become a provider for the content.
     try {
-      final selfCid = CID.fromBytes(keyMH); // Using core CID from dart_libp2p/core/routing/routing.dart
+      final selfCid = cidForProviderKey(providerKeyFromWire(keyMH));
       // 'this' refers to the IpfsDHT instance from the extension.
       // Access host via host() method, then .id and .addrs. Access providerManager via getter (to be added to IpfsDHT).
       await this.providerManager.addProvider(selfCid, AddrInfo(this.host().id, this.host().addrs));

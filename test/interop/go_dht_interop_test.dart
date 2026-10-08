@@ -252,6 +252,60 @@ void main() {
       print('ADD_PROVIDER/GET_PROVIDERS interop verified');
     }, timeout: Timeout(Duration(seconds: 60)));
 
+    // go-libp2p-kad-dht keys provider records by the CID's multihash. A Dart
+    // node must use the same key, or it never finds what Go nodes provide
+    // (OverMedia's service record on a Go bootstrap, for one).
+    test('Go provides a CID, Dart finds the provider via a Go server', () async {
+      await goDHTServer.startDHTServer();
+      final goAddr = goDHTServer.listenAddr;
+      final goPeerId = goDHTServer.peerId;
+
+      final testCid = CID.fromData(1, 'raw', Uint8List.fromList('go-provided'.codeUnits));
+      final provideResult = await GoProcessManager(binaryPath: goBinaryPath)
+          .runDHTProvide('$goAddr/p2p/${goPeerId.toBase58()}', testCid.toString());
+      expect(provideResult.exitCode, 0, reason: 'Go provide failed: ${provideResult.stderr}');
+
+      final keyPair = await crypto_ed25519.generateEd25519KeyPair();
+      dartHost = await createHost(keyPair, listenAddrs: [MultiAddr('/ip4/127.0.0.1/tcp/0')]);
+      dartDHT = IpfsDHT(
+        host: dartHost!,
+        providerStore: MemoryProviderStore(),
+        options: DHTOptions(mode: DHTMode.client),
+      );
+      await dartDHT!.start();
+      await dartHost!.connect(AddrInfo(goPeerId, [goAddr]), context: core_context.Context());
+      await dartDHT!.routingTable.tryAddPeer(goPeerId, queryPeer: false);
+
+      final providers = await dartDHT!.findProvidersAsync(testCid, 10).toList();
+      final others = providers.where((p) => p.id != goPeerId && p.id != dartHost!.id);
+      expect(others, isNotEmpty, reason: 'the Go provider was not found');
+    }, timeout: Timeout(Duration(seconds: 60)));
+
+    test('Dart provides a CID to a Go server, Go finds the provider', () async {
+      await goDHTServer.startDHTServer();
+      final goAddr = goDHTServer.listenAddr;
+      final goPeerId = goDHTServer.peerId;
+
+      final keyPair = await crypto_ed25519.generateEd25519KeyPair();
+      dartHost = await createHost(keyPair, listenAddrs: [MultiAddr('/ip4/127.0.0.1/tcp/0')]);
+      dartDHT = IpfsDHT(
+        host: dartHost!,
+        providerStore: MemoryProviderStore(),
+        options: DHTOptions(mode: DHTMode.server),
+      );
+      await dartDHT!.start();
+      await dartHost!.connect(AddrInfo(goPeerId, [goAddr]), context: core_context.Context());
+      await dartDHT!.routingTable.tryAddPeer(goPeerId, queryPeer: false);
+
+      final testCid = CID.fromData(1, 'raw', Uint8List.fromList('dart-provided'.codeUnits));
+      await dartDHT!.provide(testCid, true);
+
+      final findResult = await GoProcessManager(binaryPath: goBinaryPath)
+          .runDHTFindProviders('$goAddr/p2p/${goPeerId.toBase58()}', testCid.toString());
+      expect(findResult.stdout.toString(), contains('Provider: ${dartHost!.id.toBase58()}'),
+          reason: 'Go did not find the Dart provider: ${findResult.stderr}');
+    }, timeout: Timeout(Duration(seconds: 60)));
+
     test('Dart stores /pk/ record, Go retrieves via DHT', () async {
       // 1. Start Go DHT server
       await goDHTServer.startDHTServer();
@@ -324,6 +378,20 @@ void main() {
       return '$tcp/p2p/${dartHost!.id.toBase58()}';
     }
 
+    test('Go provides to a Dart v2 server, Go finds the provider there', () async {
+      final target = await startDartServer();
+      final testCid = CID.fromData(1, 'raw', Uint8List.fromList('go-provided-to-dart'.codeUnits));
+
+      final provideResult = await GoProcessManager(binaryPath: goBinaryPath)
+          .runDHTProvide(target, testCid.toString());
+      expect(provideResult.exitCode, 0, reason: 'Go provide failed: ${provideResult.stderr}');
+
+      final findResult = await GoProcessManager(binaryPath: goBinaryPath)
+          .runDHTFindProviders(target, testCid.toString());
+      expect(findResult.exitCode, 0, reason: 'Go found no provider on the Dart server: ${findResult.stderr}');
+      expect(findResult.stdout.toString(), contains('Provider: '));
+    }, timeout: Timeout(Duration(seconds: 60)));
+
     test('Go stores an unsigned /pk/ record on a Dart v2 server', () async {
       final target = await startDartServer();
 
@@ -352,6 +420,51 @@ void main() {
       print('Go get-value stderr: ${getResult.stderr}');
       expect(getResult.exitCode, 0);
       expect(getResult.stdout.toString(), contains('Get successful'));
+    }, timeout: Timeout(Duration(seconds: 60)));
+  });
+  // The overnode case: an app (IpfsDHTv2) looks up a service that a Go node
+  // provided on a Go bootstrap.
+  group('Kademlia DHT Go-libp2p Interop (IpfsDHTv2 client)', () {
+    late GoProcessManager goDHTServer;
+    BasicHost? dartHost;
+    IpfsDHTv2? dartDHT;
+
+    setUp(() {
+      goDHTServer = GoProcessManager(binaryPath: goBinaryPath);
+    });
+
+    tearDown(() async {
+      await dartDHT?.close();
+      dartDHT = null;
+      await dartHost?.close();
+      dartHost = null;
+      await goDHTServer.stop();
+    });
+
+    test('Go provides a CID, a Dart v2 client finds it via a Go server', () async {
+      await goDHTServer.startDHTServer();
+      final goAddr = goDHTServer.listenAddr;
+      final goPeerId = goDHTServer.peerId;
+
+      final testCid = CID.fromData(1, 'raw', Uint8List.fromList('overmedia-token-service'.codeUnits));
+      final provideResult = await GoProcessManager(binaryPath: goBinaryPath)
+          .runDHTProvide('$goAddr/p2p/${goPeerId.toBase58()}', testCid.toString());
+      expect(provideResult.exitCode, 0, reason: 'Go provide failed: ${provideResult.stderr}');
+
+      final keyPair = await crypto_ed25519.generateEd25519KeyPair();
+      dartHost = await createHost(keyPair, listenAddrs: [MultiAddr('/ip4/127.0.0.1/tcp/0')]);
+      dartDHT = IpfsDHTv2(
+        host: dartHost!,
+        providerStore: MemoryProviderStore(),
+        options: DHTOptions(mode: DHTMode.client, autoRefresh: false),
+      );
+      await dartDHT!.start();
+      await dartHost!.connect(AddrInfo(goPeerId, [goAddr]), context: core_context.Context());
+      await dartDHT!.routingTable.tryAddPeer(goPeerId, queryPeer: false);
+
+      final providers = await dartDHT!.findProvidersAsync(testCid, 10).toList();
+      final others = providers.where((p) => p.id != goPeerId && p.id != dartHost!.id);
+      expect(others, isNotEmpty, reason: 'the Go provider was not found');
     }, timeout: Timeout(Duration(seconds: 60)));
   });
 }

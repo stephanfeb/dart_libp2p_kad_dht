@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:dart_libp2p_kad_dht/src/pb/dht_codec.dart';
 
-import 'package:dcid/dcid.dart';
 import 'package:dart_libp2p/core/host/host.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
 import 'package:dart_libp2p/core/peer/addr_info.dart';
@@ -25,6 +24,7 @@ import '../config/dht_config.dart';
 import '../errors/dht_errors.dart';
 import 'metrics_manager.dart';
 import 'routing_manager.dart';
+import '../../../providers/provider_key.dart';
 
 /// Manages protocol message handling for DHT v2
 /// 
@@ -434,9 +434,10 @@ class ProtocolManager {
         throw DHTProtocolException('GET_PROVIDERS message missing key', peerId: sender);
       }
       
-      // Get providers from local provider store
-      final cid = CID.fromBytes(message.key!);
-      final providers = await _providerStore?.getProviders(cid) ?? [];
+      // Get providers from local provider store. The key is a multihash;
+      // older Dart peers send CID bytes, which reduce to the same key.
+      final key = providerKeyFromWire(message.key!);
+      final providers = await _providerStore?.getProviders(cidForProviderKey(key)) ?? [];
       
       // Convert providers to protocol format
       final providerPeers = providers.map((provider) => Peer(
@@ -446,7 +447,7 @@ class ProtocolManager {
       )).toList();
       
       // Get closer peers from routing table
-      final closestPeers = await _routing?.getNearestPeers(message.key!, _config?.bucketSize ?? 20) ?? [];
+      final closestPeers = await _routing?.getNearestPeers(key, _config?.bucketSize ?? 20) ?? [];
       final closerPeers = await _createPeerListWithAddresses(closestPeers);
       
       final response = Message(
@@ -486,7 +487,7 @@ class ProtocolManager {
       // Store the sender's own provider record only. As in go-libp2p-kad-dht,
       // a peer can announce itself as a provider, but not other peers:
       // entries whose ID is not the sender's are ignored.
-      final cid = CID.fromBytes(message.key!);
+      final cid = cidForProviderKey(providerKeyFromWire(message.key!));
       var storedCount = 0;
 
       for (final providerPeer in message.providerPeers) {

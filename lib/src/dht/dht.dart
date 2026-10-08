@@ -650,16 +650,16 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
         '${truncateForLog(base64Encode(record.key))}...');
   }
 
-  /// Gets local providers for a key
+  /// Gets local providers for a provider key (a multihash, see
+  /// [providerKeyOf]); full CID bytes are accepted too.
   Future<List<AddrInfo>> getLocalProviders(Uint8List key) async {
-    // Get providers from the provider manager
-    return await _providerManager.getProviders(CID.fromBytes(key));
+    return await _providerManager.getProviders(cidForProviderKey(providerKeyFromWire(key)));
   }
 
-  /// Adds a provider for a key
+  /// Adds a provider for a provider key (a multihash, see [providerKeyOf]);
+  /// full CID bytes are accepted too.
   Future<void> addProvider(Uint8List key, AddrInfo provider) async {
-    // Add the provider to the provider manager
-    await _providerManager.addProvider(CID.fromBytes(key), provider);
+    await _providerManager.addProvider(cidForProviderKey(providerKeyFromWire(key)), provider);
   }
 
   /// Dials a peer
@@ -1017,13 +1017,13 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     if (announce) {
       _log.info('$logPrefix Announcing provide for CID: ${cid.toString()}. Finding closest peers...');
       final result = await runLookupWithFollowup(
-        target: cid.toBytes(),
+        target: providerKeyOf(cid),
         queryFn: (peer) async {
           final queryFnLogPrefix = '$logPrefix [provideLookup.queryFn for ${peer.toBase58().substring(0,6)}]';
           _log.finer('$queryFnLogPrefix Sending FIND_NODE for CID ${cid.toString()}.');
           final message = Message(
             type: MessageType.findNode,
-            key: cid.toBytes(),
+            key: providerKeyOf(cid),
           );
           final response = await _sendMessage(peer, message);
           _log.finer('$queryFnLogPrefix Got FIND_NODE response. CloserPeers: ${response.closerPeers.length}');
@@ -1050,7 +1050,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
           _log.fine('$logPrefix Sending ADD_PROVIDER for CID ${cid.toString()} to peer $peerShortId');
           final message = Message(
             type: MessageType.addProvider,
-            key: cid.toBytes(),
+            key: providerKeyOf(cid),
             providerPeers: [
               Peer(
                 id: _host.id.toBytes(),
@@ -1224,12 +1224,12 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
 
         // Find the closest peers to the CID
         final result = await runLookupWithFollowup(
-          target: cid.toBytes(),
+          target: providerKeyOf(cid),
           queryFn: (peer) async {
             // Query the peer for providers
             final message = Message(
               type: MessageType.getProviders,
-              key: cid.toBytes(),
+              key: providerKeyOf(cid),
             );
 
             // Send the message to the peer

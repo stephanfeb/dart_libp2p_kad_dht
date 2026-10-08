@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1] - 2026-10-08
+
+### Fixed
+- **Provider records are keyed by the CID's multihash, so Dart and go-libp2p nodes find each other's providers.** Both DHTs sent the full CIDv1 bytes as the key of `ADD_PROVIDER` and `GET_PROVIDERS` and as the provider lookup target, and stored providers under them. go-libp2p-kad-dht, and the libp2p Kademlia spec, use the multihash (`cid.Hash()`). A Dart node therefore never found a provider that a Go node had announced (it asked a Go server for a key the server had never stored), and Go never found a provider that a Dart node had announced to a Go server. Now:
+  - `provide` and `findProvidersAsync` (`IpfsDHT` and `IpfsDHTv2`) send the multihash and look up the peers closest to it;
+  - `MemoryProviderStore` and `ProviderManager` key records by the multihash, so every CID of the same content (v0 or v1, any codec) shares one set of providers;
+  - the `ADD_PROVIDER` and `GET_PROVIDERS` handlers, and `addProvider`/`getLocalProviders`, read a multihash key, and still accept the full CIDv1 bytes that Dart peers before 1.5.1 send. A provider that an older Dart peer announces to an updated one is stored under the multihash, so both versions find it there; an updated node looking up providers on an older Dart server does not find them.
+- New: `providerKeyOf`, `providerKeyFromWire` and `cidForProviderKey` (`lib/src/providers/provider_key.dart`, exported). A custom `ProviderStore` should key records by `providerKeyOf(cid)` as well.
+
 ## [1.5.0] - 2026-10-08
 
 ### Changed (behaviour)

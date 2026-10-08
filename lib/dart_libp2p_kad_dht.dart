@@ -15,6 +15,7 @@ export 'src/amino/defaults.dart';
 
 // Provider management
 export 'src/providers/provider_store.dart';
+export 'src/providers/provider_key.dart';
 export 'src/providers/provider_set.dart';
 export 'src/providers/provider_manager.dart';
 

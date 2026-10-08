@@ -22,6 +22,7 @@ import 'metrics_manager.dart';
 import 'network_manager.dart';
 import 'routing_manager.dart';
 import 'protocol_manager.dart';
+import '../../../providers/provider_key.dart';
 // // Simplified types for DHT v2 compatibility
 // class QueryPeerset {
 //   const QueryPeerset();
@@ -204,12 +205,12 @@ class QueryManager {
     _metrics?.recordQueryStart();
     
     try {
-      final cidBytes = cid.toBytes();
+      final key = providerKeyOf(cid);
       final controller = StreamController<AddrInfo>();
       final foundProviders = <PeerId>{};
       
       // Start the provider search asynchronously
-      _findProvidersAsync(cidBytes, count, controller, foundProviders);
+      _findProvidersAsync(key, count, controller, foundProviders);
       
       yield* controller.stream;
       
@@ -491,11 +492,11 @@ class QueryManager {
     }
   }
 
-  /// Asynchronously finds providers for a CID
-  Future<void> _findProvidersAsync(Uint8List cidBytes, int count, StreamController<AddrInfo> controller, Set<PeerId> foundProviders) async {
+  /// Asynchronously finds providers for a provider key (see [providerKeyOf])
+  Future<void> _findProvidersAsync(Uint8List key, int count, StreamController<AddrInfo> controller, Set<PeerId> foundProviders) async {
     try {
       // Check local provider store first
-      final localProviders = await getLocalProviders(cidBytes);
+      final localProviders = await getLocalProviders(key);
       for (final provider in localProviders) {
         if (foundProviders.length >= count) break;
         if (foundProviders.add(provider.id)) {
@@ -512,13 +513,13 @@ class QueryManager {
       
       // Perform distributed lookup for providers
       await runLookupWithFollowup(
-        target: cidBytes,
+        target: key,
         queryFn: (peer) async {
           _logger.fine('Sending GET_PROVIDERS to ${peer.toBase58().substring(0, 6)}');
           
           final message = Message(
             type: MessageType.getProviders,
-            key: cidBytes,
+            key: key,
           );
           
           final response = await _network?.sendMessage(peer, message);
@@ -572,22 +573,22 @@ class QueryManager {
     try {
       _logger.info('Providing CID ${truncateForLog(cid.toString())}...');
       
-      final cidBytes = cid.toBytes();
+      final key = providerKeyOf(cid);
       
       // Add ourselves as a provider locally
       final selfInfo = AddrInfo(_network!.host.id, []);
-      await addProvider(cidBytes, selfInfo);
+      await addProvider(key, selfInfo);
       
       if (announce) {
         // Find closest peers to announce to
         final result = await runLookupWithFollowup(
-          target: cidBytes,
+          target: key,
           queryFn: (peer) async {
             _logger.fine('Sending FIND_NODE to ${peer.toBase58().substring(0, 6)} for provider announcement');
             
             final message = Message(
               type: MessageType.findNode,
-              key: cidBytes,
+              key: key,
             );
             
             final response = await _network?.sendMessage(peer, message);
@@ -617,7 +618,7 @@ class QueryManager {
             
             final addProviderMessage = Message(
               type: MessageType.addProvider,
-              key: cidBytes,
+              key: key,
               providerPeers: [
                 Peer(
                   id: _network!.host.id.toBytes(),
@@ -650,7 +651,8 @@ class QueryManager {
     }
   }
   
-  /// Adds a provider to the DHT
+  /// Adds a provider to the local store. [key] is a provider key (a
+  /// multihash, see [providerKeyOf]); full CID bytes are accepted too.
   Future<void> addProvider(Uint8List key, AddrInfo provider) async {
     _ensureStarted();
     
@@ -661,7 +663,7 @@ class QueryManager {
       _network?.host.peerStore.addOrUpdatePeer(provider.id, addrs: provider.addrs);
       
       // Store provider in local provider store
-      final cid = CID.fromBytes(key);
+      final cid = cidForProviderKey(providerKeyFromWire(key));
       await _providerStore?.addProvider(cid, provider);
       
       _metrics?.recordProviderStored();
@@ -672,7 +674,8 @@ class QueryManager {
     }
   }
   
-  /// Gets local providers for a key
+  /// Gets local providers for a provider key (a multihash, see
+  /// [providerKeyOf]); full CID bytes are accepted too.
   Future<List<AddrInfo>> getLocalProviders(Uint8List key) async {
     _ensureStarted();
     
@@ -680,7 +683,7 @@ class QueryManager {
     
     try {
       // Get providers from the local provider store
-      final cid = CID.fromBytes(key);
+      final cid = cidForProviderKey(providerKeyFromWire(key));
       final providers = await _providerStore?.getProviders(cid) ?? [];
       
       _metrics?.recordProviderRetrieved();

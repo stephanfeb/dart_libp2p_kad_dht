@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert'; // Added for base64Encode, and for logging keys
-import 'package:dcid/dcid.dart';
 import 'package:logging/logging.dart'; // Added for logging
 
 import 'package:dart_libp2p/core/peer/addr_info.dart';
@@ -11,6 +10,7 @@ import '../amino/defaults.dart';
 import '../pb/dht_message.dart';
 import 'dht.dart';
 import 'dht_filters.dart';
+import '../providers/provider_key.dart';
 
 /// Type definition for a DHT message handler function
 typedef DHTHandler = Future<Message> Function(PeerId peer, Message message);
@@ -324,8 +324,8 @@ class DHTHandlers {
         }
         _log.fine('$_logPrefix handleGetProviders: No local providers for key $keyString. Finding closer peers.');
 
-        final cid = CID.fromBytes(message.key!);
-        final closestPeers = await dht.getClosestPeers(PeerId.fromBytes(cid.multihash)); // This uses routingTable.nearestPeers
+        final key = providerKeyFromWire(message.key!);
+        final closestPeers = await dht.getClosestPeers(PeerId.fromBytes(key)); // This uses routingTable.nearestPeers
         _log.fine('$_logPrefix handleGetProviders: Found ${closestPeers.length} closer peers for key $keyString.');
 
         for (final p in closestPeers) {
