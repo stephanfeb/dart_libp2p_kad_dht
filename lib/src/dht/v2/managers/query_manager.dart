@@ -494,6 +494,8 @@ class QueryManager {
 
   /// Asynchronously finds providers for a provider key (see [providerKeyOf])
   Future<void> _findProvidersAsync(Uint8List key, int count, StreamController<AddrInfo> controller, Set<PeerId> foundProviders) async {
+    // A count of 0 means no limit, as in go-libp2p-kad-dht.
+    if (count <= 0) count = 1 << 31;
     try {
       // Check local provider store first
       final localProviders = await getLocalProviders(key);

@@ -6,6 +6,8 @@ import 'package:collection/collection.dart';
 import 'package:dcid/dcid.dart';
 import 'package:dart_libp2p_kad_dht/dart_libp2p_kad_dht.dart';
 import 'package:dart_libp2p_kad_dht/src/pb/dht_codec.dart';
+import 'package:dart_libp2p_kad_dht/src/pb/dht_message_reader.dart';
+import 'package:dart_libp2p_kad_dht/src/discovery/namespace_cid.dart';
 import 'package:dart_libp2p_kad_dht/src/dht/routing.dart';
 import 'package:dart_libp2p_kad_dht/src/dht/v2/managers/query_manager.dart';
 import 'package:dart_libp2p_kad_dht/src/internal/protocol_messenger.dart';
@@ -347,49 +349,54 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       _log.fine('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Could not extract remote address for ${remotePeer.toBase58().substring(0,6)}: $e');
     }
 
+    // A message can span several reads, and go-libp2p-kad-dht sends
+    // several requests on one stream; the reader handles both.
+    final reader = DhtMessageReader(stream);
+    var handled = 0;
+    var clean = true;
     try {
-      // Read the message from the stream
-      final dynamic rawMessageData = await stream.read();
-      Uint8List messageBytes;
+      while (true) {
+        final Message? message;
+        try {
+          message = await reader.next(timeout: AminoConstants.inboundStreamIdleTimeout);
+        } on TimeoutException {
+          break; // Idle: the peer has no more requests.
+        }
+        if (message == null) break; // The peer ended the stream.
 
-      if (rawMessageData is Uint8List) {
-        messageBytes = rawMessageData;
-      } else if (rawMessageData is List<int>) {
-        messageBytes = Uint8List.fromList(rawMessageData);
-      } else {
-        _log.fine('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Unexpected data type: ${rawMessageData.runtimeType}. Peer: $remotePeer');
-        await stream.reset();
-        return;
-      }
+        // Get the handler for this message type
+        final handler = _handlers.handlerForMsgType(message.type);
 
-      // Parse the message (protobuf with varint-length framing)
-      final message = decodeMessage(messageBytes);
+        // Handle the message — response is built with deferred RT insertion
+        final response = await handler(remotePeer, message);
+        handled++;
 
-      // Get the handler for this message type
-      final handler = _handlers.handlerForMsgType(message.type);
+        // ADD_PROVIDER is fire-and-forget per the libp2p spec — no response sent
+        if (message.type != MessageType.addProvider) {
+          await stream.write(encodeMessage(response));
+        }
 
-      // Handle the message — response is built with deferred RT insertion
-      final response = await handler(remotePeer, message);
-
-      // ADD_PROVIDER is fire-and-forget per the libp2p spec — no response sent
-      if (message.type == MessageType.addProvider) {
-        await stream.close();
-      } else {
-        // Send the response back FIRST, then do bookkeeping
-        final responseBytes = encodeMessage(response);
-        await stream.write(responseBytes);
-        await stream.close();
-      }
-
-      // Defer peerstore address storage to AFTER response is sent (non-blocking)
-      if (remotePeerAddrs != null && remotePeerAddrs.isNotEmpty) {
-        _host.peerStore.addrBook.addAddrs(remotePeer, remotePeerAddrs, Duration(hours: 1)).catchError((e) {
-          _log.fine('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Error storing addresses for ${remotePeer.toBase58().substring(0,6)}: $e');
-        });
+        // Store the address once, after the first response (non-blocking)
+        if (handled == 1 && remotePeerAddrs != null && remotePeerAddrs.isNotEmpty) {
+          _host.peerStore.addrBook.addAddrs(remotePeer, remotePeerAddrs, Duration(hours: 1)).catchError((e) {
+            _log.fine('[${_host.id.toBase58().substring(0,6)}._handleIncomingStream] Error storing addresses for ${remotePeer.toBase58().substring(0,6)}: $e');
+          });
+        }
       }
     } catch (e) {
+      clean = false;
       _log.fine('[IpfsDHT._handleIncomingStream] Error handling incoming stream from $remotePeer: $e');
-      await stream.reset();
+    }
+
+    // The peer may have closed or reset the stream already; that is fine.
+    try {
+      if (clean) {
+        await stream.close();
+      } else {
+        await stream.reset();
+      }
+    } catch (e) {
+      _log.fine('[IpfsDHT._handleIncomingStream] Failed to end stream from $remotePeer: $e');
     }
   }
 
@@ -1196,6 +1203,9 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
 
   /// Asynchronously finds providers for a CID and adds them to the controller
   Future<void> _findProvidersAsync(CID cid, int count, StreamController<AddrInfo> controller) async {
+    // A count of 0 means no limit, as in go-libp2p-kad-dht. Before, it
+    // returned the local providers only and never queried the network.
+    if (count <= 0) count = 1 << 31;
     try {
       if (!_started) {
         await start();
@@ -1539,7 +1549,6 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     while (attempt < _options.maxRetryAttempts) {
       attempt++;
       P2PStream<Uint8List>? stream;
-      List<int> responseBytes = [];
 
       try {
         _log.fine('[$selfShortId] Attempt $attempt: Dialing $shortPeerId for ${message.type}.');
@@ -1572,31 +1581,26 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
         
         _log.fine('[$selfShortId] Attempt $attempt: Message written to stream ${stream.id()}. Reading response...');
 
-        responseBytes = await stream.read().timeout(Duration(seconds: 10), onTimeout: () {
-          _log.fine('[$selfShortId] Attempt $attempt: Read operation timed out for $shortPeerId');
-          throw TimeoutException('Read operation timed out', Duration(seconds: 10));
-        });
-        
-        _log.info('[$selfShortId] Attempt $attempt: Response received from $shortPeerId on stream ${stream.id()}. Length: ${responseBytes.length}');
-        
-        await stream.close();
-        _log.fine('[$selfShortId] Attempt $attempt: Client-side stream ${stream.id()} closed after successful communication.');
-        
-        stream = null; // Clear stream variable after successful close
-
-        // Parse the protobuf response
-        Message responseMessage;
+        // A response larger than one transport chunk arrives over several
+        // reads; the reader puts the whole varint-delimited message together.
+        final Message? responseMessage;
         try {
-          responseMessage = decodeMessage(Uint8List.fromList(responseBytes));
-          _log.info('[$selfShortId] Attempt $attempt: Parsed ${responseMessage.type} response from $shortPeerId. Success.');
-          if (responseMessage.record != null) {
-            _log.finer('[$selfShortId] Received record in response: key=${base64Encode(responseMessage.record!.key)}, value=${base64Encode(responseMessage.record!.value)} (decoded: ${utf8.decode(responseMessage.record!.value, allowMalformed: true)})');
-          }
-          return responseMessage;
-        } catch (e, s) {
-          _log.fine('[$selfShortId] Attempt $attempt: Error decoding protobuf response from $shortPeerId. Length: ${responseBytes.length}. Error: $e', e, s);
+          responseMessage = await DhtMessageReader(stream).next(timeout: Duration(seconds: 10));
+        } on DhtFrameException catch (e) {
           throw Exception('Failed to decode protobuf response from $shortPeerId: $e');
         }
+        if (responseMessage == null) {
+          throw Exception('Stream from $shortPeerId ended without a response');
+        }
+        _log.info('[$selfShortId] Attempt $attempt: Parsed ${responseMessage.type} response from $shortPeerId. Success.');
+        if (responseMessage.record != null) {
+          _log.finer('[$selfShortId] Received record in response: key=${base64Encode(responseMessage.record!.key)}, value=${base64Encode(responseMessage.record!.value)} (decoded: ${utf8.decode(responseMessage.record!.value, allowMalformed: true)})');
+        }
+
+        await stream.close();
+        _log.fine('[$selfShortId] Attempt $attempt: Client-side stream ${stream.id()} closed after successful communication.');
+        stream = null; // Clear stream variable after successful close
+        return responseMessage;
 
       } catch (e, s) {
         lastError = e;
@@ -1846,9 +1850,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     // final discoveryOpts = DiscoveryOptions().apply(options); // Process options if needed for TTL later
     // For now, the TTL of the advertisement is governed by the DHT's provider record validity.
     advertiseLogger.fine('[${_host.id.toBase58().substring(0,6)}] Converting namespace "$ns" to CID.');
-    final cid = CID.fromString(ns); // Ensure this CID conversion is robust for namespaces.
-                                    // Consider if namespaces need a specific prefix or format
-                                    // before being turned into CIDs.
+    final cid = namespaceToCid(ns); // The same key as go-libp2p's routing discovery.
     advertiseLogger.info('[${_host.id.toBase58().substring(0,6)}] Namespace "$ns" converted to CID: ${cid.toString()}. Calling provide(announce: true).');
 
     // Announce that this node provides the "content" identified by the namespace CID.
@@ -1872,7 +1874,7 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
     final discoveryOpts = DiscoveryOptions().apply(options);
     final effectiveLimit = discoveryOpts.limit ?? 0; // 0 for unbounded in findProvidersAsync
 
-    final cid = CID.fromString(ns); // Same ns to CID consideration as above.
+    final cid = namespaceToCid(ns);
 
     // findProvidersAsync will return a stream of peers who have "provided" this namespace CID.
     return findProvidersAsync(cid, effectiveLimit);

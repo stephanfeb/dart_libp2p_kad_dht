@@ -136,8 +136,8 @@ void main() {
       expect(dhtPublisher.routingTable.find(receiverId), isNotNull, reason: "Receiver should be in Publisher's routing table");
       expect(dhtReceiver.routingTable.find(publisherId), isNotNull, reason: "Publisher should be in Receiver's routing table");
 
-      const namespace = 'QmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e';
-      final namespaceCid = CID.fromString(namespace); // CID is available via routing.dart import
+      const namespace = 'my-app/1.0.0';
+      final namespaceCid = namespaceToCid(namespace);
 
       // Action: Publisher advertises the namespace
       // This should trigger dhtPublisher to find closest peers (which should include dhtReceiver)

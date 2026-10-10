@@ -98,8 +98,9 @@ void main() {
     });
 
     test('advertise should add local peer as provider for the namespace CID', () async {
-      const namespace = 'QmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e';
-      final namespaceCid = CID.fromString(namespace);
+      // A namespace that is not a CID string, as go-libp2p peers use.
+      const namespace = 'my-app/1.0.0';
+      final namespaceCid = namespaceToCid(namespace);
 
       // Advertise the namespace
       final ttl = await dht1.advertise(namespace);
@@ -129,7 +130,7 @@ void main() {
     });
 
     test('findPeers should eventually find an advertised peer', () async {
-      const namespace = 'QmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e';
+      const namespace = 'teranode/bitcoin/1.0.0/testnet-block';
 
       final nodeHelper2 = await _NodeWithDHT.create();
       final dht2 = nodeHelper2.dht;

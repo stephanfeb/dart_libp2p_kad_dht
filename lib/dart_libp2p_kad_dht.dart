@@ -25,6 +25,7 @@ export 'src/query/query_runner.dart';
 export 'src/query/legacy_types.dart';
 
 // DHT implementation
+export 'src/discovery/namespace_cid.dart';
 export 'src/dht/dht.dart';
 export 'src/dht/dht_options.dart';
 export 'src/dht/handlers.dart';

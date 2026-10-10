@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- **A DHT message larger than one read failed to decode** (dart-libp2p-cce.2). The legacy `IpfsDHT` read a request (inbound handler) and a response (`_sendMessage`) with one `stream.read()`, and `IpfsDHTv2` read a response the same way. A read returns one transport frame. A go-libp2p peer sends small yamux frames, so a `FIND_NODE` or `GET_PROVIDERS` answer with many peers came in several reads, and decoding failed (`RangeError ... 2..4096: 4560`). Now all three read with `DhtMessageReader`, which reads until the varint-delimited message is complete. The inbound handler of `IpfsDHT` also answers more than one request on a stream, as go-libp2p-kad-dht sends them.
+- **`advertise` and `findPeers` threw for a namespace that is not a CID string, and used a key that go-libp2p does not use** (dart-libp2p-cce.3). `IpfsDHT` called `CID.fromString(ns)`. `IpfsDHTv2` did not advertise or search at all. Now both use `namespaceToCid(ns)`: CIDv1, codec raw, multihash sha2-256 of the namespace, as `nsToCid` in go-libp2p's routing discovery. So Dart and Go peers find each other on the same namespace. A namespace that was a CID string has a different key now: advertisements made by an older version are not found.
+- **`findProvidersAsync(cid, 0)` asked no peer.** A count of 0 means "no limit" (as in go-libp2p-kad-dht, and as `findPeers` passes it), but both DHTs returned the local providers only. Now 0 means no limit.
+
+### Added
+- `namespaceToCid` (exported).
+
 ## [1.5.1] - 2026-10-08
 
 ### Fixed

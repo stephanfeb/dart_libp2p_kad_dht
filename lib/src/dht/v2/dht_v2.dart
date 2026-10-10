@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dcid/dcid.dart';
 import 'package:dart_libp2p/core/discovery.dart';
+import '../../discovery/namespace_cid.dart';
 import 'package:dart_libp2p/core/event/bus.dart';
 import 'package:dart_libp2p/core/event/reachability.dart';
 import 'package:dart_libp2p/core/network/network.dart' show Reachability;
@@ -390,13 +391,16 @@ class IpfsDHTv2 implements IpfsDHT {
   @override
   Future<Duration> advertise(String ns, [List<DiscoveryOption> options = const []]) async {
     _ensureStarted();
-    return await _queries.advertise(ns, options);
+    // Provide the namespace's key, as go-libp2p's routing discovery does.
+    await provide(namespaceToCid(ns), true);
+    return _config.provideValidity;
   }
   
   @override
   Future<Stream<AddrInfo>> findPeers(String ns, [List<DiscoveryOption> options = const []]) async {
     _ensureStarted();
-    return await _queries.findPeers(ns, options);
+    final limit = DiscoveryOptions().apply(options).limit ?? 0; // 0: no limit
+    return findProvidersAsync(namespaceToCid(ns), limit);
   }
   
   // Metrics and monitoring

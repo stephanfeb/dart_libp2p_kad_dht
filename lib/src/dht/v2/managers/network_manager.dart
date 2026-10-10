@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dart_libp2p/core/host/host.dart';
 import 'package:dart_libp2p_kad_dht/src/pb/dht_codec.dart';
+import 'package:dart_libp2p_kad_dht/src/pb/dht_message_reader.dart';
 import 'package:dart_libp2p/core/peer/peer_id.dart';
 import 'package:dart_libp2p/core/network/stream.dart';
 import 'package:dart_libp2p/core/network/context.dart';
@@ -222,13 +223,13 @@ class NetworkManager {
 
       await stream.write(messageBytes);
 
-      // Read the response with timeout
-      final responseBytes = await stream.read().timeout(timeout);
+      // Read the whole varint-delimited response; it can span several reads.
+      final responseMessage = await DhtMessageReader(stream).next(timeout: timeout);
+      if (responseMessage == null) {
+        throw DHTProtocolException('Stream ended without a response');
+      }
 
-      _logger.fine('Received response: ${responseBytes.length} bytes');
-
-      // Deserialize the protobuf response
-      final responseMessage = decodeMessage(Uint8List.fromList(responseBytes));
+      _logger.fine('Received response: ${responseMessage.type}');
 
       return responseMessage;
     } on TimeoutException catch (e) {

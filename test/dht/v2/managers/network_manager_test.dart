@@ -12,6 +12,7 @@ import 'package:dart_libp2p_kad_dht/src/dht/v2/managers/metrics_manager.dart';
 import 'package:dart_libp2p_kad_dht/src/dht/v2/config/dht_config.dart';
 import 'package:dart_libp2p_kad_dht/src/dht/v2/errors/dht_errors.dart';
 import 'package:dart_libp2p_kad_dht/src/pb/dht_message.dart';
+import 'package:dart_libp2p_kad_dht/src/pb/dht_codec.dart';
 import 'package:dart_libp2p_kad_dht/src/amino/defaults.dart';
 
 /// Mock implementation of P2PStream for testing
@@ -264,6 +265,33 @@ void main() {
       setUp(() async {
         await networkManager.start();
       });
+
+      test('reads a response that arrives over several reads', () async {
+        final stream = mockHost.createMockStream(testPeerId);
+        final responseMessage = Message(
+          type: MessageType.getProviders,
+          providerPeers: [
+            for (var i = 0; i < 30; i++)
+              Peer(
+                id: Uint8List.fromList(List.filled(34, i)),
+                addrs: [for (var j = 0; j < 4; j++) Uint8List.fromList(List.filled(20, j))],
+              ),
+          ],
+        );
+        final responseBytes = encodeMessage(responseMessage);
+        // Pieces of 100 bytes; the first one splits nothing but the varint.
+        stream.addDataToReturn(Uint8List.sublistView(responseBytes, 0, 1));
+        for (var i = 1; i < responseBytes.length; i += 100) {
+          stream.addDataToReturn(Uint8List.sublistView(
+              responseBytes, i, i + 100 > responseBytes.length ? responseBytes.length : i + 100));
+        }
+
+        final result = await networkManager.sendMessage(
+            testPeerId, Message(type: MessageType.getProviders, key: Uint8List.fromList([1])));
+
+        expect(result.type, MessageType.getProviders);
+        expect(result.providerPeers, hasLength(30));
+      });
       
       test('should send and receive message successfully', () async {
         final stream = mockHost.createMockStream(testPeerId);
@@ -271,9 +299,7 @@ void main() {
         final responseMessage = Message(type: MessageType.findNode, closerPeers: []);
         
         // Setup stream to return the response
-        final responseJson = responseMessage.toJson();
-        final responseJsonString = jsonEncode(responseJson);
-        final responseBytes = utf8.encode(responseJsonString);
+        final responseBytes = encodeMessage(responseMessage);
         stream.addDataToReturn(responseBytes);
         
         final result = await networkManager.sendMessage(testPeerId, requestMessage);
@@ -284,9 +310,7 @@ void main() {
         // Verify the request was sent
         expect(stream.receivedData, hasLength(1));
         final sentData = stream.receivedData.first;
-        final sentJsonString = utf8.decode(sentData);
-        final sentJson = jsonDecode(sentJsonString) as Map<String, dynamic>;
-        final sentMessage = Message.fromJson(sentJson);
+        final sentMessage = decodeMessage(sentData);
         
         expect(sentMessage.type, equals(MessageType.findNode));
         expect(sentMessage.key, equals(Uint8List.fromList([1, 2, 3])));
@@ -377,9 +401,7 @@ void main() {
         final stream = mockHost.createMockStream(testPeerId);
         final responseMessage = Message(type: MessageType.ping);
         
-        final responseJson = responseMessage.toJson();
-        final responseJsonString = jsonEncode(responseJson);
-        final responseBytes = utf8.encode(responseJsonString);
+        final responseBytes = encodeMessage(responseMessage);
         stream.addDataToReturn(responseBytes);
         
         // Add a small delay to simulate network latency
@@ -402,9 +424,7 @@ void main() {
         final stream = mockHost.createMockStream(testPeerId);
         final responseMessage = Message(type: MessageType.findNode, closerPeers: []);
         
-        final responseJson = responseMessage.toJson();
-        final responseJsonString = jsonEncode(responseJson);
-        final responseBytes = utf8.encode(responseJsonString);
+        final responseBytes = encodeMessage(responseMessage);
         stream.addDataToReturn(responseBytes);
         
         final result = await networkManager.ping(testPeerId);
@@ -466,9 +486,7 @@ void main() {
          final message = Message(type: MessageType.ping);
          final responseMessage = Message(type: MessageType.ping);
          
-         final responseJson = responseMessage.toJson();
-         final responseJsonString = jsonEncode(responseJson);
-         final responseBytes = utf8.encode(responseJsonString);
+         final responseBytes = encodeMessage(responseMessage);
          stream.addDataToReturn(responseBytes);
          
          final initialMetrics = metrics.getMetrics();

@@ -463,6 +463,10 @@ class _MockKeyBook implements KeyBook {
 // MockStream implements a duplex P2PStream for testing.
 // It allows two MockStream instances to be linked, simulating a connection.
 class MockStream implements StreamSink<Uint8List>, P2PStream<Uint8List> {
+  /// When set, each write reaches the remote in pieces of at most this many
+  /// bytes, one per read, as small transport frames do.
+  static int? maxChunk;
+
   final PeerId localPeer;
   final PeerId remotePeer;
   final String _debugID; // For logging, e.g., 'client' or 'server'
@@ -593,7 +597,14 @@ class MockStream implements StreamSink<Uint8List>, P2PStream<Uint8List> {
       throw StateError('[$_debugID] Stream is closed for writing. Attempted to write data length: ${data.length}');
     }
     _streamLogger.finest('[$_debugID] Writing data, length: ${data.length}');
-    _outgoingController.sink.add(data);
+    final chunk = maxChunk;
+    if (chunk == null || data.length <= chunk) {
+      _outgoingController.sink.add(data);
+      return;
+    }
+    for (var i = 0; i < data.length; i += chunk) {
+      _outgoingController.sink.add(Uint8List.sublistView(data, i, i + chunk > data.length ? data.length : i + chunk));
+    }
   }
 
   @override
