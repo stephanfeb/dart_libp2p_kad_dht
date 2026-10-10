@@ -55,8 +55,8 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dart_libp2p_kad_dht: ^1.4.1
-  dart_libp2p: ^0.5.2
+  dart_libp2p_kad_dht: ^1.6.0
+  dart_libp2p: ^4.7.0
   dcid: ^1.0.0
 ```
 

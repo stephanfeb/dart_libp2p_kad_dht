@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.6.0] - 2026-10-11
 
 ### Fixed
 - **A DHT message larger than one read failed to decode** (dart-libp2p-cce.2). The legacy `IpfsDHT` read a request (inbound handler) and a response (`_sendMessage`) with one `stream.read()`, and `IpfsDHTv2` read a response the same way. A read returns one transport frame. A go-libp2p peer sends small yamux frames, so a `FIND_NODE` or `GET_PROVIDERS` answer with many peers came in several reads, and decoding failed (`RangeError ... 2..4096: 4560`). Now all three read with `DhtMessageReader`, which reads until the varint-delimited message is complete. The inbound handler of `IpfsDHT` also answers more than one request on a stream, as go-libp2p-kad-dht sends them.
