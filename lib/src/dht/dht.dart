@@ -1752,10 +1752,21 @@ class IpfsDHT implements Routing, Discovery { // Added Discovery interface
       );
     }
 
-    // Create QueryRunner with our configuration
+    // Create QueryRunner with our configuration. Each answer's peers are
+    // stored with their addresses for a short time, as go-libp2p-kad-dht's
+    // maybeAddAddrs (TempAddrTTL): the lookup dials them next. Without it, a
+    // peer learnt from another peer had no address and the lookup could not
+    // go past the first hop ("No addresses found").
     final runner = QueryRunner(
       target: target,
-      queryFn: queryFn,
+      queryFn: (peer) async {
+        final peers = await queryFn(peer);
+        for (final info in peers) {
+          if (info.id == _host.id || info.addrs.isEmpty) continue;
+          await _host.peerStore.addrBook.addAddrs(info.id, info.addrs, AddressTTL.tempAddrTTL);
+        }
+        return peers;
+      },
       stopFn: stopFn,
       initialPeers: bootstrapPeers.map((p) => p.id).toList(),
       alpha: _options.resiliency, // Use DHT's resiliency setting for concurrency

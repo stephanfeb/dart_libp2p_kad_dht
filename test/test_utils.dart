@@ -339,9 +339,12 @@ class MockPeerstoreImpl implements Peerstore {
     return AddrInfo(id, [MultiAddr('/ip4/127.0.0.1/tcp/0')]);
   }
 
+  // One address book, as in a real peerstore: a new one per call lost every
+  // address written through it.
+  final AddrBook _addrBook = MemoryAddrBook();
+
   @override
-  // TODO: implement addrBook
-  AddrBook get addrBook => MemoryAddrBook();
+  AddrBook get addrBook => _addrBook;
 
   @override
   Future<void> close() {
@@ -406,7 +409,14 @@ class MockPeerstoreImpl implements Peerstore {
 
   @override
   Future<PeerInfo?> getPeer(PeerId peerId) async {
-    return _peerStore[peerId];
+    final info = _peerStore[peerId];
+    final booked = await _addrBook.addrs(peerId);
+    if (booked.isEmpty) return info;
+    if (info == null) {
+      return PeerInfo(peerId: peerId, addrs: booked.toSet(), protocols: <String>{}, metadata: {});
+    }
+    return PeerInfo(peerId: peerId, addrs: {...info.addrs, ...booked},
+        protocols: info.protocols, metadata: info.metadata);
   }
 }
 
